@@ -167,7 +167,9 @@ return [
         /*
          * Package Service Providers...
          */
+        Laravel\Tinker\TinkerServiceProvider::class,
         Laravel\Socialite\SocialiteServiceProvider::class,
+        Laravel\Passport\PassportServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -230,6 +232,7 @@ return [
          * Package Service aliases...
          */
         'Socialite' => Laravel\Socialite\Facades\Socialite::class,
+        
 
     ],
 
