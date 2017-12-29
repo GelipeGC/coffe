@@ -1,5 +1,6 @@
 window._ = require('lodash');
 
+
 try {
     window.$ = window.jQuery = require('jquery');
 
@@ -45,7 +46,10 @@ if (token) {
  */
 
 import Vue from 'vue'
+import router from './routes.js'
 
-new Vue().$mount('#app');
+new Vue({
+    router
+}).$mount('#app');
 
 
