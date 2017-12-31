@@ -10474,7 +10474,7 @@ function getPluginName(obj) {
 "use strict";
 
 
-var bind = __webpack_require__(25);
+var bind = __webpack_require__(27);
 var isBuffer = __webpack_require__(55);
 
 /*global toString:true*/
@@ -11599,6 +11599,33 @@ function animate(isIn, element, animation, cb) {
 
 /***/ }),
 /* 8 */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+/* 9 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -11831,7 +11858,7 @@ function GetExplicitOffsets(element, anchor, position, alignment, vOffset, hOffs
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -11884,7 +11911,7 @@ function onImagesLoaded(images, callback) {
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -11955,7 +11982,7 @@ var Nest = {
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports) {
 
 /*
@@ -12037,7 +12064,7 @@ function toComment(sourceMap) {
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -12258,7 +12285,7 @@ function applyToTag (styleElement, obj) {
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports) {
 
 /* globals __VUE_SSR_CONTEXT__ */
@@ -12364,33 +12391,6 @@ module.exports = function normalizeComponent (
     options: options
   }
 }
-
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
-	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
 
 
 /***/ }),
@@ -12587,10 +12587,10 @@ function getDefaultAdapter() {
   var adapter;
   if (typeof XMLHttpRequest !== 'undefined') {
     // For browsers use XHR adapter
-    adapter = __webpack_require__(27);
+    adapter = __webpack_require__(28);
   } else if (typeof process !== 'undefined') {
     // For node use HTTP adapter
-    adapter = __webpack_require__(27);
+    adapter = __webpack_require__(28);
   }
   return adapter;
 }
@@ -12661,3079 +12661,10 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 
 module.exports = defaults;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(26)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(17)))
 
 /***/ }),
 /* 17 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Timer; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-
-
-
-
-function Timer(elem, options, cb) {
-  var _this = this,
-      duration = options.duration,
-      //options is an object for easily adding features later.
-  nameSpace = Object.keys(elem.data())[0] || 'timer',
-      remain = -1,
-      start,
-      timer;
-
-  this.isPaused = false;
-
-  this.restart = function () {
-    remain = -1;
-    clearTimeout(timer);
-    this.start();
-  };
-
-  this.start = function () {
-    this.isPaused = false;
-    // if(!elem.data('paused')){ return false; }//maybe implement this sanity check if used for other things.
-    clearTimeout(timer);
-    remain = remain <= 0 ? duration : remain;
-    elem.data('paused', false);
-    start = Date.now();
-    timer = setTimeout(function () {
-      if (options.infinite) {
-        _this.restart(); //rerun the timer.
-      }
-      if (cb && typeof cb === 'function') {
-        cb();
-      }
-    }, remain);
-    elem.trigger('timerstart.zf.' + nameSpace);
-  };
-
-  this.pause = function () {
-    this.isPaused = true;
-    //if(elem.data('paused')){ return false; }//maybe implement this sanity check if used for other things.
-    clearTimeout(timer);
-    elem.data('paused', true);
-    var end = Date.now();
-    remain = remain - (end - start);
-    elem.trigger('timerpaused.zf.' + nameSpace);
-  };
-}
-
-
-
-/***/ }),
-/* 18 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Accordion; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_core__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_plugin__ = __webpack_require__(2);
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-
-
-
-
-
-/**
- * Accordion module.
- * @module foundation.accordion
- * @requires foundation.util.keyboard
- */
-
-var Accordion = function (_Plugin) {
-  _inherits(Accordion, _Plugin);
-
-  function Accordion() {
-    _classCallCheck(this, Accordion);
-
-    return _possibleConstructorReturn(this, (Accordion.__proto__ || Object.getPrototypeOf(Accordion)).apply(this, arguments));
-  }
-
-  _createClass(Accordion, [{
-    key: '_setup',
-
-    /**
-     * Creates a new instance of an accordion.
-     * @class
-     * @name Accordion
-     * @fires Accordion#init
-     * @param {jQuery} element - jQuery object to make into an accordion.
-     * @param {Object} options - a plain object with settings to override the default options.
-     */
-    value: function _setup(element, options) {
-      this.$element = element;
-      this.options = __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend({}, Accordion.defaults, this.$element.data(), options);
-
-      this.className = 'Accordion'; // ie9 back compat
-      this._init();
-
-      __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].register('Accordion', {
-        'ENTER': 'toggle',
-        'SPACE': 'toggle',
-        'ARROW_DOWN': 'next',
-        'ARROW_UP': 'previous'
-      });
-    }
-
-    /**
-     * Initializes the accordion by animating the preset active pane(s).
-     * @private
-     */
-
-  }, {
-    key: '_init',
-    value: function _init() {
-      var _this3 = this;
-
-      this.$element.attr('role', 'tablist');
-      this.$tabs = this.$element.children('[data-accordion-item]');
-
-      this.$tabs.each(function (idx, el) {
-        var $el = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(el),
-            $content = $el.children('[data-tab-content]'),
-            id = $content[0].id || Object(__WEBPACK_IMPORTED_MODULE_2__foundation_util_core__["a" /* GetYoDigits */])(6, 'accordion'),
-            linkId = el.id || id + '-label';
-
-        $el.find('a:first').attr({
-          'aria-controls': id,
-          'role': 'tab',
-          'id': linkId,
-          'aria-expanded': false,
-          'aria-selected': false
-        });
-
-        $content.attr({ 'role': 'tabpanel', 'aria-labelledby': linkId, 'aria-hidden': true, 'id': id });
-      });
-      var $initActive = this.$element.find('.is-active').children('[data-tab-content]');
-      this.firstTimeInit = true;
-      if ($initActive.length) {
-        this.down($initActive, this.firstTimeInit);
-        this.firstTimeInit = false;
-      }
-
-      this._checkDeepLink = function () {
-        var anchor = window.location.hash;
-        //need a hash and a relevant anchor in this tabset
-        if (anchor.length) {
-          var $link = _this3.$element.find('[href$="' + anchor + '"]'),
-              $anchor = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(anchor);
-
-          if ($link.length && $anchor) {
-            if (!$link.parent('[data-accordion-item]').hasClass('is-active')) {
-              _this3.down($anchor, _this3.firstTimeInit);
-              _this3.firstTimeInit = false;
-            };
-
-            //roll up a little to show the titles
-            if (_this3.options.deepLinkSmudge) {
-              var _this = _this3;
-              __WEBPACK_IMPORTED_MODULE_0_jquery___default()(window).load(function () {
-                var offset = _this.$element.offset();
-                __WEBPACK_IMPORTED_MODULE_0_jquery___default()('html, body').animate({ scrollTop: offset.top }, _this.options.deepLinkSmudgeDelay);
-              });
-            }
-
-            /**
-              * Fires when the zplugin has deeplinked at pageload
-              * @event Accordion#deeplink
-              */
-            _this3.$element.trigger('deeplink.zf.accordion', [$link, $anchor]);
-          }
-        }
-      };
-
-      //use browser to open a tab, if it exists in this tabset
-      if (this.options.deepLink) {
-        this._checkDeepLink();
-      }
-
-      this._events();
-    }
-
-    /**
-     * Adds event handlers for items within the accordion.
-     * @private
-     */
-
-  }, {
-    key: '_events',
-    value: function _events() {
-      var _this = this;
-
-      this.$tabs.each(function () {
-        var $elem = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this);
-        var $tabContent = $elem.children('[data-tab-content]');
-        if ($tabContent.length) {
-          $elem.children('a').off('click.zf.accordion keydown.zf.accordion').on('click.zf.accordion', function (e) {
-            e.preventDefault();
-            _this.toggle($tabContent);
-          }).on('keydown.zf.accordion', function (e) {
-            __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].handleKey(e, 'Accordion', {
-              toggle: function toggle() {
-                _this.toggle($tabContent);
-              },
-              next: function next() {
-                var $a = $elem.next().find('a').focus();
-                if (!_this.options.multiExpand) {
-                  $a.trigger('click.zf.accordion');
-                }
-              },
-              previous: function previous() {
-                var $a = $elem.prev().find('a').focus();
-                if (!_this.options.multiExpand) {
-                  $a.trigger('click.zf.accordion');
-                }
-              },
-              handled: function handled() {
-                e.preventDefault();
-                e.stopPropagation();
-              }
-            });
-          });
-        }
-      });
-      if (this.options.deepLink) {
-        __WEBPACK_IMPORTED_MODULE_0_jquery___default()(window).on('popstate', this._checkDeepLink);
-      }
-    }
-
-    /**
-     * Toggles the selected content pane's open/close state.
-     * @param {jQuery} $target - jQuery object of the pane to toggle (`.accordion-content`).
-     * @function
-     */
-
-  }, {
-    key: 'toggle',
-    value: function toggle($target) {
-      if ($target.closest('[data-accordion]').is('[disabled]')) {
-        console.info('Cannot toggle an accordion that is disabled.');
-        return;
-      }
-      if ($target.parent().hasClass('is-active')) {
-        this.up($target);
-      } else {
-        this.down($target);
-      }
-      //either replace or update browser history
-      if (this.options.deepLink) {
-        var anchor = $target.prev('a').attr('href');
-
-        if (this.options.updateHistory) {
-          history.pushState({}, '', anchor);
-        } else {
-          history.replaceState({}, '', anchor);
-        }
-      }
-    }
-
-    /**
-     * Opens the accordion tab defined by `$target`.
-     * @param {jQuery} $target - Accordion pane to open (`.accordion-content`).
-     * @param {Boolean} firstTime - flag to determine if reflow should happen.
-     * @fires Accordion#down
-     * @function
-     */
-
-  }, {
-    key: 'down',
-    value: function down($target, firstTime) {
-      var _this4 = this;
-
-      /**
-       * checking firstTime allows for initial render of the accordion
-       * to render preset is-active panes.
-       */
-      if ($target.closest('[data-accordion]').is('[disabled]') && !firstTime) {
-        console.info('Cannot call down on an accordion that is disabled.');
-        return;
-      }
-      $target.attr('aria-hidden', false).parent('[data-tab-content]').addBack().parent().addClass('is-active');
-
-      if (!this.options.multiExpand && !firstTime) {
-        var $currentActive = this.$element.children('.is-active').children('[data-tab-content]');
-        if ($currentActive.length) {
-          this.up($currentActive.not($target));
-        }
-      }
-
-      $target.slideDown(this.options.slideSpeed, function () {
-        /**
-         * Fires when the tab is done opening.
-         * @event Accordion#down
-         */
-        _this4.$element.trigger('down.zf.accordion', [$target]);
-      });
-
-      __WEBPACK_IMPORTED_MODULE_0_jquery___default()('#' + $target.attr('aria-labelledby')).attr({
-        'aria-expanded': true,
-        'aria-selected': true
-      });
-    }
-
-    /**
-     * Closes the tab defined by `$target`.
-     * @param {jQuery} $target - Accordion tab to close (`.accordion-content`).
-     * @fires Accordion#up
-     * @function
-     */
-
-  }, {
-    key: 'up',
-    value: function up($target) {
-      if ($target.closest('[data-accordion]').is('[disabled]')) {
-        console.info('Cannot call up on an accordion that is disabled.');
-        return;
-      }
-
-      var $aunts = $target.parent().siblings(),
-          _this = this;
-
-      if (!this.options.allowAllClosed && !$aunts.hasClass('is-active') || !$target.parent().hasClass('is-active')) {
-        return;
-      }
-
-      $target.slideUp(_this.options.slideSpeed, function () {
-        /**
-         * Fires when the tab is done collapsing up.
-         * @event Accordion#up
-         */
-        _this.$element.trigger('up.zf.accordion', [$target]);
-      });
-
-      $target.attr('aria-hidden', true).parent().removeClass('is-active');
-
-      __WEBPACK_IMPORTED_MODULE_0_jquery___default()('#' + $target.attr('aria-labelledby')).attr({
-        'aria-expanded': false,
-        'aria-selected': false
-      });
-    }
-
-    /**
-     * Destroys an instance of an accordion.
-     * @fires Accordion#destroyed
-     * @function
-     */
-
-  }, {
-    key: '_destroy',
-    value: function _destroy() {
-      this.$element.find('[data-tab-content]').stop(true).slideUp(0).css('display', '');
-      this.$element.find('a').off('.zf.accordion');
-      if (this.options.deepLink) {
-        __WEBPACK_IMPORTED_MODULE_0_jquery___default()(window).off('popstate', this._checkDeepLink);
-      }
-    }
-  }]);
-
-  return Accordion;
-}(__WEBPACK_IMPORTED_MODULE_3__foundation_plugin__["a" /* Plugin */]);
-
-Accordion.defaults = {
-  /**
-   * Amount of time to animate the opening of an accordion pane.
-   * @option
-   * @type {number}
-   * @default 250
-   */
-  slideSpeed: 250,
-  /**
-   * Allow the accordion to have multiple open panes.
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  multiExpand: false,
-  /**
-   * Allow the accordion to close all panes.
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  allowAllClosed: false,
-  /**
-   * Allows the window to scroll to content of pane specified by hash anchor
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  deepLink: false,
-
-  /**
-   * Adjust the deep link scroll to make sure the top of the accordion panel is visible
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  deepLinkSmudge: false,
-
-  /**
-   * Animation time (ms) for the deep link adjustment
-   * @option
-   * @type {number}
-   * @default 300
-   */
-  deepLinkSmudgeDelay: 300,
-
-  /**
-   * Update the browser history with the open accordion
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  updateHistory: false
-};
-
-
-
-/***/ }),
-/* 19 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return AccordionMenu; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_core__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_plugin__ = __webpack_require__(2);
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-
-
-
-
-
-
-/**
- * AccordionMenu module.
- * @module foundation.accordionMenu
- * @requires foundation.util.keyboard
- * @requires foundation.util.nest
- */
-
-var AccordionMenu = function (_Plugin) {
-  _inherits(AccordionMenu, _Plugin);
-
-  function AccordionMenu() {
-    _classCallCheck(this, AccordionMenu);
-
-    return _possibleConstructorReturn(this, (AccordionMenu.__proto__ || Object.getPrototypeOf(AccordionMenu)).apply(this, arguments));
-  }
-
-  _createClass(AccordionMenu, [{
-    key: '_setup',
-
-    /**
-     * Creates a new instance of an accordion menu.
-     * @class
-     * @name AccordionMenu
-     * @fires AccordionMenu#init
-     * @param {jQuery} element - jQuery object to make into an accordion menu.
-     * @param {Object} options - Overrides to the default plugin settings.
-     */
-    value: function _setup(element, options) {
-      this.$element = element;
-      this.options = __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend({}, AccordionMenu.defaults, this.$element.data(), options);
-      this.className = 'AccordionMenu'; // ie9 back compat
-
-      this._init();
-
-      __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].register('AccordionMenu', {
-        'ENTER': 'toggle',
-        'SPACE': 'toggle',
-        'ARROW_RIGHT': 'open',
-        'ARROW_UP': 'up',
-        'ARROW_DOWN': 'down',
-        'ARROW_LEFT': 'close',
-        'ESCAPE': 'closeAll'
-      });
-    }
-
-    /**
-     * Initializes the accordion menu by hiding all nested menus.
-     * @private
-     */
-
-  }, {
-    key: '_init',
-    value: function _init() {
-      __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__["a" /* Nest */].Feather(this.$element, 'accordion');
-
-      var _this = this;
-
-      this.$element.find('[data-submenu]').not('.is-active').slideUp(0); //.find('a').css('padding-left', '1rem');
-      this.$element.attr({
-        'role': 'tree',
-        'aria-multiselectable': this.options.multiOpen
-      });
-
-      this.$menuLinks = this.$element.find('.is-accordion-submenu-parent');
-      this.$menuLinks.each(function () {
-        var linkId = this.id || Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["a" /* GetYoDigits */])(6, 'acc-menu-link'),
-            $elem = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
-            $sub = $elem.children('[data-submenu]'),
-            subId = $sub[0].id || Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["a" /* GetYoDigits */])(6, 'acc-menu'),
-            isActive = $sub.hasClass('is-active');
-
-        if (_this.options.parentLink) {
-          var $anchor = $elem.children('a');
-          $anchor.clone().prependTo($sub).wrap('<li data-is-parent-link class="is-submenu-parent-item is-submenu-item is-accordion-submenu-item"></li>');
-        }
-
-        if (_this.options.submenuToggle) {
-          $elem.addClass('has-submenu-toggle');
-          $elem.children('a').after('<button id="' + linkId + '" class="submenu-toggle" aria-controls="' + subId + '" aria-expanded="' + isActive + '" title="' + _this.options.submenuToggleText + '"><span class="submenu-toggle-text">' + _this.options.submenuToggleText + '</span></button>');
-        } else {
-          $elem.attr({
-            'aria-controls': subId,
-            'aria-expanded': isActive,
-            'id': linkId
-          });
-        }
-        $sub.attr({
-          'aria-labelledby': linkId,
-          'aria-hidden': !isActive,
-          'role': 'group',
-          'id': subId
-        });
-      });
-      this.$element.find('li').attr({
-        'role': 'treeitem'
-      });
-      var initPanes = this.$element.find('.is-active');
-      if (initPanes.length) {
-        var _this = this;
-        initPanes.each(function () {
-          _this.down(__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this));
-        });
-      }
-      this._events();
-    }
-
-    /**
-     * Adds event handlers for items within the menu.
-     * @private
-     */
-
-  }, {
-    key: '_events',
-    value: function _events() {
-      var _this = this;
-
-      this.$element.find('li').each(function () {
-        var $submenu = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).children('[data-submenu]');
-
-        if ($submenu.length) {
-          if (_this.options.submenuToggle) {
-            __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).children('.submenu-toggle').off('click.zf.accordionMenu').on('click.zf.accordionMenu', function (e) {
-              _this.toggle($submenu);
-            });
-          } else {
-            __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).children('a').off('click.zf.accordionMenu').on('click.zf.accordionMenu', function (e) {
-              e.preventDefault();
-              _this.toggle($submenu);
-            });
-          }
-        }
-      }).on('keydown.zf.accordionmenu', function (e) {
-        var $element = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
-            $elements = $element.parent('ul').children('li'),
-            $prevElement,
-            $nextElement,
-            $target = $element.children('[data-submenu]');
-
-        $elements.each(function (i) {
-          if (__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).is($element)) {
-            $prevElement = $elements.eq(Math.max(0, i - 1)).find('a').first();
-            $nextElement = $elements.eq(Math.min(i + 1, $elements.length - 1)).find('a').first();
-
-            if (__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).children('[data-submenu]:visible').length) {
-              // has open sub menu
-              $nextElement = $element.find('li:first-child').find('a').first();
-            }
-            if (__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).is(':first-child')) {
-              // is first element of sub menu
-              $prevElement = $element.parents('li').first().find('a').first();
-            } else if ($prevElement.parents('li').first().children('[data-submenu]:visible').length) {
-              // if previous element has open sub menu
-              $prevElement = $prevElement.parents('li').find('li:last-child').find('a').first();
-            }
-            if (__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).is(':last-child')) {
-              // is last element of sub menu
-              $nextElement = $element.parents('li').first().next('li').find('a').first();
-            }
-
-            return;
-          }
-        });
-
-        __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].handleKey(e, 'AccordionMenu', {
-          open: function open() {
-            if ($target.is(':hidden')) {
-              _this.down($target);
-              $target.find('li').first().find('a').first().focus();
-            }
-          },
-          close: function close() {
-            if ($target.length && !$target.is(':hidden')) {
-              // close active sub of this item
-              _this.up($target);
-            } else if ($element.parent('[data-submenu]').length) {
-              // close currently open sub
-              _this.up($element.parent('[data-submenu]'));
-              $element.parents('li').first().find('a').first().focus();
-            }
-          },
-          up: function up() {
-            $prevElement.focus();
-            return true;
-          },
-          down: function down() {
-            $nextElement.focus();
-            return true;
-          },
-          toggle: function toggle() {
-            if (_this.options.submenuToggle) {
-              return false;
-            }
-            if ($element.children('[data-submenu]').length) {
-              _this.toggle($element.children('[data-submenu]'));
-              return true;
-            }
-          },
-          closeAll: function closeAll() {
-            _this.hideAll();
-          },
-          handled: function handled(preventDefault) {
-            if (preventDefault) {
-              e.preventDefault();
-            }
-            e.stopImmediatePropagation();
-          }
-        });
-      }); //.attr('tabindex', 0);
-    }
-
-    /**
-     * Closes all panes of the menu.
-     * @function
-     */
-
-  }, {
-    key: 'hideAll',
-    value: function hideAll() {
-      this.up(this.$element.find('[data-submenu]'));
-    }
-
-    /**
-     * Opens all panes of the menu.
-     * @function
-     */
-
-  }, {
-    key: 'showAll',
-    value: function showAll() {
-      this.down(this.$element.find('[data-submenu]'));
-    }
-
-    /**
-     * Toggles the open/close state of a submenu.
-     * @function
-     * @param {jQuery} $target - the submenu to toggle
-     */
-
-  }, {
-    key: 'toggle',
-    value: function toggle($target) {
-      if (!$target.is(':animated')) {
-        if (!$target.is(':hidden')) {
-          this.up($target);
-        } else {
-          this.down($target);
-        }
-      }
-    }
-
-    /**
-     * Opens the sub-menu defined by `$target`.
-     * @param {jQuery} $target - Sub-menu to open.
-     * @fires AccordionMenu#down
-     */
-
-  }, {
-    key: 'down',
-    value: function down($target) {
-      var _this = this;
-
-      if (!this.options.multiOpen) {
-        this.up(this.$element.find('.is-active').not($target.parentsUntil(this.$element).add($target)));
-      }
-
-      $target.addClass('is-active').attr({ 'aria-hidden': false });
-
-      if (this.options.submenuToggle) {
-        $target.prev('.submenu-toggle').attr({ 'aria-expanded': true });
-      } else {
-        $target.parent('.is-accordion-submenu-parent').attr({ 'aria-expanded': true });
-      }
-
-      $target.slideDown(_this.options.slideSpeed, function () {
-        /**
-         * Fires when the menu is done opening.
-         * @event AccordionMenu#down
-         */
-        _this.$element.trigger('down.zf.accordionMenu', [$target]);
-      });
-    }
-
-    /**
-     * Closes the sub-menu defined by `$target`. All sub-menus inside the target will be closed as well.
-     * @param {jQuery} $target - Sub-menu to close.
-     * @fires AccordionMenu#up
-     */
-
-  }, {
-    key: 'up',
-    value: function up($target) {
-      var _this = this;
-      $target.slideUp(_this.options.slideSpeed, function () {
-        /**
-         * Fires when the menu is done collapsing up.
-         * @event AccordionMenu#up
-         */
-        _this.$element.trigger('up.zf.accordionMenu', [$target]);
-      });
-
-      var $menus = $target.find('[data-submenu]').slideUp(0).addBack().attr('aria-hidden', true);
-
-      if (this.options.submenuToggle) {
-        $menus.prev('.submenu-toggle').attr('aria-expanded', false);
-      } else {
-        $menus.parent('.is-accordion-submenu-parent').attr('aria-expanded', false);
-      }
-    }
-
-    /**
-     * Destroys an instance of accordion menu.
-     * @fires AccordionMenu#destroyed
-     */
-
-  }, {
-    key: '_destroy',
-    value: function _destroy() {
-      this.$element.find('[data-submenu]').slideDown(0).css('display', '');
-      this.$element.find('a').off('click.zf.accordionMenu');
-      this.$element.find('[data-is-parent-link]').detach();
-
-      if (this.options.submenuToggle) {
-        this.$element.find('.has-submenu-toggle').removeClass('has-submenu-toggle');
-        this.$element.find('.submenu-toggle').remove();
-      }
-
-      __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__["a" /* Nest */].Burn(this.$element, 'accordion');
-    }
-  }]);
-
-  return AccordionMenu;
-}(__WEBPACK_IMPORTED_MODULE_4__foundation_plugin__["a" /* Plugin */]);
-
-AccordionMenu.defaults = {
-  /**
-   * Adds the parent link to the submenu.
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  parentLink: false,
-  /**
-   * Amount of time to animate the opening of a submenu in ms.
-   * @option
-   * @type {number}
-   * @default 250
-   */
-  slideSpeed: 250,
-  /**
-   * Adds a separate submenu toggle button. This allows the parent item to have a link.
-   * @option
-   * @example true
-   */
-  submenuToggle: false,
-  /**
-   * The text used for the submenu toggle if enabled. This is used for screen readers only.
-   * @option
-   * @example true
-   */
-  submenuToggleText: 'Toggle menu',
-  /**
-   * Allow the menu to have multiple open panes.
-   * @option
-   * @type {boolean}
-   * @default true
-   */
-  multiOpen: true
-};
-
-
-
-/***/ }),
-/* 20 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Drilldown; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_core__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_util_box__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_plugin__ = __webpack_require__(2);
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-
-
-
-
-
-
-
-/**
- * Drilldown module.
- * @module foundation.drilldown
- * @requires foundation.util.keyboard
- * @requires foundation.util.nest
- * @requires foundation.util.box
- */
-
-var Drilldown = function (_Plugin) {
-  _inherits(Drilldown, _Plugin);
-
-  function Drilldown() {
-    _classCallCheck(this, Drilldown);
-
-    return _possibleConstructorReturn(this, (Drilldown.__proto__ || Object.getPrototypeOf(Drilldown)).apply(this, arguments));
-  }
-
-  _createClass(Drilldown, [{
-    key: '_setup',
-
-    /**
-     * Creates a new instance of a drilldown menu.
-     * @class
-     * @name Drilldown
-     * @param {jQuery} element - jQuery object to make into an accordion menu.
-     * @param {Object} options - Overrides to the default plugin settings.
-     */
-    value: function _setup(element, options) {
-      this.$element = element;
-      this.options = __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend({}, Drilldown.defaults, this.$element.data(), options);
-      this.className = 'Drilldown'; // ie9 back compat
-
-      this._init();
-
-      __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].register('Drilldown', {
-        'ENTER': 'open',
-        'SPACE': 'open',
-        'ARROW_RIGHT': 'next',
-        'ARROW_UP': 'up',
-        'ARROW_DOWN': 'down',
-        'ARROW_LEFT': 'previous',
-        'ESCAPE': 'close',
-        'TAB': 'down',
-        'SHIFT_TAB': 'up'
-      });
-    }
-
-    /**
-     * Initializes the drilldown by creating jQuery collections of elements
-     * @private
-     */
-
-  }, {
-    key: '_init',
-    value: function _init() {
-      __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__["a" /* Nest */].Feather(this.$element, 'drilldown');
-
-      if (this.options.autoApplyClass) {
-        this.$element.addClass('drilldown');
-      }
-
-      this.$element.attr({
-        'role': 'tree',
-        'aria-multiselectable': false
-      });
-      this.$submenuAnchors = this.$element.find('li.is-drilldown-submenu-parent').children('a');
-      this.$submenus = this.$submenuAnchors.parent('li').children('[data-submenu]').attr('role', 'group');
-      this.$menuItems = this.$element.find('li').not('.js-drilldown-back').attr('role', 'treeitem').find('a');
-      this.$element.attr('data-mutate', this.$element.attr('data-drilldown') || Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["a" /* GetYoDigits */])(6, 'drilldown'));
-
-      this._prepareMenu();
-      this._registerEvents();
-
-      this._keyboardEvents();
-    }
-
-    /**
-     * prepares drilldown menu by setting attributes to links and elements
-     * sets a min height to prevent content jumping
-     * wraps the element if not already wrapped
-     * @private
-     * @function
-     */
-
-  }, {
-    key: '_prepareMenu',
-    value: function _prepareMenu() {
-      var _this = this;
-      // if(!this.options.holdOpen){
-      //   this._menuLinkEvents();
-      // }
-      this.$submenuAnchors.each(function () {
-        var $link = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this);
-        var $sub = $link.parent();
-        if (_this.options.parentLink) {
-          $link.clone().prependTo($sub.children('[data-submenu]')).wrap('<li data-is-parent-link class="is-submenu-parent-item is-submenu-item is-drilldown-submenu-item" role="menuitem"></li>');
-        }
-        $link.data('savedHref', $link.attr('href')).removeAttr('href').attr('tabindex', 0);
-        $link.children('[data-submenu]').attr({
-          'aria-hidden': true,
-          'tabindex': 0,
-          'role': 'group'
-        });
-        _this._events($link);
-      });
-      this.$submenus.each(function () {
-        var $menu = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
-            $back = $menu.find('.js-drilldown-back');
-        if (!$back.length) {
-          switch (_this.options.backButtonPosition) {
-            case "bottom":
-              $menu.append(_this.options.backButton);
-              break;
-            case "top":
-              $menu.prepend(_this.options.backButton);
-              break;
-            default:
-              console.error("Unsupported backButtonPosition value '" + _this.options.backButtonPosition + "'");
-          }
-        }
-        _this._back($menu);
-      });
-
-      this.$submenus.addClass('invisible');
-      if (!this.options.autoHeight) {
-        this.$submenus.addClass('drilldown-submenu-cover-previous');
-      }
-
-      // create a wrapper on element if it doesn't exist.
-      if (!this.$element.parent().hasClass('is-drilldown')) {
-        this.$wrapper = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this.options.wrapper).addClass('is-drilldown');
-        if (this.options.animateHeight) this.$wrapper.addClass('animate-height');
-        this.$element.wrap(this.$wrapper);
-      }
-      // set wrapper
-      this.$wrapper = this.$element.parent();
-      this.$wrapper.css(this._getMaxDims());
-    }
-  }, {
-    key: '_resize',
-    value: function _resize() {
-      this.$wrapper.css({ 'max-width': 'none', 'min-height': 'none' });
-      // _getMaxDims has side effects (boo) but calling it should update all other necessary heights & widths
-      this.$wrapper.css(this._getMaxDims());
-    }
-
-    /**
-     * Adds event handlers to elements in the menu.
-     * @function
-     * @private
-     * @param {jQuery} $elem - the current menu item to add handlers to.
-     */
-
-  }, {
-    key: '_events',
-    value: function _events($elem) {
-      var _this = this;
-
-      $elem.off('click.zf.drilldown').on('click.zf.drilldown', function (e) {
-        if (__WEBPACK_IMPORTED_MODULE_0_jquery___default()(e.target).parentsUntil('ul', 'li').hasClass('is-drilldown-submenu-parent')) {
-          e.stopImmediatePropagation();
-          e.preventDefault();
-        }
-
-        // if(e.target !== e.currentTarget.firstElementChild){
-        //   return false;
-        // }
-        _this._show($elem.parent('li'));
-
-        if (_this.options.closeOnClick) {
-          var $body = __WEBPACK_IMPORTED_MODULE_0_jquery___default()('body');
-          $body.off('.zf.drilldown').on('click.zf.drilldown', function (e) {
-            if (e.target === _this.$element[0] || __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.contains(_this.$element[0], e.target)) {
-              return;
-            }
-            e.preventDefault();
-            _this._hideAll();
-            $body.off('.zf.drilldown');
-          });
-        }
-      });
-    }
-
-    /**
-     * Adds event handlers to the menu element.
-     * @function
-     * @private
-     */
-
-  }, {
-    key: '_registerEvents',
-    value: function _registerEvents() {
-      if (this.options.scrollTop) {
-        this._bindHandler = this._scrollTop.bind(this);
-        this.$element.on('open.zf.drilldown hide.zf.drilldown closed.zf.drilldown', this._bindHandler);
-      }
-      this.$element.on('mutateme.zf.trigger', this._resize.bind(this));
-    }
-
-    /**
-     * Scroll to Top of Element or data-scroll-top-element
-     * @function
-     * @fires Drilldown#scrollme
-     */
-
-  }, {
-    key: '_scrollTop',
-    value: function _scrollTop() {
-      var _this = this;
-      var $scrollTopElement = _this.options.scrollTopElement != '' ? __WEBPACK_IMPORTED_MODULE_0_jquery___default()(_this.options.scrollTopElement) : _this.$element,
-          scrollPos = parseInt($scrollTopElement.offset().top + _this.options.scrollTopOffset, 10);
-      __WEBPACK_IMPORTED_MODULE_0_jquery___default()('html, body').stop(true).animate({ scrollTop: scrollPos }, _this.options.animationDuration, _this.options.animationEasing, function () {
-        /**
-          * Fires after the menu has scrolled
-          * @event Drilldown#scrollme
-          */
-        if (this === __WEBPACK_IMPORTED_MODULE_0_jquery___default()('html')[0]) _this.$element.trigger('scrollme.zf.drilldown');
-      });
-    }
-
-    /**
-     * Adds keydown event listener to `li`'s in the menu.
-     * @private
-     */
-
-  }, {
-    key: '_keyboardEvents',
-    value: function _keyboardEvents() {
-      var _this = this;
-
-      this.$menuItems.add(this.$element.find('.js-drilldown-back > a, .is-submenu-parent-item > a')).on('keydown.zf.drilldown', function (e) {
-        var $element = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
-            $elements = $element.parent('li').parent('ul').children('li').children('a'),
-            $prevElement,
-            $nextElement;
-
-        $elements.each(function (i) {
-          if (__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).is($element)) {
-            $prevElement = $elements.eq(Math.max(0, i - 1));
-            $nextElement = $elements.eq(Math.min(i + 1, $elements.length - 1));
-            return;
-          }
-        });
-
-        __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].handleKey(e, 'Drilldown', {
-          next: function next() {
-            if ($element.is(_this.$submenuAnchors)) {
-              _this._show($element.parent('li'));
-              $element.parent('li').one(Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["c" /* transitionend */])($element), function () {
-                $element.parent('li').find('ul li a').filter(_this.$menuItems).first().focus();
-              });
-              return true;
-            }
-          },
-          previous: function previous() {
-            _this._hide($element.parent('li').parent('ul'));
-            $element.parent('li').parent('ul').one(Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["c" /* transitionend */])($element), function () {
-              setTimeout(function () {
-                $element.parent('li').parent('ul').parent('li').children('a').first().focus();
-              }, 1);
-            });
-            return true;
-          },
-          up: function up() {
-            $prevElement.focus();
-            // Don't tap focus on first element in root ul
-            return !$element.is(_this.$element.find('> li:first-child > a'));
-          },
-          down: function down() {
-            $nextElement.focus();
-            // Don't tap focus on last element in root ul
-            return !$element.is(_this.$element.find('> li:last-child > a'));
-          },
-          close: function close() {
-            // Don't close on element in root ul
-            if (!$element.is(_this.$element.find('> li > a'))) {
-              _this._hide($element.parent().parent());
-              $element.parent().parent().siblings('a').focus();
-            }
-          },
-          open: function open() {
-            if (!$element.is(_this.$menuItems)) {
-              // not menu item means back button
-              _this._hide($element.parent('li').parent('ul'));
-              $element.parent('li').parent('ul').one(Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["c" /* transitionend */])($element), function () {
-                setTimeout(function () {
-                  $element.parent('li').parent('ul').parent('li').children('a').first().focus();
-                }, 1);
-              });
-              return true;
-            } else if ($element.is(_this.$submenuAnchors)) {
-              _this._show($element.parent('li'));
-              $element.parent('li').one(Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["c" /* transitionend */])($element), function () {
-                $element.parent('li').find('ul li a').filter(_this.$menuItems).first().focus();
-              });
-              return true;
-            }
-          },
-          handled: function handled(preventDefault) {
-            if (preventDefault) {
-              e.preventDefault();
-            }
-            e.stopImmediatePropagation();
-          }
-        });
-      }); // end keyboardAccess
-    }
-
-    /**
-     * Closes all open elements, and returns to root menu.
-     * @function
-     * @fires Drilldown#closed
-     */
-
-  }, {
-    key: '_hideAll',
-    value: function _hideAll() {
-      var $elem = this.$element.find('.is-drilldown-submenu.is-active').addClass('is-closing');
-      if (this.options.autoHeight) this.$wrapper.css({ height: $elem.parent().closest('ul').data('calcHeight') });
-      $elem.one(Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["c" /* transitionend */])($elem), function (e) {
-        $elem.removeClass('is-active is-closing');
-      });
-      /**
-       * Fires when the menu is fully closed.
-       * @event Drilldown#closed
-       */
-      this.$element.trigger('closed.zf.drilldown');
-    }
-
-    /**
-     * Adds event listener for each `back` button, and closes open menus.
-     * @function
-     * @fires Drilldown#back
-     * @param {jQuery} $elem - the current sub-menu to add `back` event.
-     */
-
-  }, {
-    key: '_back',
-    value: function _back($elem) {
-      var _this = this;
-      $elem.off('click.zf.drilldown');
-      $elem.children('.js-drilldown-back').on('click.zf.drilldown', function (e) {
-        e.stopImmediatePropagation();
-        // console.log('mouseup on back');
-        _this._hide($elem);
-
-        // If there is a parent submenu, call show
-        var parentSubMenu = $elem.parent('li').parent('ul').parent('li');
-        if (parentSubMenu.length) {
-          _this._show(parentSubMenu);
-        }
-      });
-    }
-
-    /**
-     * Adds event listener to menu items w/o submenus to close open menus on click.
-     * @function
-     * @private
-     */
-
-  }, {
-    key: '_menuLinkEvents',
-    value: function _menuLinkEvents() {
-      var _this = this;
-      this.$menuItems.not('.is-drilldown-submenu-parent').off('click.zf.drilldown').on('click.zf.drilldown', function (e) {
-        // e.stopImmediatePropagation();
-        setTimeout(function () {
-          _this._hideAll();
-        }, 0);
-      });
-    }
-
-    /**
-     * Sets the CSS classes for submenu to show it.
-     * @function
-     * @private
-     * @param {jQuery} $elem - the target submenu (`ul` tag)
-     * @param {boolean} trigger - trigger drilldown event
-     */
-
-  }, {
-    key: '_setShowSubMenuClasses',
-    value: function _setShowSubMenuClasses($elem, trigger) {
-      $elem.addClass('is-active').removeClass('invisible').attr('aria-hidden', false);
-      $elem.parent('li').attr('aria-expanded', true);
-      if (trigger === true) {
-        this.$element.trigger('open.zf.drilldown', [$elem]);
-      }
-    }
-
-    /**
-     * Sets the CSS classes for submenu to hide it.
-     * @function
-     * @private
-     * @param {jQuery} $elem - the target submenu (`ul` tag)
-     * @param {boolean} trigger - trigger drilldown event
-     */
-
-  }, {
-    key: '_setHideSubMenuClasses',
-    value: function _setHideSubMenuClasses($elem, trigger) {
-      $elem.removeClass('is-active').addClass('invisible').attr('aria-hidden', true);
-      $elem.parent('li').attr('aria-expanded', false);
-      if (trigger === true) {
-        $elem.trigger('hide.zf.drilldown', [$elem]);
-      }
-    }
-
-    /**
-     * Opens a specific drilldown (sub)menu no matter which (sub)menu in it is currently visible.
-     * Compared to _show() this lets you jump into any submenu without clicking through every submenu on the way to it.
-     * @function
-     * @fires Drilldown#open
-     * @param {jQuery} $elem - the target (sub)menu (`ul` tag)
-     * @param {boolean} autoFocus - if true the first link in the target (sub)menu gets auto focused
-     */
-
-  }, {
-    key: '_showMenu',
-    value: function _showMenu($elem, autoFocus) {
-
-      var _this = this;
-
-      // Reset drilldown
-      var $expandedSubmenus = this.$element.find('li[aria-expanded="true"] > ul[data-submenu]');
-      $expandedSubmenus.each(function (index) {
-        _this._setHideSubMenuClasses(__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this));
-      });
-
-      // If target menu is root, focus first link & exit
-      if ($elem.is('[data-drilldown]')) {
-        if (autoFocus === true) $elem.find('li[role="treeitem"] > a').first().focus();
-        if (this.options.autoHeight) this.$wrapper.css('height', $elem.data('calcHeight'));
-        return;
-      }
-
-      // Find all submenus on way to root incl. the element itself
-      var $submenus = $elem.children().first().parentsUntil('[data-drilldown]', '[data-submenu]');
-
-      // Open target menu and all submenus on its way to root
-      $submenus.each(function (index) {
-
-        // Update height of first child (target menu) if autoHeight option true
-        if (index === 0 && _this.options.autoHeight) {
-          _this.$wrapper.css('height', __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).data('calcHeight'));
-        }
-
-        var isLastChild = index == $submenus.length - 1;
-
-        // Add transitionsend listener to last child (root due to reverse order) to open target menu's first link
-        // Last child makes sure the event gets always triggered even if going through several menus
-        if (isLastChild === true) {
-          __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).one(Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["c" /* transitionend */])(__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this)), function () {
-            if (autoFocus === true) {
-              $elem.find('li[role="treeitem"] > a').first().focus();
-            }
-          });
-        }
-
-        _this._setShowSubMenuClasses(__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this), isLastChild);
-      });
-    }
-
-    /**
-     * Opens a submenu.
-     * @function
-     * @fires Drilldown#open
-     * @param {jQuery} $elem - the current element with a submenu to open, i.e. the `li` tag.
-     */
-
-  }, {
-    key: '_show',
-    value: function _show($elem) {
-      if (this.options.autoHeight) this.$wrapper.css({ height: $elem.children('[data-submenu]').data('calcHeight') });
-      $elem.attr('aria-expanded', true);
-      $elem.children('[data-submenu]').addClass('is-active').removeClass('invisible').attr('aria-hidden', false);
-      /**
-       * Fires when the submenu has opened.
-       * @event Drilldown#open
-       */
-      this.$element.trigger('open.zf.drilldown', [$elem]);
-    }
-
-    /**
-     * Hides a submenu
-     * @function
-     * @fires Drilldown#hide
-     * @param {jQuery} $elem - the current sub-menu to hide, i.e. the `ul` tag.
-     */
-
-  }, {
-    key: '_hide',
-    value: function _hide($elem) {
-      if (this.options.autoHeight) this.$wrapper.css({ height: $elem.parent().closest('ul').data('calcHeight') });
-      var _this = this;
-      $elem.parent('li').attr('aria-expanded', false);
-      $elem.attr('aria-hidden', true);
-      $elem.addClass('is-closing').one(Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["c" /* transitionend */])($elem), function () {
-        $elem.removeClass('is-active is-closing');
-        $elem.blur().addClass('invisible');
-      });
-      /**
-       * Fires when the submenu has closed.
-       * @event Drilldown#hide
-       */
-      $elem.trigger('hide.zf.drilldown', [$elem]);
-    }
-
-    /**
-     * Iterates through the nested menus to calculate the min-height, and max-width for the menu.
-     * Prevents content jumping.
-     * @function
-     * @private
-     */
-
-  }, {
-    key: '_getMaxDims',
-    value: function _getMaxDims() {
-      var maxHeight = 0,
-          result = {},
-          _this = this;
-      this.$submenus.add(this.$element).each(function () {
-        var numOfElems = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).children('li').length;
-        var height = __WEBPACK_IMPORTED_MODULE_4__foundation_util_box__["a" /* Box */].GetDimensions(this).height;
-        maxHeight = height > maxHeight ? height : maxHeight;
-        if (_this.options.autoHeight) {
-          __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).data('calcHeight', height);
-          if (!__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).hasClass('is-drilldown-submenu')) result['height'] = height;
-        }
-      });
-
-      if (!this.options.autoHeight) result['min-height'] = maxHeight + 'px';
-
-      result['max-width'] = this.$element[0].getBoundingClientRect().width + 'px';
-
-      return result;
-    }
-
-    /**
-     * Destroys the Drilldown Menu
-     * @function
-     */
-
-  }, {
-    key: '_destroy',
-    value: function _destroy() {
-      if (this.options.scrollTop) this.$element.off('.zf.drilldown', this._bindHandler);
-      this._hideAll();
-      this.$element.off('mutateme.zf.trigger');
-      __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__["a" /* Nest */].Burn(this.$element, 'drilldown');
-      this.$element.unwrap().find('.js-drilldown-back, .is-submenu-parent-item').remove().end().find('.is-active, .is-closing, .is-drilldown-submenu').removeClass('is-active is-closing is-drilldown-submenu').end().find('[data-submenu]').removeAttr('aria-hidden tabindex role');
-      this.$submenuAnchors.each(function () {
-        __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).off('.zf.drilldown');
-      });
-
-      this.$element.find('[data-is-parent-link]').detach();
-      this.$submenus.removeClass('drilldown-submenu-cover-previous invisible');
-
-      this.$element.find('a').each(function () {
-        var $link = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this);
-        $link.removeAttr('tabindex');
-        if ($link.data('savedHref')) {
-          $link.attr('href', $link.data('savedHref')).removeData('savedHref');
-        } else {
-          return;
-        }
-      });
-    }
-  }]);
-
-  return Drilldown;
-}(__WEBPACK_IMPORTED_MODULE_5__foundation_plugin__["a" /* Plugin */]);
-
-Drilldown.defaults = {
-  /**
-   * Drilldowns depend on styles in order to function properly; in the default build of Foundation these are
-   * on the `drilldown` class. This option auto-applies this class to the drilldown upon initialization.
-   * @option
-   * @type {boolian}
-   * @default true
-   */
-  autoApplyClass: true,
-  /**
-   * Markup used for JS generated back button. Prepended  or appended (see backButtonPosition) to submenu lists and deleted on `destroy` method, 'js-drilldown-back' class required. Remove the backslash (`\`) if copy and pasting.
-   * @option
-   * @type {string}
-   * @default '<li class="js-drilldown-back"><a tabindex="0">Back</a></li>'
-   */
-  backButton: '<li class="js-drilldown-back"><a tabindex="0">Back</a></li>',
-  /**
-   * Position the back button either at the top or bottom of drilldown submenus. Can be `'left'` or `'bottom'`.
-   * @option
-   * @type {string}
-   * @default top
-   */
-  backButtonPosition: 'top',
-  /**
-   * Markup used to wrap drilldown menu. Use a class name for independent styling; the JS applied class: `is-drilldown` is required. Remove the backslash (`\`) if copy and pasting.
-   * @option
-   * @type {string}
-   * @default '<div></div>'
-   */
-  wrapper: '<div></div>',
-  /**
-   * Adds the parent link to the submenu.
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  parentLink: false,
-  /**
-   * Allow the menu to return to root list on body click.
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  closeOnClick: false,
-  /**
-   * Allow the menu to auto adjust height.
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  autoHeight: false,
-  /**
-   * Animate the auto adjust height.
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  animateHeight: false,
-  /**
-   * Scroll to the top of the menu after opening a submenu or navigating back using the menu back button
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  scrollTop: false,
-  /**
-   * String jquery selector (for example 'body') of element to take offset().top from, if empty string the drilldown menu offset().top is taken
-   * @option
-   * @type {string}
-   * @default ''
-   */
-  scrollTopElement: '',
-  /**
-   * ScrollTop offset
-   * @option
-   * @type {number}
-   * @default 0
-   */
-  scrollTopOffset: 0,
-  /**
-   * Scroll animation duration
-   * @option
-   * @type {number}
-   * @default 500
-   */
-  animationDuration: 500,
-  /**
-   * Scroll animation easing. Can be `'swing'` or `'linear'`.
-   * @option
-   * @type {string}
-   * @see {@link https://api.jquery.com/animate|JQuery animate}
-   * @default 'swing'
-   */
-  animationEasing: 'swing'
-  // holdOpen: false
-};
-
-
-
-/***/ }),
-/* 21 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Positionable; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__foundation_util_box__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_plugin__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_core__ = __webpack_require__(1);
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-
-
-
-
-var POSITIONS = ['left', 'right', 'top', 'bottom'];
-var VERTICAL_ALIGNMENTS = ['top', 'bottom', 'center'];
-var HORIZONTAL_ALIGNMENTS = ['left', 'right', 'center'];
-
-var ALIGNMENTS = {
-  'left': VERTICAL_ALIGNMENTS,
-  'right': VERTICAL_ALIGNMENTS,
-  'top': HORIZONTAL_ALIGNMENTS,
-  'bottom': HORIZONTAL_ALIGNMENTS
-};
-
-function nextItem(item, array) {
-  var currentIdx = array.indexOf(item);
-  if (currentIdx === array.length - 1) {
-    return array[0];
-  } else {
-    return array[currentIdx + 1];
-  }
-}
-
-var Positionable = function (_Plugin) {
-  _inherits(Positionable, _Plugin);
-
-  function Positionable() {
-    _classCallCheck(this, Positionable);
-
-    return _possibleConstructorReturn(this, (Positionable.__proto__ || Object.getPrototypeOf(Positionable)).apply(this, arguments));
-  }
-
-  _createClass(Positionable, [{
-    key: '_init',
-
-    /**
-     * Abstract class encapsulating the tether-like explicit positioning logic
-     * including repositioning based on overlap.
-     * Expects classes to define defaults for vOffset, hOffset, position,
-     * alignment, allowOverlap, and allowBottomOverlap. They can do this by
-     * extending the defaults, or (for now recommended due to the way docs are
-     * generated) by explicitly declaring them.
-     *
-     **/
-
-    value: function _init() {
-      this.triedPositions = {};
-      this.position = this.options.position === 'auto' ? this._getDefaultPosition() : this.options.position;
-      this.alignment = this.options.alignment === 'auto' ? this._getDefaultAlignment() : this.options.alignment;
-      this.originalPosition = this.position;
-      this.originalAlignment = this.alignment;
-    }
-  }, {
-    key: '_getDefaultPosition',
-    value: function _getDefaultPosition() {
-      return 'bottom';
-    }
-  }, {
-    key: '_getDefaultAlignment',
-    value: function _getDefaultAlignment() {
-      switch (this.position) {
-        case 'bottom':
-        case 'top':
-          return Object(__WEBPACK_IMPORTED_MODULE_2__foundation_util_core__["b" /* rtl */])() ? 'right' : 'left';
-        case 'left':
-        case 'right':
-          return 'bottom';
-      }
-    }
-
-    /**
-     * Adjusts the positionable possible positions by iterating through alignments
-     * and positions.
-     * @function
-     * @private
-     */
-
-  }, {
-    key: '_reposition',
-    value: function _reposition() {
-      if (this._alignmentsExhausted(this.position)) {
-        this.position = nextItem(this.position, POSITIONS);
-        this.alignment = ALIGNMENTS[this.position][0];
-      } else {
-        this._realign();
-      }
-    }
-
-    /**
-     * Adjusts the dropdown pane possible positions by iterating through alignments
-     * on the current position.
-     * @function
-     * @private
-     */
-
-  }, {
-    key: '_realign',
-    value: function _realign() {
-      this._addTriedPosition(this.position, this.alignment);
-      this.alignment = nextItem(this.alignment, ALIGNMENTS[this.position]);
-    }
-  }, {
-    key: '_addTriedPosition',
-    value: function _addTriedPosition(position, alignment) {
-      this.triedPositions[position] = this.triedPositions[position] || [];
-      this.triedPositions[position].push(alignment);
-    }
-  }, {
-    key: '_positionsExhausted',
-    value: function _positionsExhausted() {
-      var isExhausted = true;
-      for (var i = 0; i < POSITIONS.length; i++) {
-        isExhausted = isExhausted && this._alignmentsExhausted(POSITIONS[i]);
-      }
-      return isExhausted;
-    }
-  }, {
-    key: '_alignmentsExhausted',
-    value: function _alignmentsExhausted(position) {
-      return this.triedPositions[position] && this.triedPositions[position].length == ALIGNMENTS[position].length;
-    }
-
-    // When we're trying to center, we don't want to apply offset that's going to
-    // take us just off center, so wrap around to return 0 for the appropriate
-    // offset in those alignments.  TODO: Figure out if we want to make this
-    // configurable behavior... it feels more intuitive, especially for tooltips, but
-    // it's possible someone might actually want to start from center and then nudge
-    // slightly off.
-
-  }, {
-    key: '_getVOffset',
-    value: function _getVOffset() {
-      return this.options.vOffset;
-    }
-  }, {
-    key: '_getHOffset',
-    value: function _getHOffset() {
-      return this.options.hOffset;
-    }
-  }, {
-    key: '_setPosition',
-    value: function _setPosition($anchor, $element, $parent) {
-      if ($anchor.attr('aria-expanded') === 'false') {
-        return false;
-      }
-      var $eleDims = __WEBPACK_IMPORTED_MODULE_0__foundation_util_box__["a" /* Box */].GetDimensions($element),
-          $anchorDims = __WEBPACK_IMPORTED_MODULE_0__foundation_util_box__["a" /* Box */].GetDimensions($anchor);
-
-      if (!this.options.allowOverlap) {
-        // restore original position & alignment before checking overlap
-        this.position = this.originalPosition;
-        this.alignment = this.originalAlignment;
-      }
-
-      $element.offset(__WEBPACK_IMPORTED_MODULE_0__foundation_util_box__["a" /* Box */].GetExplicitOffsets($element, $anchor, this.position, this.alignment, this._getVOffset(), this._getHOffset()));
-
-      if (!this.options.allowOverlap) {
-        var overlaps = {};
-        var minOverlap = 100000000;
-        // default coordinates to how we start, in case we can't figure out better
-        var minCoordinates = { position: this.position, alignment: this.alignment };
-        while (!this._positionsExhausted()) {
-          var overlap = __WEBPACK_IMPORTED_MODULE_0__foundation_util_box__["a" /* Box */].OverlapArea($element, $parent, false, false, this.options.allowBottomOverlap);
-          if (overlap === 0) {
-            return;
-          }
-
-          if (overlap < minOverlap) {
-            minOverlap = overlap;
-            minCoordinates = { position: this.position, alignment: this.alignment };
-          }
-
-          this._reposition();
-
-          $element.offset(__WEBPACK_IMPORTED_MODULE_0__foundation_util_box__["a" /* Box */].GetExplicitOffsets($element, $anchor, this.position, this.alignment, this._getVOffset(), this._getHOffset()));
-        }
-        // If we get through the entire loop, there was no non-overlapping
-        // position available. Pick the version with least overlap.
-        this.position = minCoordinates.position;
-        this.alignment = minCoordinates.alignment;
-        $element.offset(__WEBPACK_IMPORTED_MODULE_0__foundation_util_box__["a" /* Box */].GetExplicitOffsets($element, $anchor, this.position, this.alignment, this._getVOffset(), this._getHOffset()));
-      }
-    }
-  }]);
-
-  return Positionable;
-}(__WEBPACK_IMPORTED_MODULE_1__foundation_plugin__["a" /* Plugin */]);
-
-Positionable.defaults = {
-  /**
-   * Position of positionable relative to anchor. Can be left, right, bottom, top, or auto.
-   * @option
-   * @type {string}
-   * @default 'auto'
-   */
-  position: 'auto',
-  /**
-   * Alignment of positionable relative to anchor. Can be left, right, bottom, top, center, or auto.
-   * @option
-   * @type {string}
-   * @default 'auto'
-   */
-  alignment: 'auto',
-  /**
-   * Allow overlap of container/window. If false, dropdown positionable first
-   * try to position as defined by data-position and data-alignment, but
-   * reposition if it would cause an overflow.
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  allowOverlap: false,
-  /**
-   * Allow overlap of only the bottom of the container. This is the most common
-   * behavior for dropdowns, allowing the dropdown to extend the bottom of the
-   * screen but not otherwise influence or break out of the container.
-   * @option
-   * @type {boolean}
-   * @default true
-   */
-  allowBottomOverlap: true,
-  /**
-   * Number of pixels the positionable should be separated vertically from anchor
-   * @option
-   * @type {number}
-   * @default 0
-   */
-  vOffset: 0,
-  /**
-   * Number of pixels the positionable should be separated horizontally from anchor
-   * @option
-   * @type {number}
-   * @default 0
-   */
-  hOffset: 0
-};
-
-
-
-/***/ }),
-/* 22 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return DropdownMenu; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_box__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_util_core__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_plugin__ = __webpack_require__(2);
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-
-
-
-
-
-
-
-/**
- * DropdownMenu module.
- * @module foundation.dropdown-menu
- * @requires foundation.util.keyboard
- * @requires foundation.util.box
- * @requires foundation.util.nest
- */
-
-var DropdownMenu = function (_Plugin) {
-  _inherits(DropdownMenu, _Plugin);
-
-  function DropdownMenu() {
-    _classCallCheck(this, DropdownMenu);
-
-    return _possibleConstructorReturn(this, (DropdownMenu.__proto__ || Object.getPrototypeOf(DropdownMenu)).apply(this, arguments));
-  }
-
-  _createClass(DropdownMenu, [{
-    key: '_setup',
-
-    /**
-     * Creates a new instance of DropdownMenu.
-     * @class
-     * @name DropdownMenu
-     * @fires DropdownMenu#init
-     * @param {jQuery} element - jQuery object to make into a dropdown menu.
-     * @param {Object} options - Overrides to the default plugin settings.
-     */
-    value: function _setup(element, options) {
-      this.$element = element;
-      this.options = __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend({}, DropdownMenu.defaults, this.$element.data(), options);
-      this.className = 'DropdownMenu'; // ie9 back compat
-
-      this._init();
-
-      __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].register('DropdownMenu', {
-        'ENTER': 'open',
-        'SPACE': 'open',
-        'ARROW_RIGHT': 'next',
-        'ARROW_UP': 'up',
-        'ARROW_DOWN': 'down',
-        'ARROW_LEFT': 'previous',
-        'ESCAPE': 'close'
-      });
-    }
-
-    /**
-     * Initializes the plugin, and calls _prepareMenu
-     * @private
-     * @function
-     */
-
-  }, {
-    key: '_init',
-    value: function _init() {
-      __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__["a" /* Nest */].Feather(this.$element, 'dropdown');
-
-      var subs = this.$element.find('li.is-dropdown-submenu-parent');
-      this.$element.children('.is-dropdown-submenu-parent').children('.is-dropdown-submenu').addClass('first-sub');
-
-      this.$menuItems = this.$element.find('[role="menuitem"]');
-      this.$tabs = this.$element.children('[role="menuitem"]');
-      this.$tabs.find('ul.is-dropdown-submenu').addClass(this.options.verticalClass);
-
-      if (this.options.alignment === 'auto') {
-        if (this.$element.hasClass(this.options.rightClass) || Object(__WEBPACK_IMPORTED_MODULE_4__foundation_util_core__["b" /* rtl */])() || this.$element.parents('.top-bar-right').is('*')) {
-          this.options.alignment = 'right';
-          subs.addClass('opens-left');
-        } else {
-          this.options.alignment = 'left';
-          subs.addClass('opens-right');
-        }
-      } else {
-        if (this.options.alignment === 'right') {
-          subs.addClass('opens-left');
-        } else {
-          subs.addClass('opens-right');
-        }
-      }
-      this.changed = false;
-      this._events();
-    }
-  }, {
-    key: '_isVertical',
-    value: function _isVertical() {
-      return this.$tabs.css('display') === 'block' || this.$element.css('flex-direction') === 'column';
-    }
-  }, {
-    key: '_isRtl',
-    value: function _isRtl() {
-      return this.$element.hasClass('align-right') || Object(__WEBPACK_IMPORTED_MODULE_4__foundation_util_core__["b" /* rtl */])() && !this.$element.hasClass('align-left');
-    }
-
-    /**
-     * Adds event listeners to elements within the menu
-     * @private
-     * @function
-     */
-
-  }, {
-    key: '_events',
-    value: function _events() {
-      var _this = this,
-          hasTouch = 'ontouchstart' in window || typeof window.ontouchstart !== 'undefined',
-          parClass = 'is-dropdown-submenu-parent';
-
-      // used for onClick and in the keyboard handlers
-      var handleClickFn = function handleClickFn(e) {
-        var $elem = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(e.target).parentsUntil('ul', '.' + parClass),
-            hasSub = $elem.hasClass(parClass),
-            hasClicked = $elem.attr('data-is-click') === 'true',
-            $sub = $elem.children('.is-dropdown-submenu');
-
-        if (hasSub) {
-          if (hasClicked) {
-            if (!_this.options.closeOnClick || !_this.options.clickOpen && !hasTouch || _this.options.forceFollow && hasTouch) {
-              return;
-            } else {
-              e.stopImmediatePropagation();
-              e.preventDefault();
-              _this._hide($elem);
-            }
-          } else {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            _this._show($sub);
-            $elem.add($elem.parentsUntil(_this.$element, '.' + parClass)).attr('data-is-click', true);
-          }
-        }
-      };
-
-      if (this.options.clickOpen || hasTouch) {
-        this.$menuItems.on('click.zf.dropdownmenu touchstart.zf.dropdownmenu', handleClickFn);
-      }
-
-      // Handle Leaf element Clicks
-      if (_this.options.closeOnClickInside) {
-        this.$menuItems.on('click.zf.dropdownmenu', function (e) {
-          var $elem = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
-              hasSub = $elem.hasClass(parClass);
-          if (!hasSub) {
-            _this._hide();
-          }
-        });
-      }
-
-      if (!this.options.disableHover) {
-        this.$menuItems.on('mouseenter.zf.dropdownmenu', function (e) {
-          var $elem = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
-              hasSub = $elem.hasClass(parClass);
-
-          if (hasSub) {
-            clearTimeout($elem.data('_delay'));
-            $elem.data('_delay', setTimeout(function () {
-              _this._show($elem.children('.is-dropdown-submenu'));
-            }, _this.options.hoverDelay));
-          }
-        }).on('mouseleave.zf.dropdownmenu', function (e) {
-          var $elem = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
-              hasSub = $elem.hasClass(parClass);
-          if (hasSub && _this.options.autoclose) {
-            if ($elem.attr('data-is-click') === 'true' && _this.options.clickOpen) {
-              return false;
-            }
-
-            clearTimeout($elem.data('_delay'));
-            $elem.data('_delay', setTimeout(function () {
-              _this._hide($elem);
-            }, _this.options.closingTime));
-          }
-        });
-      }
-      this.$menuItems.on('keydown.zf.dropdownmenu', function (e) {
-        var $element = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(e.target).parentsUntil('ul', '[role="menuitem"]'),
-            isTab = _this.$tabs.index($element) > -1,
-            $elements = isTab ? _this.$tabs : $element.siblings('li').add($element),
-            $prevElement,
-            $nextElement;
-
-        $elements.each(function (i) {
-          if (__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).is($element)) {
-            $prevElement = $elements.eq(i - 1);
-            $nextElement = $elements.eq(i + 1);
-            return;
-          }
-        });
-
-        var nextSibling = function nextSibling() {
-          $nextElement.children('a:first').focus();
-          e.preventDefault();
-        },
-            prevSibling = function prevSibling() {
-          $prevElement.children('a:first').focus();
-          e.preventDefault();
-        },
-            openSub = function openSub() {
-          var $sub = $element.children('ul.is-dropdown-submenu');
-          if ($sub.length) {
-            _this._show($sub);
-            $element.find('li > a:first').focus();
-            e.preventDefault();
-          } else {
-            return;
-          }
-        },
-            closeSub = function closeSub() {
-          //if ($element.is(':first-child')) {
-          var close = $element.parent('ul').parent('li');
-          close.children('a:first').focus();
-          _this._hide(close);
-          e.preventDefault();
-          //}
-        };
-        var functions = {
-          open: openSub,
-          close: function close() {
-            _this._hide(_this.$element);
-            _this.$menuItems.eq(0).children('a').focus(); // focus to first element
-            e.preventDefault();
-          },
-          handled: function handled() {
-            e.stopImmediatePropagation();
-          }
-        };
-
-        if (isTab) {
-          if (_this._isVertical()) {
-            // vertical menu
-            if (_this._isRtl()) {
-              // right aligned
-              __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend(functions, {
-                down: nextSibling,
-                up: prevSibling,
-                next: closeSub,
-                previous: openSub
-              });
-            } else {
-              // left aligned
-              __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend(functions, {
-                down: nextSibling,
-                up: prevSibling,
-                next: openSub,
-                previous: closeSub
-              });
-            }
-          } else {
-            // horizontal menu
-            if (_this._isRtl()) {
-              // right aligned
-              __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend(functions, {
-                next: prevSibling,
-                previous: nextSibling,
-                down: openSub,
-                up: closeSub
-              });
-            } else {
-              // left aligned
-              __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend(functions, {
-                next: nextSibling,
-                previous: prevSibling,
-                down: openSub,
-                up: closeSub
-              });
-            }
-          }
-        } else {
-          // not tabs -> one sub
-          if (_this._isRtl()) {
-            // right aligned
-            __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend(functions, {
-              next: closeSub,
-              previous: openSub,
-              down: nextSibling,
-              up: prevSibling
-            });
-          } else {
-            // left aligned
-            __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend(functions, {
-              next: openSub,
-              previous: closeSub,
-              down: nextSibling,
-              up: prevSibling
-            });
-          }
-        }
-        __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].handleKey(e, 'DropdownMenu', functions);
-      });
-    }
-
-    /**
-     * Adds an event handler to the body to close any dropdowns on a click.
-     * @function
-     * @private
-     */
-
-  }, {
-    key: '_addBodyHandler',
-    value: function _addBodyHandler() {
-      var $body = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(document.body),
-          _this = this;
-      $body.off('mouseup.zf.dropdownmenu touchend.zf.dropdownmenu').on('mouseup.zf.dropdownmenu touchend.zf.dropdownmenu', function (e) {
-        var $link = _this.$element.find(e.target);
-        if ($link.length) {
-          return;
-        }
-
-        _this._hide();
-        $body.off('mouseup.zf.dropdownmenu touchend.zf.dropdownmenu');
-      });
-    }
-
-    /**
-     * Opens a dropdown pane, and checks for collisions first.
-     * @param {jQuery} $sub - ul element that is a submenu to show
-     * @function
-     * @private
-     * @fires DropdownMenu#show
-     */
-
-  }, {
-    key: '_show',
-    value: function _show($sub) {
-      var idx = this.$tabs.index(this.$tabs.filter(function (i, el) {
-        return __WEBPACK_IMPORTED_MODULE_0_jquery___default()(el).find($sub).length > 0;
-      }));
-      var $sibs = $sub.parent('li.is-dropdown-submenu-parent').siblings('li.is-dropdown-submenu-parent');
-      this._hide($sibs, idx);
-      $sub.css('visibility', 'hidden').addClass('js-dropdown-active').parent('li.is-dropdown-submenu-parent').addClass('is-active');
-      var clear = __WEBPACK_IMPORTED_MODULE_3__foundation_util_box__["a" /* Box */].ImNotTouchingYou($sub, null, true);
-      if (!clear) {
-        var oldClass = this.options.alignment === 'left' ? '-right' : '-left',
-            $parentLi = $sub.parent('.is-dropdown-submenu-parent');
-        $parentLi.removeClass('opens' + oldClass).addClass('opens-' + this.options.alignment);
-        clear = __WEBPACK_IMPORTED_MODULE_3__foundation_util_box__["a" /* Box */].ImNotTouchingYou($sub, null, true);
-        if (!clear) {
-          $parentLi.removeClass('opens-' + this.options.alignment).addClass('opens-inner');
-        }
-        this.changed = true;
-      }
-      $sub.css('visibility', '');
-      if (this.options.closeOnClick) {
-        this._addBodyHandler();
-      }
-      /**
-       * Fires when the new dropdown pane is visible.
-       * @event DropdownMenu#show
-       */
-      this.$element.trigger('show.zf.dropdownmenu', [$sub]);
-    }
-
-    /**
-     * Hides a single, currently open dropdown pane, if passed a parameter, otherwise, hides everything.
-     * @function
-     * @param {jQuery} $elem - element with a submenu to hide
-     * @param {Number} idx - index of the $tabs collection to hide
-     * @private
-     */
-
-  }, {
-    key: '_hide',
-    value: function _hide($elem, idx) {
-      var $toClose;
-      if ($elem && $elem.length) {
-        $toClose = $elem;
-      } else if (idx !== undefined) {
-        $toClose = this.$tabs.not(function (i, el) {
-          return i === idx;
-        });
-      } else {
-        $toClose = this.$element;
-      }
-      var somethingToClose = $toClose.hasClass('is-active') || $toClose.find('.is-active').length > 0;
-
-      if (somethingToClose) {
-        $toClose.find('li.is-active').add($toClose).attr({
-          'data-is-click': false
-        }).removeClass('is-active');
-
-        $toClose.find('ul.js-dropdown-active').removeClass('js-dropdown-active');
-
-        if (this.changed || $toClose.find('opens-inner').length) {
-          var oldClass = this.options.alignment === 'left' ? 'right' : 'left';
-          $toClose.find('li.is-dropdown-submenu-parent').add($toClose).removeClass('opens-inner opens-' + this.options.alignment).addClass('opens-' + oldClass);
-          this.changed = false;
-        }
-        /**
-         * Fires when the open menus are closed.
-         * @event DropdownMenu#hide
-         */
-        this.$element.trigger('hide.zf.dropdownmenu', [$toClose]);
-      }
-    }
-
-    /**
-     * Destroys the plugin.
-     * @function
-     */
-
-  }, {
-    key: '_destroy',
-    value: function _destroy() {
-      this.$menuItems.off('.zf.dropdownmenu').removeAttr('data-is-click').removeClass('is-right-arrow is-left-arrow is-down-arrow opens-right opens-left opens-inner');
-      __WEBPACK_IMPORTED_MODULE_0_jquery___default()(document.body).off('.zf.dropdownmenu');
-      __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__["a" /* Nest */].Burn(this.$element, 'dropdown');
-    }
-  }]);
-
-  return DropdownMenu;
-}(__WEBPACK_IMPORTED_MODULE_5__foundation_plugin__["a" /* Plugin */]);
-
-/**
- * Default settings for plugin
- */
-
-
-DropdownMenu.defaults = {
-  /**
-   * Disallows hover events from opening submenus
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  disableHover: false,
-  /**
-   * Allow a submenu to automatically close on a mouseleave event, if not clicked open.
-   * @option
-   * @type {boolean}
-   * @default true
-   */
-  autoclose: true,
-  /**
-   * Amount of time to delay opening a submenu on hover event.
-   * @option
-   * @type {number}
-   * @default 50
-   */
-  hoverDelay: 50,
-  /**
-   * Allow a submenu to open/remain open on parent click event. Allows cursor to move away from menu.
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  clickOpen: false,
-  /**
-   * Amount of time to delay closing a submenu on a mouseleave event.
-   * @option
-   * @type {number}
-   * @default 500
-   */
-
-  closingTime: 500,
-  /**
-   * Position of the menu relative to what direction the submenus should open. Handled by JS. Can be `'auto'`, `'left'` or `'right'`.
-   * @option
-   * @type {string}
-   * @default 'auto'
-   */
-  alignment: 'auto',
-  /**
-   * Allow clicks on the body to close any open submenus.
-   * @option
-   * @type {boolean}
-   * @default true
-   */
-  closeOnClick: true,
-  /**
-   * Allow clicks on leaf anchor links to close any open submenus.
-   * @option
-   * @type {boolean}
-   * @default true
-   */
-  closeOnClickInside: true,
-  /**
-   * Class applied to vertical oriented menus, Foundation default is `vertical`. Update this if using your own class.
-   * @option
-   * @type {string}
-   * @default 'vertical'
-   */
-  verticalClass: 'vertical',
-  /**
-   * Class applied to right-side oriented menus, Foundation default is `align-right`. Update this if using your own class.
-   * @option
-   * @type {string}
-   * @default 'align-right'
-   */
-  rightClass: 'align-right',
-  /**
-   * Boolean to force overide the clicking of links to perform default action, on second touch event for mobile.
-   * @option
-   * @type {boolean}
-   * @default true
-   */
-  forceFollow: true
-};
-
-
-
-/***/ }),
-/* 23 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return SmoothScroll; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_core__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_plugin__ = __webpack_require__(2);
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-
-
-
-
-/**
- * SmoothScroll module.
- * @module foundation.smooth-scroll
- */
-
-var SmoothScroll = function (_Plugin) {
-    _inherits(SmoothScroll, _Plugin);
-
-    function SmoothScroll() {
-        _classCallCheck(this, SmoothScroll);
-
-        return _possibleConstructorReturn(this, (SmoothScroll.__proto__ || Object.getPrototypeOf(SmoothScroll)).apply(this, arguments));
-    }
-
-    _createClass(SmoothScroll, [{
-        key: '_setup',
-
-        /**
-         * Creates a new instance of SmoothScroll.
-         * @class
-         * @name SmoothScroll
-         * @fires SmoothScroll#init
-         * @param {Object} element - jQuery object to add the trigger to.
-         * @param {Object} options - Overrides to the default plugin settings.
-         */
-        value: function _setup(element, options) {
-            this.$element = element;
-            this.options = __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend({}, SmoothScroll.defaults, this.$element.data(), options);
-            this.className = 'SmoothScroll'; // ie9 back compat
-
-            this._init();
-        }
-
-        /**
-         * Initialize the SmoothScroll plugin
-         * @private
-         */
-
-    }, {
-        key: '_init',
-        value: function _init() {
-            var id = this.$element[0].id || Object(__WEBPACK_IMPORTED_MODULE_1__foundation_util_core__["a" /* GetYoDigits */])(6, 'smooth-scroll');
-            var _this = this;
-            this.$element.attr({
-                'id': id
-            });
-
-            this._events();
-        }
-
-        /**
-         * Initializes events for SmoothScroll.
-         * @private
-         */
-
-    }, {
-        key: '_events',
-        value: function _events() {
-            var _this = this;
-
-            // click handler function.
-            var handleLinkClick = function handleLinkClick(e) {
-                // exit function if the event source isn't coming from an anchor with href attribute starts with '#'
-                if (!__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).is('a[href^="#"]')) {
-                    return false;
-                }
-
-                var arrival = this.getAttribute('href');
-
-                _this._inTransition = true;
-
-                SmoothScroll.scrollToLoc(arrival, _this.options, function () {
-                    _this._inTransition = false;
-                });
-
-                e.preventDefault();
-            };
-
-            this.$element.on('click.zf.smoothScroll', handleLinkClick);
-            this.$element.on('click.zf.smoothScroll', 'a[href^="#"]', handleLinkClick);
-        }
-
-        /**
-         * Function to scroll to a given location on the page.
-         * @param {String} loc - A properly formatted jQuery id selector. Example: '#foo'
-         * @param {Object} options - The options to use.
-         * @param {Function} callback - The callback function.
-         * @static
-         * @function
-         */
-
-    }], [{
-        key: 'scrollToLoc',
-        value: function scrollToLoc(loc) {
-            var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : SmoothScroll.defaults;
-            var callback = arguments[2];
-
-            // Do nothing if target does not exist to prevent errors
-            if (!__WEBPACK_IMPORTED_MODULE_0_jquery___default()(loc).length) {
-                return false;
-            }
-
-            var scrollPos = Math.round(__WEBPACK_IMPORTED_MODULE_0_jquery___default()(loc).offset().top - options.threshold / 2 - options.offset);
-
-            __WEBPACK_IMPORTED_MODULE_0_jquery___default()('html, body').stop(true).animate({ scrollTop: scrollPos }, options.animationDuration, options.animationEasing, function () {
-                if (callback && typeof callback == "function") {
-                    callback();
-                }
-            });
-        }
-    }]);
-
-    return SmoothScroll;
-}(__WEBPACK_IMPORTED_MODULE_2__foundation_plugin__["a" /* Plugin */]);
-
-/**
- * Default settings for plugin.
- */
-
-
-SmoothScroll.defaults = {
-    /**
-     * Amount of time, in ms, the animated scrolling should take between locations.
-     * @option
-     * @type {number}
-     * @default 500
-     */
-    animationDuration: 500,
-    /**
-     * Animation style to use when scrolling between locations. Can be `'swing'` or `'linear'`.
-     * @option
-     * @type {string}
-     * @default 'linear'
-     * @see {@link https://api.jquery.com/animate|Jquery animate}
-     */
-    animationEasing: 'linear',
-    /**
-     * Number of pixels to use as a marker for location changes.
-     * @option
-     * @type {number}
-     * @default 50
-     */
-    threshold: 50,
-    /**
-     * Number of pixels to offset the scroll of the page on item click if using a sticky nav bar.
-     * @option
-     * @type {number}
-     * @default 0
-     */
-    offset: 0
-};
-
-
-
-/***/ }),
-/* 24 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Tabs; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_imageLoader__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_plugin__ = __webpack_require__(2);
-
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-
-
-
-
-/**
- * Tabs module.
- * @module foundation.tabs
- * @requires foundation.util.keyboard
- * @requires foundation.util.imageLoader if tabs contain images
- */
-
-var Tabs = function (_Plugin) {
-  _inherits(Tabs, _Plugin);
-
-  function Tabs() {
-    _classCallCheck(this, Tabs);
-
-    return _possibleConstructorReturn(this, (Tabs.__proto__ || Object.getPrototypeOf(Tabs)).apply(this, arguments));
-  }
-
-  _createClass(Tabs, [{
-    key: '_setup',
-
-    /**
-     * Creates a new instance of tabs.
-     * @class
-     * @name Tabs
-     * @fires Tabs#init
-     * @param {jQuery} element - jQuery object to make into tabs.
-     * @param {Object} options - Overrides to the default plugin settings.
-     */
-    value: function _setup(element, options) {
-      this.$element = element;
-      this.options = __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend({}, Tabs.defaults, this.$element.data(), options);
-      this.className = 'Tabs'; // ie9 back compat
-
-      this._init();
-      __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].register('Tabs', {
-        'ENTER': 'open',
-        'SPACE': 'open',
-        'ARROW_RIGHT': 'next',
-        'ARROW_UP': 'previous',
-        'ARROW_DOWN': 'next',
-        'ARROW_LEFT': 'previous'
-        // 'TAB': 'next',
-        // 'SHIFT_TAB': 'previous'
-      });
-    }
-
-    /**
-     * Initializes the tabs by showing and focusing (if autoFocus=true) the preset active tab.
-     * @private
-     */
-
-  }, {
-    key: '_init',
-    value: function _init() {
-      var _this3 = this;
-
-      var _this = this;
-
-      this.$element.attr({ 'role': 'tablist' });
-      this.$tabTitles = this.$element.find('.' + this.options.linkClass);
-      this.$tabContent = __WEBPACK_IMPORTED_MODULE_0_jquery___default()('[data-tabs-content="' + this.$element[0].id + '"]');
-
-      this.$tabTitles.each(function () {
-        var $elem = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
-            $link = $elem.find('a'),
-            isActive = $elem.hasClass('' + _this.options.linkActiveClass),
-            hash = $link.attr('data-tabs-target') || $link[0].hash.slice(1),
-            linkId = $link[0].id ? $link[0].id : hash + '-label',
-            $tabContent = __WEBPACK_IMPORTED_MODULE_0_jquery___default()('#' + hash);
-
-        $elem.attr({ 'role': 'presentation' });
-
-        $link.attr({
-          'role': 'tab',
-          'aria-controls': hash,
-          'aria-selected': isActive,
-          'id': linkId,
-          'tabindex': isActive ? '0' : '-1'
-        });
-
-        $tabContent.attr({
-          'role': 'tabpanel',
-          'aria-labelledby': linkId
-        });
-
-        if (!isActive) {
-          $tabContent.attr('aria-hidden', 'true');
-        }
-
-        if (isActive && _this.options.autoFocus) {
-          __WEBPACK_IMPORTED_MODULE_0_jquery___default()(window).load(function () {
-            __WEBPACK_IMPORTED_MODULE_0_jquery___default()('html, body').animate({ scrollTop: $elem.offset().top }, _this.options.deepLinkSmudgeDelay, function () {
-              $link.focus();
-            });
-          });
-        }
-      });
-      if (this.options.matchHeight) {
-        var $images = this.$tabContent.find('img');
-
-        if ($images.length) {
-          Object(__WEBPACK_IMPORTED_MODULE_2__foundation_util_imageLoader__["a" /* onImagesLoaded */])($images, this._setHeight.bind(this));
-        } else {
-          this._setHeight();
-        }
-      }
-
-      //current context-bound function to open tabs on page load or history popstate
-      this._checkDeepLink = function () {
-        var anchor = window.location.hash;
-        //need a hash and a relevant anchor in this tabset
-        if (anchor.length) {
-          var $link = _this3.$element.find('[href$="' + anchor + '"]');
-          if ($link.length) {
-            _this3.selectTab(__WEBPACK_IMPORTED_MODULE_0_jquery___default()(anchor), true);
-
-            //roll up a little to show the titles
-            if (_this3.options.deepLinkSmudge) {
-              var offset = _this3.$element.offset();
-              __WEBPACK_IMPORTED_MODULE_0_jquery___default()('html, body').animate({ scrollTop: offset.top }, _this3.options.deepLinkSmudgeDelay);
-            }
-
-            /**
-              * Fires when the zplugin has deeplinked at pageload
-              * @event Tabs#deeplink
-              */
-            _this3.$element.trigger('deeplink.zf.tabs', [$link, __WEBPACK_IMPORTED_MODULE_0_jquery___default()(anchor)]);
-          }
-        }
-      };
-
-      //use browser to open a tab, if it exists in this tabset
-      if (this.options.deepLink) {
-        this._checkDeepLink();
-      }
-
-      this._events();
-    }
-
-    /**
-     * Adds event handlers for items within the tabs.
-     * @private
-     */
-
-  }, {
-    key: '_events',
-    value: function _events() {
-      this._addKeyHandler();
-      this._addClickHandler();
-      this._setHeightMqHandler = null;
-
-      if (this.options.matchHeight) {
-        this._setHeightMqHandler = this._setHeight.bind(this);
-
-        __WEBPACK_IMPORTED_MODULE_0_jquery___default()(window).on('changed.zf.mediaquery', this._setHeightMqHandler);
-      }
-
-      if (this.options.deepLink) {
-        __WEBPACK_IMPORTED_MODULE_0_jquery___default()(window).on('popstate', this._checkDeepLink);
-      }
-    }
-
-    /**
-     * Adds click handlers for items within the tabs.
-     * @private
-     */
-
-  }, {
-    key: '_addClickHandler',
-    value: function _addClickHandler() {
-      var _this = this;
-
-      this.$element.off('click.zf.tabs').on('click.zf.tabs', '.' + this.options.linkClass, function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        _this._handleTabChange(__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this));
-      });
-    }
-
-    /**
-     * Adds keyboard event handlers for items within the tabs.
-     * @private
-     */
-
-  }, {
-    key: '_addKeyHandler',
-    value: function _addKeyHandler() {
-      var _this = this;
-
-      this.$tabTitles.off('keydown.zf.tabs').on('keydown.zf.tabs', function (e) {
-        if (e.which === 9) return;
-
-        var $element = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
-            $elements = $element.parent('ul').children('li'),
-            $prevElement,
-            $nextElement;
-
-        $elements.each(function (i) {
-          if (__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).is($element)) {
-            if (_this.options.wrapOnKeys) {
-              $prevElement = i === 0 ? $elements.last() : $elements.eq(i - 1);
-              $nextElement = i === $elements.length - 1 ? $elements.first() : $elements.eq(i + 1);
-            } else {
-              $prevElement = $elements.eq(Math.max(0, i - 1));
-              $nextElement = $elements.eq(Math.min(i + 1, $elements.length - 1));
-            }
-            return;
-          }
-        });
-
-        // handle keyboard event with keyboard util
-        __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].handleKey(e, 'Tabs', {
-          open: function open() {
-            $element.find('[role="tab"]').focus();
-            _this._handleTabChange($element);
-          },
-          previous: function previous() {
-            $prevElement.find('[role="tab"]').focus();
-            _this._handleTabChange($prevElement);
-          },
-          next: function next() {
-            $nextElement.find('[role="tab"]').focus();
-            _this._handleTabChange($nextElement);
-          },
-          handled: function handled() {
-            e.stopPropagation();
-            e.preventDefault();
-          }
-        });
-      });
-    }
-
-    /**
-     * Opens the tab `$targetContent` defined by `$target`. Collapses active tab.
-     * @param {jQuery} $target - Tab to open.
-     * @param {boolean} historyHandled - browser has already handled a history update
-     * @fires Tabs#change
-     * @function
-     */
-
-  }, {
-    key: '_handleTabChange',
-    value: function _handleTabChange($target, historyHandled) {
-
-      /**
-       * Check for active class on target. Collapse if exists.
-       */
-      if ($target.hasClass('' + this.options.linkActiveClass)) {
-        if (this.options.activeCollapse) {
-          this._collapseTab($target);
-
-          /**
-           * Fires when the zplugin has successfully collapsed tabs.
-           * @event Tabs#collapse
-           */
-          this.$element.trigger('collapse.zf.tabs', [$target]);
-        }
-        return;
-      }
-
-      var $oldTab = this.$element.find('.' + this.options.linkClass + '.' + this.options.linkActiveClass),
-          $tabLink = $target.find('[role="tab"]'),
-          hash = $tabLink.attr('data-tabs-target') || $tabLink[0].hash.slice(1),
-          $targetContent = this.$tabContent.find('#' + hash);
-
-      //close old tab
-      this._collapseTab($oldTab);
-
-      //open new tab
-      this._openTab($target);
-
-      //either replace or update browser history
-      if (this.options.deepLink && !historyHandled) {
-        var anchor = $target.find('a').attr('href');
-
-        if (this.options.updateHistory) {
-          history.pushState({}, '', anchor);
-        } else {
-          history.replaceState({}, '', anchor);
-        }
-      }
-
-      /**
-       * Fires when the plugin has successfully changed tabs.
-       * @event Tabs#change
-       */
-      this.$element.trigger('change.zf.tabs', [$target, $targetContent]);
-
-      //fire to children a mutation event
-      $targetContent.find("[data-mutate]").trigger("mutateme.zf.trigger");
-    }
-
-    /**
-     * Opens the tab `$targetContent` defined by `$target`.
-     * @param {jQuery} $target - Tab to Open.
-     * @function
-     */
-
-  }, {
-    key: '_openTab',
-    value: function _openTab($target) {
-      var $tabLink = $target.find('[role="tab"]'),
-          hash = $tabLink.attr('data-tabs-target') || $tabLink[0].hash.slice(1),
-          $targetContent = this.$tabContent.find('#' + hash);
-
-      $target.addClass('' + this.options.linkActiveClass);
-
-      $tabLink.attr({
-        'aria-selected': 'true',
-        'tabindex': '0'
-      });
-
-      $targetContent.addClass('' + this.options.panelActiveClass).removeAttr('aria-hidden');
-    }
-
-    /**
-     * Collapses `$targetContent` defined by `$target`.
-     * @param {jQuery} $target - Tab to Open.
-     * @function
-     */
-
-  }, {
-    key: '_collapseTab',
-    value: function _collapseTab($target) {
-      var $target_anchor = $target.removeClass('' + this.options.linkActiveClass).find('[role="tab"]').attr({
-        'aria-selected': 'false',
-        'tabindex': -1
-      });
-
-      __WEBPACK_IMPORTED_MODULE_0_jquery___default()('#' + $target_anchor.attr('aria-controls')).removeClass('' + this.options.panelActiveClass).attr({ 'aria-hidden': 'true' });
-    }
-
-    /**
-     * Public method for selecting a content pane to display.
-     * @param {jQuery | String} elem - jQuery object or string of the id of the pane to display.
-     * @param {boolean} historyHandled - browser has already handled a history update
-     * @function
-     */
-
-  }, {
-    key: 'selectTab',
-    value: function selectTab(elem, historyHandled) {
-      var idStr;
-
-      if ((typeof elem === 'undefined' ? 'undefined' : _typeof(elem)) === 'object') {
-        idStr = elem[0].id;
-      } else {
-        idStr = elem;
-      }
-
-      if (idStr.indexOf('#') < 0) {
-        idStr = '#' + idStr;
-      }
-
-      var $target = this.$tabTitles.find('[href$="' + idStr + '"]').parent('.' + this.options.linkClass);
-
-      this._handleTabChange($target, historyHandled);
-    }
-  }, {
-    key: '_setHeight',
-
-    /**
-     * Sets the height of each panel to the height of the tallest panel.
-     * If enabled in options, gets called on media query change.
-     * If loading content via external source, can be called directly or with _reflow.
-     * If enabled with `data-match-height="true"`, tabs sets to equal height
-     * @function
-     * @private
-     */
-    value: function _setHeight() {
-      var max = 0,
-          _this = this; // Lock down the `this` value for the root tabs object
-
-      this.$tabContent.find('.' + this.options.panelClass).css('height', '').each(function () {
-
-        var panel = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
-            isActive = panel.hasClass('' + _this.options.panelActiveClass); // get the options from the parent instead of trying to get them from the child
-
-        if (!isActive) {
-          panel.css({ 'visibility': 'hidden', 'display': 'block' });
-        }
-
-        var temp = this.getBoundingClientRect().height;
-
-        if (!isActive) {
-          panel.css({
-            'visibility': '',
-            'display': ''
-          });
-        }
-
-        max = temp > max ? temp : max;
-      }).css('height', max + 'px');
-    }
-
-    /**
-     * Destroys an instance of an tabs.
-     * @fires Tabs#destroyed
-     */
-
-  }, {
-    key: '_destroy',
-    value: function _destroy() {
-      this.$element.find('.' + this.options.linkClass).off('.zf.tabs').hide().end().find('.' + this.options.panelClass).hide();
-
-      if (this.options.matchHeight) {
-        if (this._setHeightMqHandler != null) {
-          __WEBPACK_IMPORTED_MODULE_0_jquery___default()(window).off('changed.zf.mediaquery', this._setHeightMqHandler);
-        }
-      }
-
-      if (this.options.deepLink) {
-        __WEBPACK_IMPORTED_MODULE_0_jquery___default()(window).off('popstate', this._checkDeepLink);
-      }
-    }
-  }]);
-
-  return Tabs;
-}(__WEBPACK_IMPORTED_MODULE_3__foundation_plugin__["a" /* Plugin */]);
-
-Tabs.defaults = {
-  /**
-   * Allows the window to scroll to content of pane specified by hash anchor
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  deepLink: false,
-
-  /**
-   * Adjust the deep link scroll to make sure the top of the tab panel is visible
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  deepLinkSmudge: false,
-
-  /**
-   * Animation time (ms) for the deep link adjustment
-   * @option
-   * @type {number}
-   * @default 300
-   */
-  deepLinkSmudgeDelay: 300,
-
-  /**
-   * Update the browser history with the open tab
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  updateHistory: false,
-
-  /**
-   * Allows the window to scroll to content of active pane on load if set to true.
-   * Not recommended if more than one tab panel per page.
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  autoFocus: false,
-
-  /**
-   * Allows keyboard input to 'wrap' around the tab links.
-   * @option
-   * @type {boolean}
-   * @default true
-   */
-  wrapOnKeys: true,
-
-  /**
-   * Allows the tab content panes to match heights if set to true.
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  matchHeight: false,
-
-  /**
-   * Allows active tabs to collapse when clicked.
-   * @option
-   * @type {boolean}
-   * @default false
-   */
-  activeCollapse: false,
-
-  /**
-   * Class applied to `li`'s in tab link list.
-   * @option
-   * @type {string}
-   * @default 'tabs-title'
-   */
-  linkClass: 'tabs-title',
-
-  /**
-   * Class applied to the active `li` in tab link list.
-   * @option
-   * @type {string}
-   * @default 'is-active'
-   */
-  linkActiveClass: 'is-active',
-
-  /**
-   * Class applied to the content containers.
-   * @option
-   * @type {string}
-   * @default 'tabs-panel'
-   */
-  panelClass: 'tabs-panel',
-
-  /**
-   * Class applied to the active content container.
-   * @option
-   * @type {string}
-   * @default 'is-active'
-   */
-  panelActiveClass: 'is-active'
-};
-
-
-
-/***/ }),
-/* 25 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-module.exports = function bind(fn, thisArg) {
-  return function wrap() {
-    var args = new Array(arguments.length);
-    for (var i = 0; i < args.length; i++) {
-      args[i] = arguments[i];
-    }
-    return fn.apply(thisArg, args);
-  };
-};
-
-
-/***/ }),
-/* 26 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -15923,257 +12854,7 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 27 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var utils = __webpack_require__(3);
-var settle = __webpack_require__(58);
-var buildURL = __webpack_require__(60);
-var parseHeaders = __webpack_require__(61);
-var isURLSameOrigin = __webpack_require__(62);
-var createError = __webpack_require__(28);
-var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(63);
-
-module.exports = function xhrAdapter(config) {
-  return new Promise(function dispatchXhrRequest(resolve, reject) {
-    var requestData = config.data;
-    var requestHeaders = config.headers;
-
-    if (utils.isFormData(requestData)) {
-      delete requestHeaders['Content-Type']; // Let the browser set it
-    }
-
-    var request = new XMLHttpRequest();
-    var loadEvent = 'onreadystatechange';
-    var xDomain = false;
-
-    // For IE 8/9 CORS support
-    // Only supports POST and GET calls and doesn't returns the response headers.
-    // DON'T do this for testing b/c XMLHttpRequest is mocked, not XDomainRequest.
-    if ("development" !== 'test' &&
-        typeof window !== 'undefined' &&
-        window.XDomainRequest && !('withCredentials' in request) &&
-        !isURLSameOrigin(config.url)) {
-      request = new window.XDomainRequest();
-      loadEvent = 'onload';
-      xDomain = true;
-      request.onprogress = function handleProgress() {};
-      request.ontimeout = function handleTimeout() {};
-    }
-
-    // HTTP basic authentication
-    if (config.auth) {
-      var username = config.auth.username || '';
-      var password = config.auth.password || '';
-      requestHeaders.Authorization = 'Basic ' + btoa(username + ':' + password);
-    }
-
-    request.open(config.method.toUpperCase(), buildURL(config.url, config.params, config.paramsSerializer), true);
-
-    // Set the request timeout in MS
-    request.timeout = config.timeout;
-
-    // Listen for ready state
-    request[loadEvent] = function handleLoad() {
-      if (!request || (request.readyState !== 4 && !xDomain)) {
-        return;
-      }
-
-      // The request errored out and we didn't get a response, this will be
-      // handled by onerror instead
-      // With one exception: request that using file: protocol, most browsers
-      // will return status as 0 even though it's a successful request
-      if (request.status === 0 && !(request.responseURL && request.responseURL.indexOf('file:') === 0)) {
-        return;
-      }
-
-      // Prepare the response
-      var responseHeaders = 'getAllResponseHeaders' in request ? parseHeaders(request.getAllResponseHeaders()) : null;
-      var responseData = !config.responseType || config.responseType === 'text' ? request.responseText : request.response;
-      var response = {
-        data: responseData,
-        // IE sends 1223 instead of 204 (https://github.com/axios/axios/issues/201)
-        status: request.status === 1223 ? 204 : request.status,
-        statusText: request.status === 1223 ? 'No Content' : request.statusText,
-        headers: responseHeaders,
-        config: config,
-        request: request
-      };
-
-      settle(resolve, reject, response);
-
-      // Clean up request
-      request = null;
-    };
-
-    // Handle low level network errors
-    request.onerror = function handleError() {
-      // Real errors are hidden from us by the browser
-      // onerror should only fire if it's a network error
-      reject(createError('Network Error', config, null, request));
-
-      // Clean up request
-      request = null;
-    };
-
-    // Handle timeout
-    request.ontimeout = function handleTimeout() {
-      reject(createError('timeout of ' + config.timeout + 'ms exceeded', config, 'ECONNABORTED',
-        request));
-
-      // Clean up request
-      request = null;
-    };
-
-    // Add xsrf header
-    // This is only done if running in a standard browser environment.
-    // Specifically not if we're in a web worker, or react-native.
-    if (utils.isStandardBrowserEnv()) {
-      var cookies = __webpack_require__(64);
-
-      // Add xsrf header
-      var xsrfValue = (config.withCredentials || isURLSameOrigin(config.url)) && config.xsrfCookieName ?
-          cookies.read(config.xsrfCookieName) :
-          undefined;
-
-      if (xsrfValue) {
-        requestHeaders[config.xsrfHeaderName] = xsrfValue;
-      }
-    }
-
-    // Add headers to the request
-    if ('setRequestHeader' in request) {
-      utils.forEach(requestHeaders, function setRequestHeader(val, key) {
-        if (typeof requestData === 'undefined' && key.toLowerCase() === 'content-type') {
-          // Remove Content-Type if data is undefined
-          delete requestHeaders[key];
-        } else {
-          // Otherwise add header to the request
-          request.setRequestHeader(key, val);
-        }
-      });
-    }
-
-    // Add withCredentials to request if needed
-    if (config.withCredentials) {
-      request.withCredentials = true;
-    }
-
-    // Add responseType to request if needed
-    if (config.responseType) {
-      try {
-        request.responseType = config.responseType;
-      } catch (e) {
-        // Expected DOMException thrown by browsers not compatible XMLHttpRequest Level 2.
-        // But, this can be suppressed for 'json' type as it can be parsed by default 'transformResponse' function.
-        if (config.responseType !== 'json') {
-          throw e;
-        }
-      }
-    }
-
-    // Handle progress if needed
-    if (typeof config.onDownloadProgress === 'function') {
-      request.addEventListener('progress', config.onDownloadProgress);
-    }
-
-    // Not all browsers support upload events
-    if (typeof config.onUploadProgress === 'function' && request.upload) {
-      request.upload.addEventListener('progress', config.onUploadProgress);
-    }
-
-    if (config.cancelToken) {
-      // Handle cancellation
-      config.cancelToken.promise.then(function onCanceled(cancel) {
-        if (!request) {
-          return;
-        }
-
-        request.abort();
-        reject(cancel);
-        // Clean up request
-        request = null;
-      });
-    }
-
-    if (requestData === undefined) {
-      requestData = null;
-    }
-
-    // Send the request
-    request.send(requestData);
-  });
-};
-
-
-/***/ }),
-/* 28 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var enhanceError = __webpack_require__(59);
-
-/**
- * Create an Error with the specified message, config, error code, request and response.
- *
- * @param {string} message The error message.
- * @param {Object} config The config.
- * @param {string} [code] The error code (for example, 'ECONNABORTED').
- * @param {Object} [request] The request.
- * @param {Object} [response] The response.
- * @returns {Error} The created error.
- */
-module.exports = function createError(message, config, code, request, response) {
-  var error = new Error(message);
-  return enhanceError(error, config, code, request, response);
-};
-
-
-/***/ }),
-/* 29 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-module.exports = function isCancel(value) {
-  return !!(value && value.__CANCEL__);
-};
-
-
-/***/ }),
-/* 30 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * A `Cancel` is an object that is thrown when an operation is canceled.
- *
- * @class
- * @param {string=} message The message.
- */
-function Cancel(message) {
-  this.message = message;
-}
-
-Cancel.prototype.toString = function toString() {
-  return 'Cancel' + (this.message ? ': ' + this.message : '');
-};
-
-Cancel.prototype.__CANCEL__ = true;
-
-module.exports = Cancel;
-
-
-/***/ }),
-/* 31 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26987,14 +23668,3333 @@ Vue$3.compile = compileToFunctions;
 
 module.exports = Vue$3;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14), __webpack_require__(72).setImmediate))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8), __webpack_require__(72).setImmediate))
+
+/***/ }),
+/* 19 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Timer; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
+
+
+
+
+function Timer(elem, options, cb) {
+  var _this = this,
+      duration = options.duration,
+      //options is an object for easily adding features later.
+  nameSpace = Object.keys(elem.data())[0] || 'timer',
+      remain = -1,
+      start,
+      timer;
+
+  this.isPaused = false;
+
+  this.restart = function () {
+    remain = -1;
+    clearTimeout(timer);
+    this.start();
+  };
+
+  this.start = function () {
+    this.isPaused = false;
+    // if(!elem.data('paused')){ return false; }//maybe implement this sanity check if used for other things.
+    clearTimeout(timer);
+    remain = remain <= 0 ? duration : remain;
+    elem.data('paused', false);
+    start = Date.now();
+    timer = setTimeout(function () {
+      if (options.infinite) {
+        _this.restart(); //rerun the timer.
+      }
+      if (cb && typeof cb === 'function') {
+        cb();
+      }
+    }, remain);
+    elem.trigger('timerstart.zf.' + nameSpace);
+  };
+
+  this.pause = function () {
+    this.isPaused = true;
+    //if(elem.data('paused')){ return false; }//maybe implement this sanity check if used for other things.
+    clearTimeout(timer);
+    elem.data('paused', true);
+    var end = Date.now();
+    remain = remain - (end - start);
+    elem.trigger('timerpaused.zf.' + nameSpace);
+  };
+}
+
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Accordion; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_core__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_plugin__ = __webpack_require__(2);
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+
+
+
+
+
+/**
+ * Accordion module.
+ * @module foundation.accordion
+ * @requires foundation.util.keyboard
+ */
+
+var Accordion = function (_Plugin) {
+  _inherits(Accordion, _Plugin);
+
+  function Accordion() {
+    _classCallCheck(this, Accordion);
+
+    return _possibleConstructorReturn(this, (Accordion.__proto__ || Object.getPrototypeOf(Accordion)).apply(this, arguments));
+  }
+
+  _createClass(Accordion, [{
+    key: '_setup',
+
+    /**
+     * Creates a new instance of an accordion.
+     * @class
+     * @name Accordion
+     * @fires Accordion#init
+     * @param {jQuery} element - jQuery object to make into an accordion.
+     * @param {Object} options - a plain object with settings to override the default options.
+     */
+    value: function _setup(element, options) {
+      this.$element = element;
+      this.options = __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend({}, Accordion.defaults, this.$element.data(), options);
+
+      this.className = 'Accordion'; // ie9 back compat
+      this._init();
+
+      __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].register('Accordion', {
+        'ENTER': 'toggle',
+        'SPACE': 'toggle',
+        'ARROW_DOWN': 'next',
+        'ARROW_UP': 'previous'
+      });
+    }
+
+    /**
+     * Initializes the accordion by animating the preset active pane(s).
+     * @private
+     */
+
+  }, {
+    key: '_init',
+    value: function _init() {
+      var _this3 = this;
+
+      this.$element.attr('role', 'tablist');
+      this.$tabs = this.$element.children('[data-accordion-item]');
+
+      this.$tabs.each(function (idx, el) {
+        var $el = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(el),
+            $content = $el.children('[data-tab-content]'),
+            id = $content[0].id || Object(__WEBPACK_IMPORTED_MODULE_2__foundation_util_core__["a" /* GetYoDigits */])(6, 'accordion'),
+            linkId = el.id || id + '-label';
+
+        $el.find('a:first').attr({
+          'aria-controls': id,
+          'role': 'tab',
+          'id': linkId,
+          'aria-expanded': false,
+          'aria-selected': false
+        });
+
+        $content.attr({ 'role': 'tabpanel', 'aria-labelledby': linkId, 'aria-hidden': true, 'id': id });
+      });
+      var $initActive = this.$element.find('.is-active').children('[data-tab-content]');
+      this.firstTimeInit = true;
+      if ($initActive.length) {
+        this.down($initActive, this.firstTimeInit);
+        this.firstTimeInit = false;
+      }
+
+      this._checkDeepLink = function () {
+        var anchor = window.location.hash;
+        //need a hash and a relevant anchor in this tabset
+        if (anchor.length) {
+          var $link = _this3.$element.find('[href$="' + anchor + '"]'),
+              $anchor = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(anchor);
+
+          if ($link.length && $anchor) {
+            if (!$link.parent('[data-accordion-item]').hasClass('is-active')) {
+              _this3.down($anchor, _this3.firstTimeInit);
+              _this3.firstTimeInit = false;
+            };
+
+            //roll up a little to show the titles
+            if (_this3.options.deepLinkSmudge) {
+              var _this = _this3;
+              __WEBPACK_IMPORTED_MODULE_0_jquery___default()(window).load(function () {
+                var offset = _this.$element.offset();
+                __WEBPACK_IMPORTED_MODULE_0_jquery___default()('html, body').animate({ scrollTop: offset.top }, _this.options.deepLinkSmudgeDelay);
+              });
+            }
+
+            /**
+              * Fires when the zplugin has deeplinked at pageload
+              * @event Accordion#deeplink
+              */
+            _this3.$element.trigger('deeplink.zf.accordion', [$link, $anchor]);
+          }
+        }
+      };
+
+      //use browser to open a tab, if it exists in this tabset
+      if (this.options.deepLink) {
+        this._checkDeepLink();
+      }
+
+      this._events();
+    }
+
+    /**
+     * Adds event handlers for items within the accordion.
+     * @private
+     */
+
+  }, {
+    key: '_events',
+    value: function _events() {
+      var _this = this;
+
+      this.$tabs.each(function () {
+        var $elem = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this);
+        var $tabContent = $elem.children('[data-tab-content]');
+        if ($tabContent.length) {
+          $elem.children('a').off('click.zf.accordion keydown.zf.accordion').on('click.zf.accordion', function (e) {
+            e.preventDefault();
+            _this.toggle($tabContent);
+          }).on('keydown.zf.accordion', function (e) {
+            __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].handleKey(e, 'Accordion', {
+              toggle: function toggle() {
+                _this.toggle($tabContent);
+              },
+              next: function next() {
+                var $a = $elem.next().find('a').focus();
+                if (!_this.options.multiExpand) {
+                  $a.trigger('click.zf.accordion');
+                }
+              },
+              previous: function previous() {
+                var $a = $elem.prev().find('a').focus();
+                if (!_this.options.multiExpand) {
+                  $a.trigger('click.zf.accordion');
+                }
+              },
+              handled: function handled() {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            });
+          });
+        }
+      });
+      if (this.options.deepLink) {
+        __WEBPACK_IMPORTED_MODULE_0_jquery___default()(window).on('popstate', this._checkDeepLink);
+      }
+    }
+
+    /**
+     * Toggles the selected content pane's open/close state.
+     * @param {jQuery} $target - jQuery object of the pane to toggle (`.accordion-content`).
+     * @function
+     */
+
+  }, {
+    key: 'toggle',
+    value: function toggle($target) {
+      if ($target.closest('[data-accordion]').is('[disabled]')) {
+        console.info('Cannot toggle an accordion that is disabled.');
+        return;
+      }
+      if ($target.parent().hasClass('is-active')) {
+        this.up($target);
+      } else {
+        this.down($target);
+      }
+      //either replace or update browser history
+      if (this.options.deepLink) {
+        var anchor = $target.prev('a').attr('href');
+
+        if (this.options.updateHistory) {
+          history.pushState({}, '', anchor);
+        } else {
+          history.replaceState({}, '', anchor);
+        }
+      }
+    }
+
+    /**
+     * Opens the accordion tab defined by `$target`.
+     * @param {jQuery} $target - Accordion pane to open (`.accordion-content`).
+     * @param {Boolean} firstTime - flag to determine if reflow should happen.
+     * @fires Accordion#down
+     * @function
+     */
+
+  }, {
+    key: 'down',
+    value: function down($target, firstTime) {
+      var _this4 = this;
+
+      /**
+       * checking firstTime allows for initial render of the accordion
+       * to render preset is-active panes.
+       */
+      if ($target.closest('[data-accordion]').is('[disabled]') && !firstTime) {
+        console.info('Cannot call down on an accordion that is disabled.');
+        return;
+      }
+      $target.attr('aria-hidden', false).parent('[data-tab-content]').addBack().parent().addClass('is-active');
+
+      if (!this.options.multiExpand && !firstTime) {
+        var $currentActive = this.$element.children('.is-active').children('[data-tab-content]');
+        if ($currentActive.length) {
+          this.up($currentActive.not($target));
+        }
+      }
+
+      $target.slideDown(this.options.slideSpeed, function () {
+        /**
+         * Fires when the tab is done opening.
+         * @event Accordion#down
+         */
+        _this4.$element.trigger('down.zf.accordion', [$target]);
+      });
+
+      __WEBPACK_IMPORTED_MODULE_0_jquery___default()('#' + $target.attr('aria-labelledby')).attr({
+        'aria-expanded': true,
+        'aria-selected': true
+      });
+    }
+
+    /**
+     * Closes the tab defined by `$target`.
+     * @param {jQuery} $target - Accordion tab to close (`.accordion-content`).
+     * @fires Accordion#up
+     * @function
+     */
+
+  }, {
+    key: 'up',
+    value: function up($target) {
+      if ($target.closest('[data-accordion]').is('[disabled]')) {
+        console.info('Cannot call up on an accordion that is disabled.');
+        return;
+      }
+
+      var $aunts = $target.parent().siblings(),
+          _this = this;
+
+      if (!this.options.allowAllClosed && !$aunts.hasClass('is-active') || !$target.parent().hasClass('is-active')) {
+        return;
+      }
+
+      $target.slideUp(_this.options.slideSpeed, function () {
+        /**
+         * Fires when the tab is done collapsing up.
+         * @event Accordion#up
+         */
+        _this.$element.trigger('up.zf.accordion', [$target]);
+      });
+
+      $target.attr('aria-hidden', true).parent().removeClass('is-active');
+
+      __WEBPACK_IMPORTED_MODULE_0_jquery___default()('#' + $target.attr('aria-labelledby')).attr({
+        'aria-expanded': false,
+        'aria-selected': false
+      });
+    }
+
+    /**
+     * Destroys an instance of an accordion.
+     * @fires Accordion#destroyed
+     * @function
+     */
+
+  }, {
+    key: '_destroy',
+    value: function _destroy() {
+      this.$element.find('[data-tab-content]').stop(true).slideUp(0).css('display', '');
+      this.$element.find('a').off('.zf.accordion');
+      if (this.options.deepLink) {
+        __WEBPACK_IMPORTED_MODULE_0_jquery___default()(window).off('popstate', this._checkDeepLink);
+      }
+    }
+  }]);
+
+  return Accordion;
+}(__WEBPACK_IMPORTED_MODULE_3__foundation_plugin__["a" /* Plugin */]);
+
+Accordion.defaults = {
+  /**
+   * Amount of time to animate the opening of an accordion pane.
+   * @option
+   * @type {number}
+   * @default 250
+   */
+  slideSpeed: 250,
+  /**
+   * Allow the accordion to have multiple open panes.
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  multiExpand: false,
+  /**
+   * Allow the accordion to close all panes.
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  allowAllClosed: false,
+  /**
+   * Allows the window to scroll to content of pane specified by hash anchor
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  deepLink: false,
+
+  /**
+   * Adjust the deep link scroll to make sure the top of the accordion panel is visible
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  deepLinkSmudge: false,
+
+  /**
+   * Animation time (ms) for the deep link adjustment
+   * @option
+   * @type {number}
+   * @default 300
+   */
+  deepLinkSmudgeDelay: 300,
+
+  /**
+   * Update the browser history with the open accordion
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  updateHistory: false
+};
+
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return AccordionMenu; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_core__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_plugin__ = __webpack_require__(2);
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+
+
+
+
+
+
+/**
+ * AccordionMenu module.
+ * @module foundation.accordionMenu
+ * @requires foundation.util.keyboard
+ * @requires foundation.util.nest
+ */
+
+var AccordionMenu = function (_Plugin) {
+  _inherits(AccordionMenu, _Plugin);
+
+  function AccordionMenu() {
+    _classCallCheck(this, AccordionMenu);
+
+    return _possibleConstructorReturn(this, (AccordionMenu.__proto__ || Object.getPrototypeOf(AccordionMenu)).apply(this, arguments));
+  }
+
+  _createClass(AccordionMenu, [{
+    key: '_setup',
+
+    /**
+     * Creates a new instance of an accordion menu.
+     * @class
+     * @name AccordionMenu
+     * @fires AccordionMenu#init
+     * @param {jQuery} element - jQuery object to make into an accordion menu.
+     * @param {Object} options - Overrides to the default plugin settings.
+     */
+    value: function _setup(element, options) {
+      this.$element = element;
+      this.options = __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend({}, AccordionMenu.defaults, this.$element.data(), options);
+      this.className = 'AccordionMenu'; // ie9 back compat
+
+      this._init();
+
+      __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].register('AccordionMenu', {
+        'ENTER': 'toggle',
+        'SPACE': 'toggle',
+        'ARROW_RIGHT': 'open',
+        'ARROW_UP': 'up',
+        'ARROW_DOWN': 'down',
+        'ARROW_LEFT': 'close',
+        'ESCAPE': 'closeAll'
+      });
+    }
+
+    /**
+     * Initializes the accordion menu by hiding all nested menus.
+     * @private
+     */
+
+  }, {
+    key: '_init',
+    value: function _init() {
+      __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__["a" /* Nest */].Feather(this.$element, 'accordion');
+
+      var _this = this;
+
+      this.$element.find('[data-submenu]').not('.is-active').slideUp(0); //.find('a').css('padding-left', '1rem');
+      this.$element.attr({
+        'role': 'tree',
+        'aria-multiselectable': this.options.multiOpen
+      });
+
+      this.$menuLinks = this.$element.find('.is-accordion-submenu-parent');
+      this.$menuLinks.each(function () {
+        var linkId = this.id || Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["a" /* GetYoDigits */])(6, 'acc-menu-link'),
+            $elem = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
+            $sub = $elem.children('[data-submenu]'),
+            subId = $sub[0].id || Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["a" /* GetYoDigits */])(6, 'acc-menu'),
+            isActive = $sub.hasClass('is-active');
+
+        if (_this.options.parentLink) {
+          var $anchor = $elem.children('a');
+          $anchor.clone().prependTo($sub).wrap('<li data-is-parent-link class="is-submenu-parent-item is-submenu-item is-accordion-submenu-item"></li>');
+        }
+
+        if (_this.options.submenuToggle) {
+          $elem.addClass('has-submenu-toggle');
+          $elem.children('a').after('<button id="' + linkId + '" class="submenu-toggle" aria-controls="' + subId + '" aria-expanded="' + isActive + '" title="' + _this.options.submenuToggleText + '"><span class="submenu-toggle-text">' + _this.options.submenuToggleText + '</span></button>');
+        } else {
+          $elem.attr({
+            'aria-controls': subId,
+            'aria-expanded': isActive,
+            'id': linkId
+          });
+        }
+        $sub.attr({
+          'aria-labelledby': linkId,
+          'aria-hidden': !isActive,
+          'role': 'group',
+          'id': subId
+        });
+      });
+      this.$element.find('li').attr({
+        'role': 'treeitem'
+      });
+      var initPanes = this.$element.find('.is-active');
+      if (initPanes.length) {
+        var _this = this;
+        initPanes.each(function () {
+          _this.down(__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this));
+        });
+      }
+      this._events();
+    }
+
+    /**
+     * Adds event handlers for items within the menu.
+     * @private
+     */
+
+  }, {
+    key: '_events',
+    value: function _events() {
+      var _this = this;
+
+      this.$element.find('li').each(function () {
+        var $submenu = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).children('[data-submenu]');
+
+        if ($submenu.length) {
+          if (_this.options.submenuToggle) {
+            __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).children('.submenu-toggle').off('click.zf.accordionMenu').on('click.zf.accordionMenu', function (e) {
+              _this.toggle($submenu);
+            });
+          } else {
+            __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).children('a').off('click.zf.accordionMenu').on('click.zf.accordionMenu', function (e) {
+              e.preventDefault();
+              _this.toggle($submenu);
+            });
+          }
+        }
+      }).on('keydown.zf.accordionmenu', function (e) {
+        var $element = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
+            $elements = $element.parent('ul').children('li'),
+            $prevElement,
+            $nextElement,
+            $target = $element.children('[data-submenu]');
+
+        $elements.each(function (i) {
+          if (__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).is($element)) {
+            $prevElement = $elements.eq(Math.max(0, i - 1)).find('a').first();
+            $nextElement = $elements.eq(Math.min(i + 1, $elements.length - 1)).find('a').first();
+
+            if (__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).children('[data-submenu]:visible').length) {
+              // has open sub menu
+              $nextElement = $element.find('li:first-child').find('a').first();
+            }
+            if (__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).is(':first-child')) {
+              // is first element of sub menu
+              $prevElement = $element.parents('li').first().find('a').first();
+            } else if ($prevElement.parents('li').first().children('[data-submenu]:visible').length) {
+              // if previous element has open sub menu
+              $prevElement = $prevElement.parents('li').find('li:last-child').find('a').first();
+            }
+            if (__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).is(':last-child')) {
+              // is last element of sub menu
+              $nextElement = $element.parents('li').first().next('li').find('a').first();
+            }
+
+            return;
+          }
+        });
+
+        __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].handleKey(e, 'AccordionMenu', {
+          open: function open() {
+            if ($target.is(':hidden')) {
+              _this.down($target);
+              $target.find('li').first().find('a').first().focus();
+            }
+          },
+          close: function close() {
+            if ($target.length && !$target.is(':hidden')) {
+              // close active sub of this item
+              _this.up($target);
+            } else if ($element.parent('[data-submenu]').length) {
+              // close currently open sub
+              _this.up($element.parent('[data-submenu]'));
+              $element.parents('li').first().find('a').first().focus();
+            }
+          },
+          up: function up() {
+            $prevElement.focus();
+            return true;
+          },
+          down: function down() {
+            $nextElement.focus();
+            return true;
+          },
+          toggle: function toggle() {
+            if (_this.options.submenuToggle) {
+              return false;
+            }
+            if ($element.children('[data-submenu]').length) {
+              _this.toggle($element.children('[data-submenu]'));
+              return true;
+            }
+          },
+          closeAll: function closeAll() {
+            _this.hideAll();
+          },
+          handled: function handled(preventDefault) {
+            if (preventDefault) {
+              e.preventDefault();
+            }
+            e.stopImmediatePropagation();
+          }
+        });
+      }); //.attr('tabindex', 0);
+    }
+
+    /**
+     * Closes all panes of the menu.
+     * @function
+     */
+
+  }, {
+    key: 'hideAll',
+    value: function hideAll() {
+      this.up(this.$element.find('[data-submenu]'));
+    }
+
+    /**
+     * Opens all panes of the menu.
+     * @function
+     */
+
+  }, {
+    key: 'showAll',
+    value: function showAll() {
+      this.down(this.$element.find('[data-submenu]'));
+    }
+
+    /**
+     * Toggles the open/close state of a submenu.
+     * @function
+     * @param {jQuery} $target - the submenu to toggle
+     */
+
+  }, {
+    key: 'toggle',
+    value: function toggle($target) {
+      if (!$target.is(':animated')) {
+        if (!$target.is(':hidden')) {
+          this.up($target);
+        } else {
+          this.down($target);
+        }
+      }
+    }
+
+    /**
+     * Opens the sub-menu defined by `$target`.
+     * @param {jQuery} $target - Sub-menu to open.
+     * @fires AccordionMenu#down
+     */
+
+  }, {
+    key: 'down',
+    value: function down($target) {
+      var _this = this;
+
+      if (!this.options.multiOpen) {
+        this.up(this.$element.find('.is-active').not($target.parentsUntil(this.$element).add($target)));
+      }
+
+      $target.addClass('is-active').attr({ 'aria-hidden': false });
+
+      if (this.options.submenuToggle) {
+        $target.prev('.submenu-toggle').attr({ 'aria-expanded': true });
+      } else {
+        $target.parent('.is-accordion-submenu-parent').attr({ 'aria-expanded': true });
+      }
+
+      $target.slideDown(_this.options.slideSpeed, function () {
+        /**
+         * Fires when the menu is done opening.
+         * @event AccordionMenu#down
+         */
+        _this.$element.trigger('down.zf.accordionMenu', [$target]);
+      });
+    }
+
+    /**
+     * Closes the sub-menu defined by `$target`. All sub-menus inside the target will be closed as well.
+     * @param {jQuery} $target - Sub-menu to close.
+     * @fires AccordionMenu#up
+     */
+
+  }, {
+    key: 'up',
+    value: function up($target) {
+      var _this = this;
+      $target.slideUp(_this.options.slideSpeed, function () {
+        /**
+         * Fires when the menu is done collapsing up.
+         * @event AccordionMenu#up
+         */
+        _this.$element.trigger('up.zf.accordionMenu', [$target]);
+      });
+
+      var $menus = $target.find('[data-submenu]').slideUp(0).addBack().attr('aria-hidden', true);
+
+      if (this.options.submenuToggle) {
+        $menus.prev('.submenu-toggle').attr('aria-expanded', false);
+      } else {
+        $menus.parent('.is-accordion-submenu-parent').attr('aria-expanded', false);
+      }
+    }
+
+    /**
+     * Destroys an instance of accordion menu.
+     * @fires AccordionMenu#destroyed
+     */
+
+  }, {
+    key: '_destroy',
+    value: function _destroy() {
+      this.$element.find('[data-submenu]').slideDown(0).css('display', '');
+      this.$element.find('a').off('click.zf.accordionMenu');
+      this.$element.find('[data-is-parent-link]').detach();
+
+      if (this.options.submenuToggle) {
+        this.$element.find('.has-submenu-toggle').removeClass('has-submenu-toggle');
+        this.$element.find('.submenu-toggle').remove();
+      }
+
+      __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__["a" /* Nest */].Burn(this.$element, 'accordion');
+    }
+  }]);
+
+  return AccordionMenu;
+}(__WEBPACK_IMPORTED_MODULE_4__foundation_plugin__["a" /* Plugin */]);
+
+AccordionMenu.defaults = {
+  /**
+   * Adds the parent link to the submenu.
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  parentLink: false,
+  /**
+   * Amount of time to animate the opening of a submenu in ms.
+   * @option
+   * @type {number}
+   * @default 250
+   */
+  slideSpeed: 250,
+  /**
+   * Adds a separate submenu toggle button. This allows the parent item to have a link.
+   * @option
+   * @example true
+   */
+  submenuToggle: false,
+  /**
+   * The text used for the submenu toggle if enabled. This is used for screen readers only.
+   * @option
+   * @example true
+   */
+  submenuToggleText: 'Toggle menu',
+  /**
+   * Allow the menu to have multiple open panes.
+   * @option
+   * @type {boolean}
+   * @default true
+   */
+  multiOpen: true
+};
+
+
+
+/***/ }),
+/* 22 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Drilldown; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_core__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_util_box__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_plugin__ = __webpack_require__(2);
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+
+
+
+
+
+
+
+/**
+ * Drilldown module.
+ * @module foundation.drilldown
+ * @requires foundation.util.keyboard
+ * @requires foundation.util.nest
+ * @requires foundation.util.box
+ */
+
+var Drilldown = function (_Plugin) {
+  _inherits(Drilldown, _Plugin);
+
+  function Drilldown() {
+    _classCallCheck(this, Drilldown);
+
+    return _possibleConstructorReturn(this, (Drilldown.__proto__ || Object.getPrototypeOf(Drilldown)).apply(this, arguments));
+  }
+
+  _createClass(Drilldown, [{
+    key: '_setup',
+
+    /**
+     * Creates a new instance of a drilldown menu.
+     * @class
+     * @name Drilldown
+     * @param {jQuery} element - jQuery object to make into an accordion menu.
+     * @param {Object} options - Overrides to the default plugin settings.
+     */
+    value: function _setup(element, options) {
+      this.$element = element;
+      this.options = __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend({}, Drilldown.defaults, this.$element.data(), options);
+      this.className = 'Drilldown'; // ie9 back compat
+
+      this._init();
+
+      __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].register('Drilldown', {
+        'ENTER': 'open',
+        'SPACE': 'open',
+        'ARROW_RIGHT': 'next',
+        'ARROW_UP': 'up',
+        'ARROW_DOWN': 'down',
+        'ARROW_LEFT': 'previous',
+        'ESCAPE': 'close',
+        'TAB': 'down',
+        'SHIFT_TAB': 'up'
+      });
+    }
+
+    /**
+     * Initializes the drilldown by creating jQuery collections of elements
+     * @private
+     */
+
+  }, {
+    key: '_init',
+    value: function _init() {
+      __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__["a" /* Nest */].Feather(this.$element, 'drilldown');
+
+      if (this.options.autoApplyClass) {
+        this.$element.addClass('drilldown');
+      }
+
+      this.$element.attr({
+        'role': 'tree',
+        'aria-multiselectable': false
+      });
+      this.$submenuAnchors = this.$element.find('li.is-drilldown-submenu-parent').children('a');
+      this.$submenus = this.$submenuAnchors.parent('li').children('[data-submenu]').attr('role', 'group');
+      this.$menuItems = this.$element.find('li').not('.js-drilldown-back').attr('role', 'treeitem').find('a');
+      this.$element.attr('data-mutate', this.$element.attr('data-drilldown') || Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["a" /* GetYoDigits */])(6, 'drilldown'));
+
+      this._prepareMenu();
+      this._registerEvents();
+
+      this._keyboardEvents();
+    }
+
+    /**
+     * prepares drilldown menu by setting attributes to links and elements
+     * sets a min height to prevent content jumping
+     * wraps the element if not already wrapped
+     * @private
+     * @function
+     */
+
+  }, {
+    key: '_prepareMenu',
+    value: function _prepareMenu() {
+      var _this = this;
+      // if(!this.options.holdOpen){
+      //   this._menuLinkEvents();
+      // }
+      this.$submenuAnchors.each(function () {
+        var $link = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this);
+        var $sub = $link.parent();
+        if (_this.options.parentLink) {
+          $link.clone().prependTo($sub.children('[data-submenu]')).wrap('<li data-is-parent-link class="is-submenu-parent-item is-submenu-item is-drilldown-submenu-item" role="menuitem"></li>');
+        }
+        $link.data('savedHref', $link.attr('href')).removeAttr('href').attr('tabindex', 0);
+        $link.children('[data-submenu]').attr({
+          'aria-hidden': true,
+          'tabindex': 0,
+          'role': 'group'
+        });
+        _this._events($link);
+      });
+      this.$submenus.each(function () {
+        var $menu = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
+            $back = $menu.find('.js-drilldown-back');
+        if (!$back.length) {
+          switch (_this.options.backButtonPosition) {
+            case "bottom":
+              $menu.append(_this.options.backButton);
+              break;
+            case "top":
+              $menu.prepend(_this.options.backButton);
+              break;
+            default:
+              console.error("Unsupported backButtonPosition value '" + _this.options.backButtonPosition + "'");
+          }
+        }
+        _this._back($menu);
+      });
+
+      this.$submenus.addClass('invisible');
+      if (!this.options.autoHeight) {
+        this.$submenus.addClass('drilldown-submenu-cover-previous');
+      }
+
+      // create a wrapper on element if it doesn't exist.
+      if (!this.$element.parent().hasClass('is-drilldown')) {
+        this.$wrapper = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this.options.wrapper).addClass('is-drilldown');
+        if (this.options.animateHeight) this.$wrapper.addClass('animate-height');
+        this.$element.wrap(this.$wrapper);
+      }
+      // set wrapper
+      this.$wrapper = this.$element.parent();
+      this.$wrapper.css(this._getMaxDims());
+    }
+  }, {
+    key: '_resize',
+    value: function _resize() {
+      this.$wrapper.css({ 'max-width': 'none', 'min-height': 'none' });
+      // _getMaxDims has side effects (boo) but calling it should update all other necessary heights & widths
+      this.$wrapper.css(this._getMaxDims());
+    }
+
+    /**
+     * Adds event handlers to elements in the menu.
+     * @function
+     * @private
+     * @param {jQuery} $elem - the current menu item to add handlers to.
+     */
+
+  }, {
+    key: '_events',
+    value: function _events($elem) {
+      var _this = this;
+
+      $elem.off('click.zf.drilldown').on('click.zf.drilldown', function (e) {
+        if (__WEBPACK_IMPORTED_MODULE_0_jquery___default()(e.target).parentsUntil('ul', 'li').hasClass('is-drilldown-submenu-parent')) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+        }
+
+        // if(e.target !== e.currentTarget.firstElementChild){
+        //   return false;
+        // }
+        _this._show($elem.parent('li'));
+
+        if (_this.options.closeOnClick) {
+          var $body = __WEBPACK_IMPORTED_MODULE_0_jquery___default()('body');
+          $body.off('.zf.drilldown').on('click.zf.drilldown', function (e) {
+            if (e.target === _this.$element[0] || __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.contains(_this.$element[0], e.target)) {
+              return;
+            }
+            e.preventDefault();
+            _this._hideAll();
+            $body.off('.zf.drilldown');
+          });
+        }
+      });
+    }
+
+    /**
+     * Adds event handlers to the menu element.
+     * @function
+     * @private
+     */
+
+  }, {
+    key: '_registerEvents',
+    value: function _registerEvents() {
+      if (this.options.scrollTop) {
+        this._bindHandler = this._scrollTop.bind(this);
+        this.$element.on('open.zf.drilldown hide.zf.drilldown closed.zf.drilldown', this._bindHandler);
+      }
+      this.$element.on('mutateme.zf.trigger', this._resize.bind(this));
+    }
+
+    /**
+     * Scroll to Top of Element or data-scroll-top-element
+     * @function
+     * @fires Drilldown#scrollme
+     */
+
+  }, {
+    key: '_scrollTop',
+    value: function _scrollTop() {
+      var _this = this;
+      var $scrollTopElement = _this.options.scrollTopElement != '' ? __WEBPACK_IMPORTED_MODULE_0_jquery___default()(_this.options.scrollTopElement) : _this.$element,
+          scrollPos = parseInt($scrollTopElement.offset().top + _this.options.scrollTopOffset, 10);
+      __WEBPACK_IMPORTED_MODULE_0_jquery___default()('html, body').stop(true).animate({ scrollTop: scrollPos }, _this.options.animationDuration, _this.options.animationEasing, function () {
+        /**
+          * Fires after the menu has scrolled
+          * @event Drilldown#scrollme
+          */
+        if (this === __WEBPACK_IMPORTED_MODULE_0_jquery___default()('html')[0]) _this.$element.trigger('scrollme.zf.drilldown');
+      });
+    }
+
+    /**
+     * Adds keydown event listener to `li`'s in the menu.
+     * @private
+     */
+
+  }, {
+    key: '_keyboardEvents',
+    value: function _keyboardEvents() {
+      var _this = this;
+
+      this.$menuItems.add(this.$element.find('.js-drilldown-back > a, .is-submenu-parent-item > a')).on('keydown.zf.drilldown', function (e) {
+        var $element = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
+            $elements = $element.parent('li').parent('ul').children('li').children('a'),
+            $prevElement,
+            $nextElement;
+
+        $elements.each(function (i) {
+          if (__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).is($element)) {
+            $prevElement = $elements.eq(Math.max(0, i - 1));
+            $nextElement = $elements.eq(Math.min(i + 1, $elements.length - 1));
+            return;
+          }
+        });
+
+        __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].handleKey(e, 'Drilldown', {
+          next: function next() {
+            if ($element.is(_this.$submenuAnchors)) {
+              _this._show($element.parent('li'));
+              $element.parent('li').one(Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["c" /* transitionend */])($element), function () {
+                $element.parent('li').find('ul li a').filter(_this.$menuItems).first().focus();
+              });
+              return true;
+            }
+          },
+          previous: function previous() {
+            _this._hide($element.parent('li').parent('ul'));
+            $element.parent('li').parent('ul').one(Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["c" /* transitionend */])($element), function () {
+              setTimeout(function () {
+                $element.parent('li').parent('ul').parent('li').children('a').first().focus();
+              }, 1);
+            });
+            return true;
+          },
+          up: function up() {
+            $prevElement.focus();
+            // Don't tap focus on first element in root ul
+            return !$element.is(_this.$element.find('> li:first-child > a'));
+          },
+          down: function down() {
+            $nextElement.focus();
+            // Don't tap focus on last element in root ul
+            return !$element.is(_this.$element.find('> li:last-child > a'));
+          },
+          close: function close() {
+            // Don't close on element in root ul
+            if (!$element.is(_this.$element.find('> li > a'))) {
+              _this._hide($element.parent().parent());
+              $element.parent().parent().siblings('a').focus();
+            }
+          },
+          open: function open() {
+            if (!$element.is(_this.$menuItems)) {
+              // not menu item means back button
+              _this._hide($element.parent('li').parent('ul'));
+              $element.parent('li').parent('ul').one(Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["c" /* transitionend */])($element), function () {
+                setTimeout(function () {
+                  $element.parent('li').parent('ul').parent('li').children('a').first().focus();
+                }, 1);
+              });
+              return true;
+            } else if ($element.is(_this.$submenuAnchors)) {
+              _this._show($element.parent('li'));
+              $element.parent('li').one(Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["c" /* transitionend */])($element), function () {
+                $element.parent('li').find('ul li a').filter(_this.$menuItems).first().focus();
+              });
+              return true;
+            }
+          },
+          handled: function handled(preventDefault) {
+            if (preventDefault) {
+              e.preventDefault();
+            }
+            e.stopImmediatePropagation();
+          }
+        });
+      }); // end keyboardAccess
+    }
+
+    /**
+     * Closes all open elements, and returns to root menu.
+     * @function
+     * @fires Drilldown#closed
+     */
+
+  }, {
+    key: '_hideAll',
+    value: function _hideAll() {
+      var $elem = this.$element.find('.is-drilldown-submenu.is-active').addClass('is-closing');
+      if (this.options.autoHeight) this.$wrapper.css({ height: $elem.parent().closest('ul').data('calcHeight') });
+      $elem.one(Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["c" /* transitionend */])($elem), function (e) {
+        $elem.removeClass('is-active is-closing');
+      });
+      /**
+       * Fires when the menu is fully closed.
+       * @event Drilldown#closed
+       */
+      this.$element.trigger('closed.zf.drilldown');
+    }
+
+    /**
+     * Adds event listener for each `back` button, and closes open menus.
+     * @function
+     * @fires Drilldown#back
+     * @param {jQuery} $elem - the current sub-menu to add `back` event.
+     */
+
+  }, {
+    key: '_back',
+    value: function _back($elem) {
+      var _this = this;
+      $elem.off('click.zf.drilldown');
+      $elem.children('.js-drilldown-back').on('click.zf.drilldown', function (e) {
+        e.stopImmediatePropagation();
+        // console.log('mouseup on back');
+        _this._hide($elem);
+
+        // If there is a parent submenu, call show
+        var parentSubMenu = $elem.parent('li').parent('ul').parent('li');
+        if (parentSubMenu.length) {
+          _this._show(parentSubMenu);
+        }
+      });
+    }
+
+    /**
+     * Adds event listener to menu items w/o submenus to close open menus on click.
+     * @function
+     * @private
+     */
+
+  }, {
+    key: '_menuLinkEvents',
+    value: function _menuLinkEvents() {
+      var _this = this;
+      this.$menuItems.not('.is-drilldown-submenu-parent').off('click.zf.drilldown').on('click.zf.drilldown', function (e) {
+        // e.stopImmediatePropagation();
+        setTimeout(function () {
+          _this._hideAll();
+        }, 0);
+      });
+    }
+
+    /**
+     * Sets the CSS classes for submenu to show it.
+     * @function
+     * @private
+     * @param {jQuery} $elem - the target submenu (`ul` tag)
+     * @param {boolean} trigger - trigger drilldown event
+     */
+
+  }, {
+    key: '_setShowSubMenuClasses',
+    value: function _setShowSubMenuClasses($elem, trigger) {
+      $elem.addClass('is-active').removeClass('invisible').attr('aria-hidden', false);
+      $elem.parent('li').attr('aria-expanded', true);
+      if (trigger === true) {
+        this.$element.trigger('open.zf.drilldown', [$elem]);
+      }
+    }
+
+    /**
+     * Sets the CSS classes for submenu to hide it.
+     * @function
+     * @private
+     * @param {jQuery} $elem - the target submenu (`ul` tag)
+     * @param {boolean} trigger - trigger drilldown event
+     */
+
+  }, {
+    key: '_setHideSubMenuClasses',
+    value: function _setHideSubMenuClasses($elem, trigger) {
+      $elem.removeClass('is-active').addClass('invisible').attr('aria-hidden', true);
+      $elem.parent('li').attr('aria-expanded', false);
+      if (trigger === true) {
+        $elem.trigger('hide.zf.drilldown', [$elem]);
+      }
+    }
+
+    /**
+     * Opens a specific drilldown (sub)menu no matter which (sub)menu in it is currently visible.
+     * Compared to _show() this lets you jump into any submenu without clicking through every submenu on the way to it.
+     * @function
+     * @fires Drilldown#open
+     * @param {jQuery} $elem - the target (sub)menu (`ul` tag)
+     * @param {boolean} autoFocus - if true the first link in the target (sub)menu gets auto focused
+     */
+
+  }, {
+    key: '_showMenu',
+    value: function _showMenu($elem, autoFocus) {
+
+      var _this = this;
+
+      // Reset drilldown
+      var $expandedSubmenus = this.$element.find('li[aria-expanded="true"] > ul[data-submenu]');
+      $expandedSubmenus.each(function (index) {
+        _this._setHideSubMenuClasses(__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this));
+      });
+
+      // If target menu is root, focus first link & exit
+      if ($elem.is('[data-drilldown]')) {
+        if (autoFocus === true) $elem.find('li[role="treeitem"] > a').first().focus();
+        if (this.options.autoHeight) this.$wrapper.css('height', $elem.data('calcHeight'));
+        return;
+      }
+
+      // Find all submenus on way to root incl. the element itself
+      var $submenus = $elem.children().first().parentsUntil('[data-drilldown]', '[data-submenu]');
+
+      // Open target menu and all submenus on its way to root
+      $submenus.each(function (index) {
+
+        // Update height of first child (target menu) if autoHeight option true
+        if (index === 0 && _this.options.autoHeight) {
+          _this.$wrapper.css('height', __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).data('calcHeight'));
+        }
+
+        var isLastChild = index == $submenus.length - 1;
+
+        // Add transitionsend listener to last child (root due to reverse order) to open target menu's first link
+        // Last child makes sure the event gets always triggered even if going through several menus
+        if (isLastChild === true) {
+          __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).one(Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["c" /* transitionend */])(__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this)), function () {
+            if (autoFocus === true) {
+              $elem.find('li[role="treeitem"] > a').first().focus();
+            }
+          });
+        }
+
+        _this._setShowSubMenuClasses(__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this), isLastChild);
+      });
+    }
+
+    /**
+     * Opens a submenu.
+     * @function
+     * @fires Drilldown#open
+     * @param {jQuery} $elem - the current element with a submenu to open, i.e. the `li` tag.
+     */
+
+  }, {
+    key: '_show',
+    value: function _show($elem) {
+      if (this.options.autoHeight) this.$wrapper.css({ height: $elem.children('[data-submenu]').data('calcHeight') });
+      $elem.attr('aria-expanded', true);
+      $elem.children('[data-submenu]').addClass('is-active').removeClass('invisible').attr('aria-hidden', false);
+      /**
+       * Fires when the submenu has opened.
+       * @event Drilldown#open
+       */
+      this.$element.trigger('open.zf.drilldown', [$elem]);
+    }
+
+    /**
+     * Hides a submenu
+     * @function
+     * @fires Drilldown#hide
+     * @param {jQuery} $elem - the current sub-menu to hide, i.e. the `ul` tag.
+     */
+
+  }, {
+    key: '_hide',
+    value: function _hide($elem) {
+      if (this.options.autoHeight) this.$wrapper.css({ height: $elem.parent().closest('ul').data('calcHeight') });
+      var _this = this;
+      $elem.parent('li').attr('aria-expanded', false);
+      $elem.attr('aria-hidden', true);
+      $elem.addClass('is-closing').one(Object(__WEBPACK_IMPORTED_MODULE_3__foundation_util_core__["c" /* transitionend */])($elem), function () {
+        $elem.removeClass('is-active is-closing');
+        $elem.blur().addClass('invisible');
+      });
+      /**
+       * Fires when the submenu has closed.
+       * @event Drilldown#hide
+       */
+      $elem.trigger('hide.zf.drilldown', [$elem]);
+    }
+
+    /**
+     * Iterates through the nested menus to calculate the min-height, and max-width for the menu.
+     * Prevents content jumping.
+     * @function
+     * @private
+     */
+
+  }, {
+    key: '_getMaxDims',
+    value: function _getMaxDims() {
+      var maxHeight = 0,
+          result = {},
+          _this = this;
+      this.$submenus.add(this.$element).each(function () {
+        var numOfElems = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).children('li').length;
+        var height = __WEBPACK_IMPORTED_MODULE_4__foundation_util_box__["a" /* Box */].GetDimensions(this).height;
+        maxHeight = height > maxHeight ? height : maxHeight;
+        if (_this.options.autoHeight) {
+          __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).data('calcHeight', height);
+          if (!__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).hasClass('is-drilldown-submenu')) result['height'] = height;
+        }
+      });
+
+      if (!this.options.autoHeight) result['min-height'] = maxHeight + 'px';
+
+      result['max-width'] = this.$element[0].getBoundingClientRect().width + 'px';
+
+      return result;
+    }
+
+    /**
+     * Destroys the Drilldown Menu
+     * @function
+     */
+
+  }, {
+    key: '_destroy',
+    value: function _destroy() {
+      if (this.options.scrollTop) this.$element.off('.zf.drilldown', this._bindHandler);
+      this._hideAll();
+      this.$element.off('mutateme.zf.trigger');
+      __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__["a" /* Nest */].Burn(this.$element, 'drilldown');
+      this.$element.unwrap().find('.js-drilldown-back, .is-submenu-parent-item').remove().end().find('.is-active, .is-closing, .is-drilldown-submenu').removeClass('is-active is-closing is-drilldown-submenu').end().find('[data-submenu]').removeAttr('aria-hidden tabindex role');
+      this.$submenuAnchors.each(function () {
+        __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).off('.zf.drilldown');
+      });
+
+      this.$element.find('[data-is-parent-link]').detach();
+      this.$submenus.removeClass('drilldown-submenu-cover-previous invisible');
+
+      this.$element.find('a').each(function () {
+        var $link = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this);
+        $link.removeAttr('tabindex');
+        if ($link.data('savedHref')) {
+          $link.attr('href', $link.data('savedHref')).removeData('savedHref');
+        } else {
+          return;
+        }
+      });
+    }
+  }]);
+
+  return Drilldown;
+}(__WEBPACK_IMPORTED_MODULE_5__foundation_plugin__["a" /* Plugin */]);
+
+Drilldown.defaults = {
+  /**
+   * Drilldowns depend on styles in order to function properly; in the default build of Foundation these are
+   * on the `drilldown` class. This option auto-applies this class to the drilldown upon initialization.
+   * @option
+   * @type {boolian}
+   * @default true
+   */
+  autoApplyClass: true,
+  /**
+   * Markup used for JS generated back button. Prepended  or appended (see backButtonPosition) to submenu lists and deleted on `destroy` method, 'js-drilldown-back' class required. Remove the backslash (`\`) if copy and pasting.
+   * @option
+   * @type {string}
+   * @default '<li class="js-drilldown-back"><a tabindex="0">Back</a></li>'
+   */
+  backButton: '<li class="js-drilldown-back"><a tabindex="0">Back</a></li>',
+  /**
+   * Position the back button either at the top or bottom of drilldown submenus. Can be `'left'` or `'bottom'`.
+   * @option
+   * @type {string}
+   * @default top
+   */
+  backButtonPosition: 'top',
+  /**
+   * Markup used to wrap drilldown menu. Use a class name for independent styling; the JS applied class: `is-drilldown` is required. Remove the backslash (`\`) if copy and pasting.
+   * @option
+   * @type {string}
+   * @default '<div></div>'
+   */
+  wrapper: '<div></div>',
+  /**
+   * Adds the parent link to the submenu.
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  parentLink: false,
+  /**
+   * Allow the menu to return to root list on body click.
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  closeOnClick: false,
+  /**
+   * Allow the menu to auto adjust height.
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  autoHeight: false,
+  /**
+   * Animate the auto adjust height.
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  animateHeight: false,
+  /**
+   * Scroll to the top of the menu after opening a submenu or navigating back using the menu back button
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  scrollTop: false,
+  /**
+   * String jquery selector (for example 'body') of element to take offset().top from, if empty string the drilldown menu offset().top is taken
+   * @option
+   * @type {string}
+   * @default ''
+   */
+  scrollTopElement: '',
+  /**
+   * ScrollTop offset
+   * @option
+   * @type {number}
+   * @default 0
+   */
+  scrollTopOffset: 0,
+  /**
+   * Scroll animation duration
+   * @option
+   * @type {number}
+   * @default 500
+   */
+  animationDuration: 500,
+  /**
+   * Scroll animation easing. Can be `'swing'` or `'linear'`.
+   * @option
+   * @type {string}
+   * @see {@link https://api.jquery.com/animate|JQuery animate}
+   * @default 'swing'
+   */
+  animationEasing: 'swing'
+  // holdOpen: false
+};
+
+
+
+/***/ }),
+/* 23 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Positionable; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__foundation_util_box__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_plugin__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_core__ = __webpack_require__(1);
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+
+
+
+
+var POSITIONS = ['left', 'right', 'top', 'bottom'];
+var VERTICAL_ALIGNMENTS = ['top', 'bottom', 'center'];
+var HORIZONTAL_ALIGNMENTS = ['left', 'right', 'center'];
+
+var ALIGNMENTS = {
+  'left': VERTICAL_ALIGNMENTS,
+  'right': VERTICAL_ALIGNMENTS,
+  'top': HORIZONTAL_ALIGNMENTS,
+  'bottom': HORIZONTAL_ALIGNMENTS
+};
+
+function nextItem(item, array) {
+  var currentIdx = array.indexOf(item);
+  if (currentIdx === array.length - 1) {
+    return array[0];
+  } else {
+    return array[currentIdx + 1];
+  }
+}
+
+var Positionable = function (_Plugin) {
+  _inherits(Positionable, _Plugin);
+
+  function Positionable() {
+    _classCallCheck(this, Positionable);
+
+    return _possibleConstructorReturn(this, (Positionable.__proto__ || Object.getPrototypeOf(Positionable)).apply(this, arguments));
+  }
+
+  _createClass(Positionable, [{
+    key: '_init',
+
+    /**
+     * Abstract class encapsulating the tether-like explicit positioning logic
+     * including repositioning based on overlap.
+     * Expects classes to define defaults for vOffset, hOffset, position,
+     * alignment, allowOverlap, and allowBottomOverlap. They can do this by
+     * extending the defaults, or (for now recommended due to the way docs are
+     * generated) by explicitly declaring them.
+     *
+     **/
+
+    value: function _init() {
+      this.triedPositions = {};
+      this.position = this.options.position === 'auto' ? this._getDefaultPosition() : this.options.position;
+      this.alignment = this.options.alignment === 'auto' ? this._getDefaultAlignment() : this.options.alignment;
+      this.originalPosition = this.position;
+      this.originalAlignment = this.alignment;
+    }
+  }, {
+    key: '_getDefaultPosition',
+    value: function _getDefaultPosition() {
+      return 'bottom';
+    }
+  }, {
+    key: '_getDefaultAlignment',
+    value: function _getDefaultAlignment() {
+      switch (this.position) {
+        case 'bottom':
+        case 'top':
+          return Object(__WEBPACK_IMPORTED_MODULE_2__foundation_util_core__["b" /* rtl */])() ? 'right' : 'left';
+        case 'left':
+        case 'right':
+          return 'bottom';
+      }
+    }
+
+    /**
+     * Adjusts the positionable possible positions by iterating through alignments
+     * and positions.
+     * @function
+     * @private
+     */
+
+  }, {
+    key: '_reposition',
+    value: function _reposition() {
+      if (this._alignmentsExhausted(this.position)) {
+        this.position = nextItem(this.position, POSITIONS);
+        this.alignment = ALIGNMENTS[this.position][0];
+      } else {
+        this._realign();
+      }
+    }
+
+    /**
+     * Adjusts the dropdown pane possible positions by iterating through alignments
+     * on the current position.
+     * @function
+     * @private
+     */
+
+  }, {
+    key: '_realign',
+    value: function _realign() {
+      this._addTriedPosition(this.position, this.alignment);
+      this.alignment = nextItem(this.alignment, ALIGNMENTS[this.position]);
+    }
+  }, {
+    key: '_addTriedPosition',
+    value: function _addTriedPosition(position, alignment) {
+      this.triedPositions[position] = this.triedPositions[position] || [];
+      this.triedPositions[position].push(alignment);
+    }
+  }, {
+    key: '_positionsExhausted',
+    value: function _positionsExhausted() {
+      var isExhausted = true;
+      for (var i = 0; i < POSITIONS.length; i++) {
+        isExhausted = isExhausted && this._alignmentsExhausted(POSITIONS[i]);
+      }
+      return isExhausted;
+    }
+  }, {
+    key: '_alignmentsExhausted',
+    value: function _alignmentsExhausted(position) {
+      return this.triedPositions[position] && this.triedPositions[position].length == ALIGNMENTS[position].length;
+    }
+
+    // When we're trying to center, we don't want to apply offset that's going to
+    // take us just off center, so wrap around to return 0 for the appropriate
+    // offset in those alignments.  TODO: Figure out if we want to make this
+    // configurable behavior... it feels more intuitive, especially for tooltips, but
+    // it's possible someone might actually want to start from center and then nudge
+    // slightly off.
+
+  }, {
+    key: '_getVOffset',
+    value: function _getVOffset() {
+      return this.options.vOffset;
+    }
+  }, {
+    key: '_getHOffset',
+    value: function _getHOffset() {
+      return this.options.hOffset;
+    }
+  }, {
+    key: '_setPosition',
+    value: function _setPosition($anchor, $element, $parent) {
+      if ($anchor.attr('aria-expanded') === 'false') {
+        return false;
+      }
+      var $eleDims = __WEBPACK_IMPORTED_MODULE_0__foundation_util_box__["a" /* Box */].GetDimensions($element),
+          $anchorDims = __WEBPACK_IMPORTED_MODULE_0__foundation_util_box__["a" /* Box */].GetDimensions($anchor);
+
+      if (!this.options.allowOverlap) {
+        // restore original position & alignment before checking overlap
+        this.position = this.originalPosition;
+        this.alignment = this.originalAlignment;
+      }
+
+      $element.offset(__WEBPACK_IMPORTED_MODULE_0__foundation_util_box__["a" /* Box */].GetExplicitOffsets($element, $anchor, this.position, this.alignment, this._getVOffset(), this._getHOffset()));
+
+      if (!this.options.allowOverlap) {
+        var overlaps = {};
+        var minOverlap = 100000000;
+        // default coordinates to how we start, in case we can't figure out better
+        var minCoordinates = { position: this.position, alignment: this.alignment };
+        while (!this._positionsExhausted()) {
+          var overlap = __WEBPACK_IMPORTED_MODULE_0__foundation_util_box__["a" /* Box */].OverlapArea($element, $parent, false, false, this.options.allowBottomOverlap);
+          if (overlap === 0) {
+            return;
+          }
+
+          if (overlap < minOverlap) {
+            minOverlap = overlap;
+            minCoordinates = { position: this.position, alignment: this.alignment };
+          }
+
+          this._reposition();
+
+          $element.offset(__WEBPACK_IMPORTED_MODULE_0__foundation_util_box__["a" /* Box */].GetExplicitOffsets($element, $anchor, this.position, this.alignment, this._getVOffset(), this._getHOffset()));
+        }
+        // If we get through the entire loop, there was no non-overlapping
+        // position available. Pick the version with least overlap.
+        this.position = minCoordinates.position;
+        this.alignment = minCoordinates.alignment;
+        $element.offset(__WEBPACK_IMPORTED_MODULE_0__foundation_util_box__["a" /* Box */].GetExplicitOffsets($element, $anchor, this.position, this.alignment, this._getVOffset(), this._getHOffset()));
+      }
+    }
+  }]);
+
+  return Positionable;
+}(__WEBPACK_IMPORTED_MODULE_1__foundation_plugin__["a" /* Plugin */]);
+
+Positionable.defaults = {
+  /**
+   * Position of positionable relative to anchor. Can be left, right, bottom, top, or auto.
+   * @option
+   * @type {string}
+   * @default 'auto'
+   */
+  position: 'auto',
+  /**
+   * Alignment of positionable relative to anchor. Can be left, right, bottom, top, center, or auto.
+   * @option
+   * @type {string}
+   * @default 'auto'
+   */
+  alignment: 'auto',
+  /**
+   * Allow overlap of container/window. If false, dropdown positionable first
+   * try to position as defined by data-position and data-alignment, but
+   * reposition if it would cause an overflow.
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  allowOverlap: false,
+  /**
+   * Allow overlap of only the bottom of the container. This is the most common
+   * behavior for dropdowns, allowing the dropdown to extend the bottom of the
+   * screen but not otherwise influence or break out of the container.
+   * @option
+   * @type {boolean}
+   * @default true
+   */
+  allowBottomOverlap: true,
+  /**
+   * Number of pixels the positionable should be separated vertically from anchor
+   * @option
+   * @type {number}
+   * @default 0
+   */
+  vOffset: 0,
+  /**
+   * Number of pixels the positionable should be separated horizontally from anchor
+   * @option
+   * @type {number}
+   * @default 0
+   */
+  hOffset: 0
+};
+
+
+
+/***/ }),
+/* 24 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return DropdownMenu; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_box__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_util_core__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_plugin__ = __webpack_require__(2);
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+
+
+
+
+
+
+
+/**
+ * DropdownMenu module.
+ * @module foundation.dropdown-menu
+ * @requires foundation.util.keyboard
+ * @requires foundation.util.box
+ * @requires foundation.util.nest
+ */
+
+var DropdownMenu = function (_Plugin) {
+  _inherits(DropdownMenu, _Plugin);
+
+  function DropdownMenu() {
+    _classCallCheck(this, DropdownMenu);
+
+    return _possibleConstructorReturn(this, (DropdownMenu.__proto__ || Object.getPrototypeOf(DropdownMenu)).apply(this, arguments));
+  }
+
+  _createClass(DropdownMenu, [{
+    key: '_setup',
+
+    /**
+     * Creates a new instance of DropdownMenu.
+     * @class
+     * @name DropdownMenu
+     * @fires DropdownMenu#init
+     * @param {jQuery} element - jQuery object to make into a dropdown menu.
+     * @param {Object} options - Overrides to the default plugin settings.
+     */
+    value: function _setup(element, options) {
+      this.$element = element;
+      this.options = __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend({}, DropdownMenu.defaults, this.$element.data(), options);
+      this.className = 'DropdownMenu'; // ie9 back compat
+
+      this._init();
+
+      __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].register('DropdownMenu', {
+        'ENTER': 'open',
+        'SPACE': 'open',
+        'ARROW_RIGHT': 'next',
+        'ARROW_UP': 'up',
+        'ARROW_DOWN': 'down',
+        'ARROW_LEFT': 'previous',
+        'ESCAPE': 'close'
+      });
+    }
+
+    /**
+     * Initializes the plugin, and calls _prepareMenu
+     * @private
+     * @function
+     */
+
+  }, {
+    key: '_init',
+    value: function _init() {
+      __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__["a" /* Nest */].Feather(this.$element, 'dropdown');
+
+      var subs = this.$element.find('li.is-dropdown-submenu-parent');
+      this.$element.children('.is-dropdown-submenu-parent').children('.is-dropdown-submenu').addClass('first-sub');
+
+      this.$menuItems = this.$element.find('[role="menuitem"]');
+      this.$tabs = this.$element.children('[role="menuitem"]');
+      this.$tabs.find('ul.is-dropdown-submenu').addClass(this.options.verticalClass);
+
+      if (this.options.alignment === 'auto') {
+        if (this.$element.hasClass(this.options.rightClass) || Object(__WEBPACK_IMPORTED_MODULE_4__foundation_util_core__["b" /* rtl */])() || this.$element.parents('.top-bar-right').is('*')) {
+          this.options.alignment = 'right';
+          subs.addClass('opens-left');
+        } else {
+          this.options.alignment = 'left';
+          subs.addClass('opens-right');
+        }
+      } else {
+        if (this.options.alignment === 'right') {
+          subs.addClass('opens-left');
+        } else {
+          subs.addClass('opens-right');
+        }
+      }
+      this.changed = false;
+      this._events();
+    }
+  }, {
+    key: '_isVertical',
+    value: function _isVertical() {
+      return this.$tabs.css('display') === 'block' || this.$element.css('flex-direction') === 'column';
+    }
+  }, {
+    key: '_isRtl',
+    value: function _isRtl() {
+      return this.$element.hasClass('align-right') || Object(__WEBPACK_IMPORTED_MODULE_4__foundation_util_core__["b" /* rtl */])() && !this.$element.hasClass('align-left');
+    }
+
+    /**
+     * Adds event listeners to elements within the menu
+     * @private
+     * @function
+     */
+
+  }, {
+    key: '_events',
+    value: function _events() {
+      var _this = this,
+          hasTouch = 'ontouchstart' in window || typeof window.ontouchstart !== 'undefined',
+          parClass = 'is-dropdown-submenu-parent';
+
+      // used for onClick and in the keyboard handlers
+      var handleClickFn = function handleClickFn(e) {
+        var $elem = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(e.target).parentsUntil('ul', '.' + parClass),
+            hasSub = $elem.hasClass(parClass),
+            hasClicked = $elem.attr('data-is-click') === 'true',
+            $sub = $elem.children('.is-dropdown-submenu');
+
+        if (hasSub) {
+          if (hasClicked) {
+            if (!_this.options.closeOnClick || !_this.options.clickOpen && !hasTouch || _this.options.forceFollow && hasTouch) {
+              return;
+            } else {
+              e.stopImmediatePropagation();
+              e.preventDefault();
+              _this._hide($elem);
+            }
+          } else {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            _this._show($sub);
+            $elem.add($elem.parentsUntil(_this.$element, '.' + parClass)).attr('data-is-click', true);
+          }
+        }
+      };
+
+      if (this.options.clickOpen || hasTouch) {
+        this.$menuItems.on('click.zf.dropdownmenu touchstart.zf.dropdownmenu', handleClickFn);
+      }
+
+      // Handle Leaf element Clicks
+      if (_this.options.closeOnClickInside) {
+        this.$menuItems.on('click.zf.dropdownmenu', function (e) {
+          var $elem = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
+              hasSub = $elem.hasClass(parClass);
+          if (!hasSub) {
+            _this._hide();
+          }
+        });
+      }
+
+      if (!this.options.disableHover) {
+        this.$menuItems.on('mouseenter.zf.dropdownmenu', function (e) {
+          var $elem = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
+              hasSub = $elem.hasClass(parClass);
+
+          if (hasSub) {
+            clearTimeout($elem.data('_delay'));
+            $elem.data('_delay', setTimeout(function () {
+              _this._show($elem.children('.is-dropdown-submenu'));
+            }, _this.options.hoverDelay));
+          }
+        }).on('mouseleave.zf.dropdownmenu', function (e) {
+          var $elem = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
+              hasSub = $elem.hasClass(parClass);
+          if (hasSub && _this.options.autoclose) {
+            if ($elem.attr('data-is-click') === 'true' && _this.options.clickOpen) {
+              return false;
+            }
+
+            clearTimeout($elem.data('_delay'));
+            $elem.data('_delay', setTimeout(function () {
+              _this._hide($elem);
+            }, _this.options.closingTime));
+          }
+        });
+      }
+      this.$menuItems.on('keydown.zf.dropdownmenu', function (e) {
+        var $element = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(e.target).parentsUntil('ul', '[role="menuitem"]'),
+            isTab = _this.$tabs.index($element) > -1,
+            $elements = isTab ? _this.$tabs : $element.siblings('li').add($element),
+            $prevElement,
+            $nextElement;
+
+        $elements.each(function (i) {
+          if (__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).is($element)) {
+            $prevElement = $elements.eq(i - 1);
+            $nextElement = $elements.eq(i + 1);
+            return;
+          }
+        });
+
+        var nextSibling = function nextSibling() {
+          $nextElement.children('a:first').focus();
+          e.preventDefault();
+        },
+            prevSibling = function prevSibling() {
+          $prevElement.children('a:first').focus();
+          e.preventDefault();
+        },
+            openSub = function openSub() {
+          var $sub = $element.children('ul.is-dropdown-submenu');
+          if ($sub.length) {
+            _this._show($sub);
+            $element.find('li > a:first').focus();
+            e.preventDefault();
+          } else {
+            return;
+          }
+        },
+            closeSub = function closeSub() {
+          //if ($element.is(':first-child')) {
+          var close = $element.parent('ul').parent('li');
+          close.children('a:first').focus();
+          _this._hide(close);
+          e.preventDefault();
+          //}
+        };
+        var functions = {
+          open: openSub,
+          close: function close() {
+            _this._hide(_this.$element);
+            _this.$menuItems.eq(0).children('a').focus(); // focus to first element
+            e.preventDefault();
+          },
+          handled: function handled() {
+            e.stopImmediatePropagation();
+          }
+        };
+
+        if (isTab) {
+          if (_this._isVertical()) {
+            // vertical menu
+            if (_this._isRtl()) {
+              // right aligned
+              __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend(functions, {
+                down: nextSibling,
+                up: prevSibling,
+                next: closeSub,
+                previous: openSub
+              });
+            } else {
+              // left aligned
+              __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend(functions, {
+                down: nextSibling,
+                up: prevSibling,
+                next: openSub,
+                previous: closeSub
+              });
+            }
+          } else {
+            // horizontal menu
+            if (_this._isRtl()) {
+              // right aligned
+              __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend(functions, {
+                next: prevSibling,
+                previous: nextSibling,
+                down: openSub,
+                up: closeSub
+              });
+            } else {
+              // left aligned
+              __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend(functions, {
+                next: nextSibling,
+                previous: prevSibling,
+                down: openSub,
+                up: closeSub
+              });
+            }
+          }
+        } else {
+          // not tabs -> one sub
+          if (_this._isRtl()) {
+            // right aligned
+            __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend(functions, {
+              next: closeSub,
+              previous: openSub,
+              down: nextSibling,
+              up: prevSibling
+            });
+          } else {
+            // left aligned
+            __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend(functions, {
+              next: openSub,
+              previous: closeSub,
+              down: nextSibling,
+              up: prevSibling
+            });
+          }
+        }
+        __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].handleKey(e, 'DropdownMenu', functions);
+      });
+    }
+
+    /**
+     * Adds an event handler to the body to close any dropdowns on a click.
+     * @function
+     * @private
+     */
+
+  }, {
+    key: '_addBodyHandler',
+    value: function _addBodyHandler() {
+      var $body = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(document.body),
+          _this = this;
+      $body.off('mouseup.zf.dropdownmenu touchend.zf.dropdownmenu').on('mouseup.zf.dropdownmenu touchend.zf.dropdownmenu', function (e) {
+        var $link = _this.$element.find(e.target);
+        if ($link.length) {
+          return;
+        }
+
+        _this._hide();
+        $body.off('mouseup.zf.dropdownmenu touchend.zf.dropdownmenu');
+      });
+    }
+
+    /**
+     * Opens a dropdown pane, and checks for collisions first.
+     * @param {jQuery} $sub - ul element that is a submenu to show
+     * @function
+     * @private
+     * @fires DropdownMenu#show
+     */
+
+  }, {
+    key: '_show',
+    value: function _show($sub) {
+      var idx = this.$tabs.index(this.$tabs.filter(function (i, el) {
+        return __WEBPACK_IMPORTED_MODULE_0_jquery___default()(el).find($sub).length > 0;
+      }));
+      var $sibs = $sub.parent('li.is-dropdown-submenu-parent').siblings('li.is-dropdown-submenu-parent');
+      this._hide($sibs, idx);
+      $sub.css('visibility', 'hidden').addClass('js-dropdown-active').parent('li.is-dropdown-submenu-parent').addClass('is-active');
+      var clear = __WEBPACK_IMPORTED_MODULE_3__foundation_util_box__["a" /* Box */].ImNotTouchingYou($sub, null, true);
+      if (!clear) {
+        var oldClass = this.options.alignment === 'left' ? '-right' : '-left',
+            $parentLi = $sub.parent('.is-dropdown-submenu-parent');
+        $parentLi.removeClass('opens' + oldClass).addClass('opens-' + this.options.alignment);
+        clear = __WEBPACK_IMPORTED_MODULE_3__foundation_util_box__["a" /* Box */].ImNotTouchingYou($sub, null, true);
+        if (!clear) {
+          $parentLi.removeClass('opens-' + this.options.alignment).addClass('opens-inner');
+        }
+        this.changed = true;
+      }
+      $sub.css('visibility', '');
+      if (this.options.closeOnClick) {
+        this._addBodyHandler();
+      }
+      /**
+       * Fires when the new dropdown pane is visible.
+       * @event DropdownMenu#show
+       */
+      this.$element.trigger('show.zf.dropdownmenu', [$sub]);
+    }
+
+    /**
+     * Hides a single, currently open dropdown pane, if passed a parameter, otherwise, hides everything.
+     * @function
+     * @param {jQuery} $elem - element with a submenu to hide
+     * @param {Number} idx - index of the $tabs collection to hide
+     * @private
+     */
+
+  }, {
+    key: '_hide',
+    value: function _hide($elem, idx) {
+      var $toClose;
+      if ($elem && $elem.length) {
+        $toClose = $elem;
+      } else if (idx !== undefined) {
+        $toClose = this.$tabs.not(function (i, el) {
+          return i === idx;
+        });
+      } else {
+        $toClose = this.$element;
+      }
+      var somethingToClose = $toClose.hasClass('is-active') || $toClose.find('.is-active').length > 0;
+
+      if (somethingToClose) {
+        $toClose.find('li.is-active').add($toClose).attr({
+          'data-is-click': false
+        }).removeClass('is-active');
+
+        $toClose.find('ul.js-dropdown-active').removeClass('js-dropdown-active');
+
+        if (this.changed || $toClose.find('opens-inner').length) {
+          var oldClass = this.options.alignment === 'left' ? 'right' : 'left';
+          $toClose.find('li.is-dropdown-submenu-parent').add($toClose).removeClass('opens-inner opens-' + this.options.alignment).addClass('opens-' + oldClass);
+          this.changed = false;
+        }
+        /**
+         * Fires when the open menus are closed.
+         * @event DropdownMenu#hide
+         */
+        this.$element.trigger('hide.zf.dropdownmenu', [$toClose]);
+      }
+    }
+
+    /**
+     * Destroys the plugin.
+     * @function
+     */
+
+  }, {
+    key: '_destroy',
+    value: function _destroy() {
+      this.$menuItems.off('.zf.dropdownmenu').removeAttr('data-is-click').removeClass('is-right-arrow is-left-arrow is-down-arrow opens-right opens-left opens-inner');
+      __WEBPACK_IMPORTED_MODULE_0_jquery___default()(document.body).off('.zf.dropdownmenu');
+      __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__["a" /* Nest */].Burn(this.$element, 'dropdown');
+    }
+  }]);
+
+  return DropdownMenu;
+}(__WEBPACK_IMPORTED_MODULE_5__foundation_plugin__["a" /* Plugin */]);
+
+/**
+ * Default settings for plugin
+ */
+
+
+DropdownMenu.defaults = {
+  /**
+   * Disallows hover events from opening submenus
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  disableHover: false,
+  /**
+   * Allow a submenu to automatically close on a mouseleave event, if not clicked open.
+   * @option
+   * @type {boolean}
+   * @default true
+   */
+  autoclose: true,
+  /**
+   * Amount of time to delay opening a submenu on hover event.
+   * @option
+   * @type {number}
+   * @default 50
+   */
+  hoverDelay: 50,
+  /**
+   * Allow a submenu to open/remain open on parent click event. Allows cursor to move away from menu.
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  clickOpen: false,
+  /**
+   * Amount of time to delay closing a submenu on a mouseleave event.
+   * @option
+   * @type {number}
+   * @default 500
+   */
+
+  closingTime: 500,
+  /**
+   * Position of the menu relative to what direction the submenus should open. Handled by JS. Can be `'auto'`, `'left'` or `'right'`.
+   * @option
+   * @type {string}
+   * @default 'auto'
+   */
+  alignment: 'auto',
+  /**
+   * Allow clicks on the body to close any open submenus.
+   * @option
+   * @type {boolean}
+   * @default true
+   */
+  closeOnClick: true,
+  /**
+   * Allow clicks on leaf anchor links to close any open submenus.
+   * @option
+   * @type {boolean}
+   * @default true
+   */
+  closeOnClickInside: true,
+  /**
+   * Class applied to vertical oriented menus, Foundation default is `vertical`. Update this if using your own class.
+   * @option
+   * @type {string}
+   * @default 'vertical'
+   */
+  verticalClass: 'vertical',
+  /**
+   * Class applied to right-side oriented menus, Foundation default is `align-right`. Update this if using your own class.
+   * @option
+   * @type {string}
+   * @default 'align-right'
+   */
+  rightClass: 'align-right',
+  /**
+   * Boolean to force overide the clicking of links to perform default action, on second touch event for mobile.
+   * @option
+   * @type {boolean}
+   * @default true
+   */
+  forceFollow: true
+};
+
+
+
+/***/ }),
+/* 25 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return SmoothScroll; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_core__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_plugin__ = __webpack_require__(2);
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+
+
+
+
+/**
+ * SmoothScroll module.
+ * @module foundation.smooth-scroll
+ */
+
+var SmoothScroll = function (_Plugin) {
+    _inherits(SmoothScroll, _Plugin);
+
+    function SmoothScroll() {
+        _classCallCheck(this, SmoothScroll);
+
+        return _possibleConstructorReturn(this, (SmoothScroll.__proto__ || Object.getPrototypeOf(SmoothScroll)).apply(this, arguments));
+    }
+
+    _createClass(SmoothScroll, [{
+        key: '_setup',
+
+        /**
+         * Creates a new instance of SmoothScroll.
+         * @class
+         * @name SmoothScroll
+         * @fires SmoothScroll#init
+         * @param {Object} element - jQuery object to add the trigger to.
+         * @param {Object} options - Overrides to the default plugin settings.
+         */
+        value: function _setup(element, options) {
+            this.$element = element;
+            this.options = __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend({}, SmoothScroll.defaults, this.$element.data(), options);
+            this.className = 'SmoothScroll'; // ie9 back compat
+
+            this._init();
+        }
+
+        /**
+         * Initialize the SmoothScroll plugin
+         * @private
+         */
+
+    }, {
+        key: '_init',
+        value: function _init() {
+            var id = this.$element[0].id || Object(__WEBPACK_IMPORTED_MODULE_1__foundation_util_core__["a" /* GetYoDigits */])(6, 'smooth-scroll');
+            var _this = this;
+            this.$element.attr({
+                'id': id
+            });
+
+            this._events();
+        }
+
+        /**
+         * Initializes events for SmoothScroll.
+         * @private
+         */
+
+    }, {
+        key: '_events',
+        value: function _events() {
+            var _this = this;
+
+            // click handler function.
+            var handleLinkClick = function handleLinkClick(e) {
+                // exit function if the event source isn't coming from an anchor with href attribute starts with '#'
+                if (!__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).is('a[href^="#"]')) {
+                    return false;
+                }
+
+                var arrival = this.getAttribute('href');
+
+                _this._inTransition = true;
+
+                SmoothScroll.scrollToLoc(arrival, _this.options, function () {
+                    _this._inTransition = false;
+                });
+
+                e.preventDefault();
+            };
+
+            this.$element.on('click.zf.smoothScroll', handleLinkClick);
+            this.$element.on('click.zf.smoothScroll', 'a[href^="#"]', handleLinkClick);
+        }
+
+        /**
+         * Function to scroll to a given location on the page.
+         * @param {String} loc - A properly formatted jQuery id selector. Example: '#foo'
+         * @param {Object} options - The options to use.
+         * @param {Function} callback - The callback function.
+         * @static
+         * @function
+         */
+
+    }], [{
+        key: 'scrollToLoc',
+        value: function scrollToLoc(loc) {
+            var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : SmoothScroll.defaults;
+            var callback = arguments[2];
+
+            // Do nothing if target does not exist to prevent errors
+            if (!__WEBPACK_IMPORTED_MODULE_0_jquery___default()(loc).length) {
+                return false;
+            }
+
+            var scrollPos = Math.round(__WEBPACK_IMPORTED_MODULE_0_jquery___default()(loc).offset().top - options.threshold / 2 - options.offset);
+
+            __WEBPACK_IMPORTED_MODULE_0_jquery___default()('html, body').stop(true).animate({ scrollTop: scrollPos }, options.animationDuration, options.animationEasing, function () {
+                if (callback && typeof callback == "function") {
+                    callback();
+                }
+            });
+        }
+    }]);
+
+    return SmoothScroll;
+}(__WEBPACK_IMPORTED_MODULE_2__foundation_plugin__["a" /* Plugin */]);
+
+/**
+ * Default settings for plugin.
+ */
+
+
+SmoothScroll.defaults = {
+    /**
+     * Amount of time, in ms, the animated scrolling should take between locations.
+     * @option
+     * @type {number}
+     * @default 500
+     */
+    animationDuration: 500,
+    /**
+     * Animation style to use when scrolling between locations. Can be `'swing'` or `'linear'`.
+     * @option
+     * @type {string}
+     * @default 'linear'
+     * @see {@link https://api.jquery.com/animate|Jquery animate}
+     */
+    animationEasing: 'linear',
+    /**
+     * Number of pixels to use as a marker for location changes.
+     * @option
+     * @type {number}
+     * @default 50
+     */
+    threshold: 50,
+    /**
+     * Number of pixels to offset the scroll of the page on item click if using a sticky nav bar.
+     * @option
+     * @type {number}
+     * @default 0
+     */
+    offset: 0
+};
+
+
+
+/***/ }),
+/* 26 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Tabs; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_imageLoader__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_plugin__ = __webpack_require__(2);
+
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+
+
+
+
+/**
+ * Tabs module.
+ * @module foundation.tabs
+ * @requires foundation.util.keyboard
+ * @requires foundation.util.imageLoader if tabs contain images
+ */
+
+var Tabs = function (_Plugin) {
+  _inherits(Tabs, _Plugin);
+
+  function Tabs() {
+    _classCallCheck(this, Tabs);
+
+    return _possibleConstructorReturn(this, (Tabs.__proto__ || Object.getPrototypeOf(Tabs)).apply(this, arguments));
+  }
+
+  _createClass(Tabs, [{
+    key: '_setup',
+
+    /**
+     * Creates a new instance of tabs.
+     * @class
+     * @name Tabs
+     * @fires Tabs#init
+     * @param {jQuery} element - jQuery object to make into tabs.
+     * @param {Object} options - Overrides to the default plugin settings.
+     */
+    value: function _setup(element, options) {
+      this.$element = element;
+      this.options = __WEBPACK_IMPORTED_MODULE_0_jquery___default.a.extend({}, Tabs.defaults, this.$element.data(), options);
+      this.className = 'Tabs'; // ie9 back compat
+
+      this._init();
+      __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].register('Tabs', {
+        'ENTER': 'open',
+        'SPACE': 'open',
+        'ARROW_RIGHT': 'next',
+        'ARROW_UP': 'previous',
+        'ARROW_DOWN': 'next',
+        'ARROW_LEFT': 'previous'
+        // 'TAB': 'next',
+        // 'SHIFT_TAB': 'previous'
+      });
+    }
+
+    /**
+     * Initializes the tabs by showing and focusing (if autoFocus=true) the preset active tab.
+     * @private
+     */
+
+  }, {
+    key: '_init',
+    value: function _init() {
+      var _this3 = this;
+
+      var _this = this;
+
+      this.$element.attr({ 'role': 'tablist' });
+      this.$tabTitles = this.$element.find('.' + this.options.linkClass);
+      this.$tabContent = __WEBPACK_IMPORTED_MODULE_0_jquery___default()('[data-tabs-content="' + this.$element[0].id + '"]');
+
+      this.$tabTitles.each(function () {
+        var $elem = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
+            $link = $elem.find('a'),
+            isActive = $elem.hasClass('' + _this.options.linkActiveClass),
+            hash = $link.attr('data-tabs-target') || $link[0].hash.slice(1),
+            linkId = $link[0].id ? $link[0].id : hash + '-label',
+            $tabContent = __WEBPACK_IMPORTED_MODULE_0_jquery___default()('#' + hash);
+
+        $elem.attr({ 'role': 'presentation' });
+
+        $link.attr({
+          'role': 'tab',
+          'aria-controls': hash,
+          'aria-selected': isActive,
+          'id': linkId,
+          'tabindex': isActive ? '0' : '-1'
+        });
+
+        $tabContent.attr({
+          'role': 'tabpanel',
+          'aria-labelledby': linkId
+        });
+
+        if (!isActive) {
+          $tabContent.attr('aria-hidden', 'true');
+        }
+
+        if (isActive && _this.options.autoFocus) {
+          __WEBPACK_IMPORTED_MODULE_0_jquery___default()(window).load(function () {
+            __WEBPACK_IMPORTED_MODULE_0_jquery___default()('html, body').animate({ scrollTop: $elem.offset().top }, _this.options.deepLinkSmudgeDelay, function () {
+              $link.focus();
+            });
+          });
+        }
+      });
+      if (this.options.matchHeight) {
+        var $images = this.$tabContent.find('img');
+
+        if ($images.length) {
+          Object(__WEBPACK_IMPORTED_MODULE_2__foundation_util_imageLoader__["a" /* onImagesLoaded */])($images, this._setHeight.bind(this));
+        } else {
+          this._setHeight();
+        }
+      }
+
+      //current context-bound function to open tabs on page load or history popstate
+      this._checkDeepLink = function () {
+        var anchor = window.location.hash;
+        //need a hash and a relevant anchor in this tabset
+        if (anchor.length) {
+          var $link = _this3.$element.find('[href$="' + anchor + '"]');
+          if ($link.length) {
+            _this3.selectTab(__WEBPACK_IMPORTED_MODULE_0_jquery___default()(anchor), true);
+
+            //roll up a little to show the titles
+            if (_this3.options.deepLinkSmudge) {
+              var offset = _this3.$element.offset();
+              __WEBPACK_IMPORTED_MODULE_0_jquery___default()('html, body').animate({ scrollTop: offset.top }, _this3.options.deepLinkSmudgeDelay);
+            }
+
+            /**
+              * Fires when the zplugin has deeplinked at pageload
+              * @event Tabs#deeplink
+              */
+            _this3.$element.trigger('deeplink.zf.tabs', [$link, __WEBPACK_IMPORTED_MODULE_0_jquery___default()(anchor)]);
+          }
+        }
+      };
+
+      //use browser to open a tab, if it exists in this tabset
+      if (this.options.deepLink) {
+        this._checkDeepLink();
+      }
+
+      this._events();
+    }
+
+    /**
+     * Adds event handlers for items within the tabs.
+     * @private
+     */
+
+  }, {
+    key: '_events',
+    value: function _events() {
+      this._addKeyHandler();
+      this._addClickHandler();
+      this._setHeightMqHandler = null;
+
+      if (this.options.matchHeight) {
+        this._setHeightMqHandler = this._setHeight.bind(this);
+
+        __WEBPACK_IMPORTED_MODULE_0_jquery___default()(window).on('changed.zf.mediaquery', this._setHeightMqHandler);
+      }
+
+      if (this.options.deepLink) {
+        __WEBPACK_IMPORTED_MODULE_0_jquery___default()(window).on('popstate', this._checkDeepLink);
+      }
+    }
+
+    /**
+     * Adds click handlers for items within the tabs.
+     * @private
+     */
+
+  }, {
+    key: '_addClickHandler',
+    value: function _addClickHandler() {
+      var _this = this;
+
+      this.$element.off('click.zf.tabs').on('click.zf.tabs', '.' + this.options.linkClass, function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        _this._handleTabChange(__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this));
+      });
+    }
+
+    /**
+     * Adds keyboard event handlers for items within the tabs.
+     * @private
+     */
+
+  }, {
+    key: '_addKeyHandler',
+    value: function _addKeyHandler() {
+      var _this = this;
+
+      this.$tabTitles.off('keydown.zf.tabs').on('keydown.zf.tabs', function (e) {
+        if (e.which === 9) return;
+
+        var $element = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
+            $elements = $element.parent('ul').children('li'),
+            $prevElement,
+            $nextElement;
+
+        $elements.each(function (i) {
+          if (__WEBPACK_IMPORTED_MODULE_0_jquery___default()(this).is($element)) {
+            if (_this.options.wrapOnKeys) {
+              $prevElement = i === 0 ? $elements.last() : $elements.eq(i - 1);
+              $nextElement = i === $elements.length - 1 ? $elements.first() : $elements.eq(i + 1);
+            } else {
+              $prevElement = $elements.eq(Math.max(0, i - 1));
+              $nextElement = $elements.eq(Math.min(i + 1, $elements.length - 1));
+            }
+            return;
+          }
+        });
+
+        // handle keyboard event with keyboard util
+        __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__["a" /* Keyboard */].handleKey(e, 'Tabs', {
+          open: function open() {
+            $element.find('[role="tab"]').focus();
+            _this._handleTabChange($element);
+          },
+          previous: function previous() {
+            $prevElement.find('[role="tab"]').focus();
+            _this._handleTabChange($prevElement);
+          },
+          next: function next() {
+            $nextElement.find('[role="tab"]').focus();
+            _this._handleTabChange($nextElement);
+          },
+          handled: function handled() {
+            e.stopPropagation();
+            e.preventDefault();
+          }
+        });
+      });
+    }
+
+    /**
+     * Opens the tab `$targetContent` defined by `$target`. Collapses active tab.
+     * @param {jQuery} $target - Tab to open.
+     * @param {boolean} historyHandled - browser has already handled a history update
+     * @fires Tabs#change
+     * @function
+     */
+
+  }, {
+    key: '_handleTabChange',
+    value: function _handleTabChange($target, historyHandled) {
+
+      /**
+       * Check for active class on target. Collapse if exists.
+       */
+      if ($target.hasClass('' + this.options.linkActiveClass)) {
+        if (this.options.activeCollapse) {
+          this._collapseTab($target);
+
+          /**
+           * Fires when the zplugin has successfully collapsed tabs.
+           * @event Tabs#collapse
+           */
+          this.$element.trigger('collapse.zf.tabs', [$target]);
+        }
+        return;
+      }
+
+      var $oldTab = this.$element.find('.' + this.options.linkClass + '.' + this.options.linkActiveClass),
+          $tabLink = $target.find('[role="tab"]'),
+          hash = $tabLink.attr('data-tabs-target') || $tabLink[0].hash.slice(1),
+          $targetContent = this.$tabContent.find('#' + hash);
+
+      //close old tab
+      this._collapseTab($oldTab);
+
+      //open new tab
+      this._openTab($target);
+
+      //either replace or update browser history
+      if (this.options.deepLink && !historyHandled) {
+        var anchor = $target.find('a').attr('href');
+
+        if (this.options.updateHistory) {
+          history.pushState({}, '', anchor);
+        } else {
+          history.replaceState({}, '', anchor);
+        }
+      }
+
+      /**
+       * Fires when the plugin has successfully changed tabs.
+       * @event Tabs#change
+       */
+      this.$element.trigger('change.zf.tabs', [$target, $targetContent]);
+
+      //fire to children a mutation event
+      $targetContent.find("[data-mutate]").trigger("mutateme.zf.trigger");
+    }
+
+    /**
+     * Opens the tab `$targetContent` defined by `$target`.
+     * @param {jQuery} $target - Tab to Open.
+     * @function
+     */
+
+  }, {
+    key: '_openTab',
+    value: function _openTab($target) {
+      var $tabLink = $target.find('[role="tab"]'),
+          hash = $tabLink.attr('data-tabs-target') || $tabLink[0].hash.slice(1),
+          $targetContent = this.$tabContent.find('#' + hash);
+
+      $target.addClass('' + this.options.linkActiveClass);
+
+      $tabLink.attr({
+        'aria-selected': 'true',
+        'tabindex': '0'
+      });
+
+      $targetContent.addClass('' + this.options.panelActiveClass).removeAttr('aria-hidden');
+    }
+
+    /**
+     * Collapses `$targetContent` defined by `$target`.
+     * @param {jQuery} $target - Tab to Open.
+     * @function
+     */
+
+  }, {
+    key: '_collapseTab',
+    value: function _collapseTab($target) {
+      var $target_anchor = $target.removeClass('' + this.options.linkActiveClass).find('[role="tab"]').attr({
+        'aria-selected': 'false',
+        'tabindex': -1
+      });
+
+      __WEBPACK_IMPORTED_MODULE_0_jquery___default()('#' + $target_anchor.attr('aria-controls')).removeClass('' + this.options.panelActiveClass).attr({ 'aria-hidden': 'true' });
+    }
+
+    /**
+     * Public method for selecting a content pane to display.
+     * @param {jQuery | String} elem - jQuery object or string of the id of the pane to display.
+     * @param {boolean} historyHandled - browser has already handled a history update
+     * @function
+     */
+
+  }, {
+    key: 'selectTab',
+    value: function selectTab(elem, historyHandled) {
+      var idStr;
+
+      if ((typeof elem === 'undefined' ? 'undefined' : _typeof(elem)) === 'object') {
+        idStr = elem[0].id;
+      } else {
+        idStr = elem;
+      }
+
+      if (idStr.indexOf('#') < 0) {
+        idStr = '#' + idStr;
+      }
+
+      var $target = this.$tabTitles.find('[href$="' + idStr + '"]').parent('.' + this.options.linkClass);
+
+      this._handleTabChange($target, historyHandled);
+    }
+  }, {
+    key: '_setHeight',
+
+    /**
+     * Sets the height of each panel to the height of the tallest panel.
+     * If enabled in options, gets called on media query change.
+     * If loading content via external source, can be called directly or with _reflow.
+     * If enabled with `data-match-height="true"`, tabs sets to equal height
+     * @function
+     * @private
+     */
+    value: function _setHeight() {
+      var max = 0,
+          _this = this; // Lock down the `this` value for the root tabs object
+
+      this.$tabContent.find('.' + this.options.panelClass).css('height', '').each(function () {
+
+        var panel = __WEBPACK_IMPORTED_MODULE_0_jquery___default()(this),
+            isActive = panel.hasClass('' + _this.options.panelActiveClass); // get the options from the parent instead of trying to get them from the child
+
+        if (!isActive) {
+          panel.css({ 'visibility': 'hidden', 'display': 'block' });
+        }
+
+        var temp = this.getBoundingClientRect().height;
+
+        if (!isActive) {
+          panel.css({
+            'visibility': '',
+            'display': ''
+          });
+        }
+
+        max = temp > max ? temp : max;
+      }).css('height', max + 'px');
+    }
+
+    /**
+     * Destroys an instance of an tabs.
+     * @fires Tabs#destroyed
+     */
+
+  }, {
+    key: '_destroy',
+    value: function _destroy() {
+      this.$element.find('.' + this.options.linkClass).off('.zf.tabs').hide().end().find('.' + this.options.panelClass).hide();
+
+      if (this.options.matchHeight) {
+        if (this._setHeightMqHandler != null) {
+          __WEBPACK_IMPORTED_MODULE_0_jquery___default()(window).off('changed.zf.mediaquery', this._setHeightMqHandler);
+        }
+      }
+
+      if (this.options.deepLink) {
+        __WEBPACK_IMPORTED_MODULE_0_jquery___default()(window).off('popstate', this._checkDeepLink);
+      }
+    }
+  }]);
+
+  return Tabs;
+}(__WEBPACK_IMPORTED_MODULE_3__foundation_plugin__["a" /* Plugin */]);
+
+Tabs.defaults = {
+  /**
+   * Allows the window to scroll to content of pane specified by hash anchor
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  deepLink: false,
+
+  /**
+   * Adjust the deep link scroll to make sure the top of the tab panel is visible
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  deepLinkSmudge: false,
+
+  /**
+   * Animation time (ms) for the deep link adjustment
+   * @option
+   * @type {number}
+   * @default 300
+   */
+  deepLinkSmudgeDelay: 300,
+
+  /**
+   * Update the browser history with the open tab
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  updateHistory: false,
+
+  /**
+   * Allows the window to scroll to content of active pane on load if set to true.
+   * Not recommended if more than one tab panel per page.
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  autoFocus: false,
+
+  /**
+   * Allows keyboard input to 'wrap' around the tab links.
+   * @option
+   * @type {boolean}
+   * @default true
+   */
+  wrapOnKeys: true,
+
+  /**
+   * Allows the tab content panes to match heights if set to true.
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  matchHeight: false,
+
+  /**
+   * Allows active tabs to collapse when clicked.
+   * @option
+   * @type {boolean}
+   * @default false
+   */
+  activeCollapse: false,
+
+  /**
+   * Class applied to `li`'s in tab link list.
+   * @option
+   * @type {string}
+   * @default 'tabs-title'
+   */
+  linkClass: 'tabs-title',
+
+  /**
+   * Class applied to the active `li` in tab link list.
+   * @option
+   * @type {string}
+   * @default 'is-active'
+   */
+  linkActiveClass: 'is-active',
+
+  /**
+   * Class applied to the content containers.
+   * @option
+   * @type {string}
+   * @default 'tabs-panel'
+   */
+  panelClass: 'tabs-panel',
+
+  /**
+   * Class applied to the active content container.
+   * @option
+   * @type {string}
+   * @default 'is-active'
+   */
+  panelActiveClass: 'is-active'
+};
+
+
+
+/***/ }),
+/* 27 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+module.exports = function bind(fn, thisArg) {
+  return function wrap() {
+    var args = new Array(arguments.length);
+    for (var i = 0; i < args.length; i++) {
+      args[i] = arguments[i];
+    }
+    return fn.apply(thisArg, args);
+  };
+};
+
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(3);
+var settle = __webpack_require__(58);
+var buildURL = __webpack_require__(60);
+var parseHeaders = __webpack_require__(61);
+var isURLSameOrigin = __webpack_require__(62);
+var createError = __webpack_require__(29);
+var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(63);
+
+module.exports = function xhrAdapter(config) {
+  return new Promise(function dispatchXhrRequest(resolve, reject) {
+    var requestData = config.data;
+    var requestHeaders = config.headers;
+
+    if (utils.isFormData(requestData)) {
+      delete requestHeaders['Content-Type']; // Let the browser set it
+    }
+
+    var request = new XMLHttpRequest();
+    var loadEvent = 'onreadystatechange';
+    var xDomain = false;
+
+    // For IE 8/9 CORS support
+    // Only supports POST and GET calls and doesn't returns the response headers.
+    // DON'T do this for testing b/c XMLHttpRequest is mocked, not XDomainRequest.
+    if ("development" !== 'test' &&
+        typeof window !== 'undefined' &&
+        window.XDomainRequest && !('withCredentials' in request) &&
+        !isURLSameOrigin(config.url)) {
+      request = new window.XDomainRequest();
+      loadEvent = 'onload';
+      xDomain = true;
+      request.onprogress = function handleProgress() {};
+      request.ontimeout = function handleTimeout() {};
+    }
+
+    // HTTP basic authentication
+    if (config.auth) {
+      var username = config.auth.username || '';
+      var password = config.auth.password || '';
+      requestHeaders.Authorization = 'Basic ' + btoa(username + ':' + password);
+    }
+
+    request.open(config.method.toUpperCase(), buildURL(config.url, config.params, config.paramsSerializer), true);
+
+    // Set the request timeout in MS
+    request.timeout = config.timeout;
+
+    // Listen for ready state
+    request[loadEvent] = function handleLoad() {
+      if (!request || (request.readyState !== 4 && !xDomain)) {
+        return;
+      }
+
+      // The request errored out and we didn't get a response, this will be
+      // handled by onerror instead
+      // With one exception: request that using file: protocol, most browsers
+      // will return status as 0 even though it's a successful request
+      if (request.status === 0 && !(request.responseURL && request.responseURL.indexOf('file:') === 0)) {
+        return;
+      }
+
+      // Prepare the response
+      var responseHeaders = 'getAllResponseHeaders' in request ? parseHeaders(request.getAllResponseHeaders()) : null;
+      var responseData = !config.responseType || config.responseType === 'text' ? request.responseText : request.response;
+      var response = {
+        data: responseData,
+        // IE sends 1223 instead of 204 (https://github.com/axios/axios/issues/201)
+        status: request.status === 1223 ? 204 : request.status,
+        statusText: request.status === 1223 ? 'No Content' : request.statusText,
+        headers: responseHeaders,
+        config: config,
+        request: request
+      };
+
+      settle(resolve, reject, response);
+
+      // Clean up request
+      request = null;
+    };
+
+    // Handle low level network errors
+    request.onerror = function handleError() {
+      // Real errors are hidden from us by the browser
+      // onerror should only fire if it's a network error
+      reject(createError('Network Error', config, null, request));
+
+      // Clean up request
+      request = null;
+    };
+
+    // Handle timeout
+    request.ontimeout = function handleTimeout() {
+      reject(createError('timeout of ' + config.timeout + 'ms exceeded', config, 'ECONNABORTED',
+        request));
+
+      // Clean up request
+      request = null;
+    };
+
+    // Add xsrf header
+    // This is only done if running in a standard browser environment.
+    // Specifically not if we're in a web worker, or react-native.
+    if (utils.isStandardBrowserEnv()) {
+      var cookies = __webpack_require__(64);
+
+      // Add xsrf header
+      var xsrfValue = (config.withCredentials || isURLSameOrigin(config.url)) && config.xsrfCookieName ?
+          cookies.read(config.xsrfCookieName) :
+          undefined;
+
+      if (xsrfValue) {
+        requestHeaders[config.xsrfHeaderName] = xsrfValue;
+      }
+    }
+
+    // Add headers to the request
+    if ('setRequestHeader' in request) {
+      utils.forEach(requestHeaders, function setRequestHeader(val, key) {
+        if (typeof requestData === 'undefined' && key.toLowerCase() === 'content-type') {
+          // Remove Content-Type if data is undefined
+          delete requestHeaders[key];
+        } else {
+          // Otherwise add header to the request
+          request.setRequestHeader(key, val);
+        }
+      });
+    }
+
+    // Add withCredentials to request if needed
+    if (config.withCredentials) {
+      request.withCredentials = true;
+    }
+
+    // Add responseType to request if needed
+    if (config.responseType) {
+      try {
+        request.responseType = config.responseType;
+      } catch (e) {
+        // Expected DOMException thrown by browsers not compatible XMLHttpRequest Level 2.
+        // But, this can be suppressed for 'json' type as it can be parsed by default 'transformResponse' function.
+        if (config.responseType !== 'json') {
+          throw e;
+        }
+      }
+    }
+
+    // Handle progress if needed
+    if (typeof config.onDownloadProgress === 'function') {
+      request.addEventListener('progress', config.onDownloadProgress);
+    }
+
+    // Not all browsers support upload events
+    if (typeof config.onUploadProgress === 'function' && request.upload) {
+      request.upload.addEventListener('progress', config.onUploadProgress);
+    }
+
+    if (config.cancelToken) {
+      // Handle cancellation
+      config.cancelToken.promise.then(function onCanceled(cancel) {
+        if (!request) {
+          return;
+        }
+
+        request.abort();
+        reject(cancel);
+        // Clean up request
+        request = null;
+      });
+    }
+
+    if (requestData === undefined) {
+      requestData = null;
+    }
+
+    // Send the request
+    request.send(requestData);
+  });
+};
+
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var enhanceError = __webpack_require__(59);
+
+/**
+ * Create an Error with the specified message, config, error code, request and response.
+ *
+ * @param {string} message The error message.
+ * @param {Object} config The config.
+ * @param {string} [code] The error code (for example, 'ECONNABORTED').
+ * @param {Object} [request] The request.
+ * @param {Object} [response] The response.
+ * @returns {Error} The created error.
+ */
+module.exports = function createError(message, config, code, request, response) {
+  var error = new Error(message);
+  return enhanceError(error, config, code, request, response);
+};
+
+
+/***/ }),
+/* 30 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+module.exports = function isCancel(value) {
+  return !!(value && value.__CANCEL__);
+};
+
+
+/***/ }),
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * A `Cancel` is an object that is thrown when an operation is canceled.
+ *
+ * @class
+ * @param {string=} message The message.
+ */
+function Cancel(message) {
+  this.message = message;
+}
+
+Cancel.prototype.toString = function toString() {
+  return 'Cancel' + (this.message ? ': ' + this.message : '');
+};
+
+Cancel.prototype.__CANCEL__ = true;
+
+module.exports = Cancel;
+
 
 /***/ }),
 /* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(33);
-module.exports = __webpack_require__(97);
+module.exports = __webpack_require__(104);
 
 
 /***/ }),
@@ -27003,9 +27003,10 @@ module.exports = __webpack_require__(97);
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(31);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(18);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__routes_js__ = __webpack_require__(74);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__store_js__ = __webpack_require__(97);
 window._ = __webpack_require__(34);
 
 try {
@@ -27053,8 +27054,10 @@ if (token) {
 
 
 
+
 new __WEBPACK_IMPORTED_MODULE_0_vue___default.a({
-  router: __WEBPACK_IMPORTED_MODULE_1__routes_js__["a" /* default */]
+  router: __WEBPACK_IMPORTED_MODULE_1__routes_js__["a" /* default */],
+  store: __WEBPACK_IMPORTED_MODULE_2__store_js__["a" /* default */]
 }).$mount('#app');
 
 /***/ }),
@@ -44147,7 +44150,7 @@ new __WEBPACK_IMPORTED_MODULE_0_vue___default.a({
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14), __webpack_require__(35)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8), __webpack_require__(35)(module)))
 
 /***/ }),
 /* 35 */
@@ -44187,21 +44190,21 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__js_foundation_core__ = __webpack_require__(37);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__js_foundation_util_core__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__js_foundation_util_box__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__js_foundation_util_imageLoader__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__js_foundation_util_box__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__js_foundation_util_imageLoader__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__js_foundation_util_keyboard__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__js_foundation_util_mediaQuery__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__js_foundation_util_motion__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__js_foundation_util_nest__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__js_foundation_util_timer__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__js_foundation_util_nest__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__js_foundation_util_timer__ = __webpack_require__(19);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__js_foundation_util_touch__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_foundation_util_triggers__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__js_foundation_abide__ = __webpack_require__(38);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__js_foundation_accordion__ = __webpack_require__(18);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__js_foundation_accordionMenu__ = __webpack_require__(19);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__js_foundation_drilldown__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__js_foundation_accordion__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__js_foundation_accordionMenu__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__js_foundation_drilldown__ = __webpack_require__(22);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__js_foundation_dropdown__ = __webpack_require__(39);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__js_foundation_dropdownMenu__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__js_foundation_dropdownMenu__ = __webpack_require__(24);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_18__js_foundation_equalizer__ = __webpack_require__(40);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_19__js_foundation_interchange__ = __webpack_require__(41);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_20__js_foundation_magellan__ = __webpack_require__(42);
@@ -44211,9 +44214,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_24__js_foundation_responsiveToggle__ = __webpack_require__(46);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_25__js_foundation_reveal__ = __webpack_require__(47);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_26__js_foundation_slider__ = __webpack_require__(48);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_27__js_foundation_smoothScroll__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_27__js_foundation_smoothScroll__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_28__js_foundation_sticky__ = __webpack_require__(49);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_29__js_foundation_tabs__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_29__js_foundation_tabs__ = __webpack_require__(26);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_30__js_foundation_toggler__ = __webpack_require__(50);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_31__js_foundation_tooltip__ = __webpack_require__(51);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_32__js_foundation_responsiveAccordionTabs__ = __webpack_require__(52);
@@ -45354,7 +45357,7 @@ Abide.defaults = {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_core__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_positionable__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_positionable__ = __webpack_require__(23);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_util_triggers__ = __webpack_require__(6);
 
 
@@ -45825,7 +45828,7 @@ Dropdown.defaults = {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_mediaQuery__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_imageLoader__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_imageLoader__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_core__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_plugin__ = __webpack_require__(2);
 
@@ -46493,7 +46496,7 @@ Interchange.SPECIAL_QUERIES = {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_core__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_plugin__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_smoothScroll__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_smoothScroll__ = __webpack_require__(25);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -47435,8 +47438,8 @@ OffCanvas.defaults = {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_motion__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_timer__ = __webpack_require__(17);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_util_imageLoader__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_timer__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_util_imageLoader__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_util_core__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__foundation_plugin__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__foundation_util_touch__ = __webpack_require__(15);
@@ -48038,9 +48041,9 @@ Orbit.defaults = {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_mediaQuery__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_core__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_plugin__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_dropdownMenu__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_drilldown__ = __webpack_require__(20);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__foundation_accordionMenu__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_dropdownMenu__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_drilldown__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__foundation_accordionMenu__ = __webpack_require__(21);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -50679,7 +50682,7 @@ Toggler.defaults = {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_core__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_mediaQuery__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_triggers__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_positionable__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_positionable__ = __webpack_require__(23);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -51192,8 +51195,8 @@ Tooltip.defaults = {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_mediaQuery__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_core__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_plugin__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_accordion__ = __webpack_require__(18);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_tabs__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_accordion__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_tabs__ = __webpack_require__(26);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -51486,7 +51489,7 @@ module.exports = __webpack_require__(54);
 
 
 var utils = __webpack_require__(3);
-var bind = __webpack_require__(25);
+var bind = __webpack_require__(27);
 var Axios = __webpack_require__(56);
 var defaults = __webpack_require__(16);
 
@@ -51521,9 +51524,9 @@ axios.create = function create(instanceConfig) {
 };
 
 // Expose Cancel & CancelToken
-axios.Cancel = __webpack_require__(30);
+axios.Cancel = __webpack_require__(31);
 axios.CancelToken = __webpack_require__(70);
-axios.isCancel = __webpack_require__(29);
+axios.isCancel = __webpack_require__(30);
 
 // Expose all/spread
 axios.all = function all(promises) {
@@ -51676,7 +51679,7 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
 "use strict";
 
 
-var createError = __webpack_require__(28);
+var createError = __webpack_require__(29);
 
 /**
  * Resolve or reject a Promise based on response status.
@@ -52111,7 +52114,7 @@ module.exports = InterceptorManager;
 
 var utils = __webpack_require__(3);
 var transformData = __webpack_require__(67);
-var isCancel = __webpack_require__(29);
+var isCancel = __webpack_require__(30);
 var defaults = __webpack_require__(16);
 var isAbsoluteURL = __webpack_require__(68);
 var combineURLs = __webpack_require__(69);
@@ -52271,7 +52274,7 @@ module.exports = function combineURLs(baseURL, relativeURL) {
 "use strict";
 
 
-var Cancel = __webpack_require__(30);
+var Cancel = __webpack_require__(31);
 
 /**
  * A `CancelToken` is an object that can be used to request cancellation of an operation.
@@ -52612,14 +52615,14 @@ exports.clearImmediate = clearImmediate;
     attachTo.clearImmediate = clearImmediate;
 }(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14), __webpack_require__(26)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8), __webpack_require__(17)))
 
 /***/ }),
 /* 74 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(31);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(18);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vue_router__ = __webpack_require__(75);
 /*
@@ -55299,7 +55302,7 @@ function injectStyle (ssrContext) {
   if (disposed) return
   __webpack_require__(77)
 }
-var normalizeComponent = __webpack_require__(13)
+var normalizeComponent = __webpack_require__(14)
 /* script */
 var __vue_script__ = __webpack_require__(80)
 /* template */
@@ -55352,7 +55355,7 @@ var content = __webpack_require__(78);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(12)("26a351fa", content, false);
+var update = __webpack_require__(13)("26a351fa", content, false);
 // Hot Module Replacement
 if(false) {
  // When the styles change, update the <style> tags
@@ -55371,7 +55374,7 @@ if(false) {
 /* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(11)(undefined);
+exports = module.exports = __webpack_require__(12)(undefined);
 // imports
 
 
@@ -55457,7 +55460,7 @@ function injectStyle (ssrContext) {
   if (disposed) return
   __webpack_require__(83)
 }
-var normalizeComponent = __webpack_require__(13)
+var normalizeComponent = __webpack_require__(14)
 /* script */
 var __vue_script__ = __webpack_require__(85)
 /* template */
@@ -55510,7 +55513,7 @@ var content = __webpack_require__(84);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(12)("6919dc95", content, false);
+var update = __webpack_require__(13)("6919dc95", content, false);
 // Hot Module Replacement
 if(false) {
  // When the styles change, update the <style> tags
@@ -55529,7 +55532,7 @@ if(false) {
 /* 84 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(11)(undefined);
+exports = module.exports = __webpack_require__(12)(undefined);
 // imports
 
 
@@ -55582,7 +55585,7 @@ function injectStyle (ssrContext) {
   if (disposed) return
   __webpack_require__(88)
 }
-var normalizeComponent = __webpack_require__(13)
+var normalizeComponent = __webpack_require__(14)
 /* script */
 var __vue_script__ = __webpack_require__(90)
 /* template */
@@ -55635,7 +55638,7 @@ var content = __webpack_require__(89);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(12)("33fb2a81", content, false);
+var update = __webpack_require__(13)("33fb2a81", content, false);
 // Hot Module Replacement
 if(false) {
  // When the styles change, update the <style> tags
@@ -55654,7 +55657,7 @@ if(false) {
 /* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(11)(undefined);
+exports = module.exports = __webpack_require__(12)(undefined);
 // imports
 
 
@@ -55707,7 +55710,7 @@ function injectStyle (ssrContext) {
   if (disposed) return
   __webpack_require__(93)
 }
-var normalizeComponent = __webpack_require__(13)
+var normalizeComponent = __webpack_require__(14)
 /* script */
 var __vue_script__ = __webpack_require__(95)
 /* template */
@@ -55760,7 +55763,7 @@ var content = __webpack_require__(94);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(12)("0bb6787d", content, false);
+var update = __webpack_require__(13)("0bb6787d", content, false);
 // Hot Module Replacement
 if(false) {
  // When the styles change, update the <style> tags
@@ -55779,7 +55782,7 @@ if(false) {
 /* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(11)(undefined);
+exports = module.exports = __webpack_require__(12)(undefined);
 // imports
 
 
@@ -55825,6 +55828,2357 @@ if (false) {
 
 /***/ }),
 /* 97 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vuex__ = __webpack_require__(100);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__modules_cafes_js__ = __webpack_require__(101);
+/*
+  Adds the promise polyfill for IE 11
+*/
+__webpack_require__(98).polyfill();
+
+/**
+ * Imports vue and vuex
+ */
+
+
+
+/**
+ * initialize vuex in vue
+ */
+__WEBPACK_IMPORTED_MODULE_0_vue___default.a.use(__WEBPACK_IMPORTED_MODULE_1_vuex__["a" /* default */]);
+
+/*
+    Imports all of the modules used in the application to build the data store.
+*/
+
+
+/**
+ * export our data store
+ */
+
+/* harmony default export */ __webpack_exports__["a"] = (new __WEBPACK_IMPORTED_MODULE_1_vuex__["a" /* default */].Store({
+  modules: {
+    cafes: __WEBPACK_IMPORTED_MODULE_2__modules_cafes_js__["a" /* cafes */]
+  }
+}));
+
+/***/ }),
+/* 98 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process, global) {var require;/*!
+ * @overview es6-promise - a tiny implementation of Promises/A+.
+ * @copyright Copyright (c) 2014 Yehuda Katz, Tom Dale, Stefan Penner and contributors (Conversion to ES6 API by Jake Archibald)
+ * @license   Licensed under MIT license
+ *            See https://raw.githubusercontent.com/stefanpenner/es6-promise/master/LICENSE
+ * @version   v4.2.2+97478eb6
+ */
+
+(function (global, factory) {
+	 true ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	(global.ES6Promise = factory());
+}(this, (function () { 'use strict';
+
+function objectOrFunction(x) {
+  var type = typeof x;
+  return x !== null && (type === 'object' || type === 'function');
+}
+
+function isFunction(x) {
+  return typeof x === 'function';
+}
+
+
+
+var _isArray = void 0;
+if (Array.isArray) {
+  _isArray = Array.isArray;
+} else {
+  _isArray = function (x) {
+    return Object.prototype.toString.call(x) === '[object Array]';
+  };
+}
+
+var isArray = _isArray;
+
+var len = 0;
+var vertxNext = void 0;
+var customSchedulerFn = void 0;
+
+var asap = function asap(callback, arg) {
+  queue[len] = callback;
+  queue[len + 1] = arg;
+  len += 2;
+  if (len === 2) {
+    // If len is 2, that means that we need to schedule an async flush.
+    // If additional callbacks are queued before the queue is flushed, they
+    // will be processed by this flush that we are scheduling.
+    if (customSchedulerFn) {
+      customSchedulerFn(flush);
+    } else {
+      scheduleFlush();
+    }
+  }
+};
+
+function setScheduler(scheduleFn) {
+  customSchedulerFn = scheduleFn;
+}
+
+function setAsap(asapFn) {
+  asap = asapFn;
+}
+
+var browserWindow = typeof window !== 'undefined' ? window : undefined;
+var browserGlobal = browserWindow || {};
+var BrowserMutationObserver = browserGlobal.MutationObserver || browserGlobal.WebKitMutationObserver;
+var isNode = typeof self === 'undefined' && typeof process !== 'undefined' && {}.toString.call(process) === '[object process]';
+
+// test for web worker but not in IE10
+var isWorker = typeof Uint8ClampedArray !== 'undefined' && typeof importScripts !== 'undefined' && typeof MessageChannel !== 'undefined';
+
+// node
+function useNextTick() {
+  // node version 0.10.x displays a deprecation warning when nextTick is used recursively
+  // see https://github.com/cujojs/when/issues/410 for details
+  return function () {
+    return process.nextTick(flush);
+  };
+}
+
+// vertx
+function useVertxTimer() {
+  if (typeof vertxNext !== 'undefined') {
+    return function () {
+      vertxNext(flush);
+    };
+  }
+
+  return useSetTimeout();
+}
+
+function useMutationObserver() {
+  var iterations = 0;
+  var observer = new BrowserMutationObserver(flush);
+  var node = document.createTextNode('');
+  observer.observe(node, { characterData: true });
+
+  return function () {
+    node.data = iterations = ++iterations % 2;
+  };
+}
+
+// web worker
+function useMessageChannel() {
+  var channel = new MessageChannel();
+  channel.port1.onmessage = flush;
+  return function () {
+    return channel.port2.postMessage(0);
+  };
+}
+
+function useSetTimeout() {
+  // Store setTimeout reference so es6-promise will be unaffected by
+  // other code modifying setTimeout (like sinon.useFakeTimers())
+  var globalSetTimeout = setTimeout;
+  return function () {
+    return globalSetTimeout(flush, 1);
+  };
+}
+
+var queue = new Array(1000);
+function flush() {
+  for (var i = 0; i < len; i += 2) {
+    var callback = queue[i];
+    var arg = queue[i + 1];
+
+    callback(arg);
+
+    queue[i] = undefined;
+    queue[i + 1] = undefined;
+  }
+
+  len = 0;
+}
+
+function attemptVertx() {
+  try {
+    var r = require;
+    var vertx = __webpack_require__(99);
+    vertxNext = vertx.runOnLoop || vertx.runOnContext;
+    return useVertxTimer();
+  } catch (e) {
+    return useSetTimeout();
+  }
+}
+
+var scheduleFlush = void 0;
+// Decide what async method to use to triggering processing of queued callbacks:
+if (isNode) {
+  scheduleFlush = useNextTick();
+} else if (BrowserMutationObserver) {
+  scheduleFlush = useMutationObserver();
+} else if (isWorker) {
+  scheduleFlush = useMessageChannel();
+} else if (browserWindow === undefined && "function" === 'function') {
+  scheduleFlush = attemptVertx();
+} else {
+  scheduleFlush = useSetTimeout();
+}
+
+function then(onFulfillment, onRejection) {
+  var parent = this;
+
+  var child = new this.constructor(noop);
+
+  if (child[PROMISE_ID] === undefined) {
+    makePromise(child);
+  }
+
+  var _state = parent._state;
+
+
+  if (_state) {
+    var callback = arguments[_state - 1];
+    asap(function () {
+      return invokeCallback(_state, child, callback, parent._result);
+    });
+  } else {
+    subscribe(parent, child, onFulfillment, onRejection);
+  }
+
+  return child;
+}
+
+/**
+  `Promise.resolve` returns a promise that will become resolved with the
+  passed `value`. It is shorthand for the following:
+
+  ```javascript
+  let promise = new Promise(function(resolve, reject){
+    resolve(1);
+  });
+
+  promise.then(function(value){
+    // value === 1
+  });
+  ```
+
+  Instead of writing the above, your code now simply becomes the following:
+
+  ```javascript
+  let promise = Promise.resolve(1);
+
+  promise.then(function(value){
+    // value === 1
+  });
+  ```
+
+  @method resolve
+  @static
+  @param {Any} value value that the returned promise will be resolved with
+  Useful for tooling.
+  @return {Promise} a promise that will become fulfilled with the given
+  `value`
+*/
+function resolve$1(object) {
+  /*jshint validthis:true */
+  var Constructor = this;
+
+  if (object && typeof object === 'object' && object.constructor === Constructor) {
+    return object;
+  }
+
+  var promise = new Constructor(noop);
+  resolve(promise, object);
+  return promise;
+}
+
+var PROMISE_ID = Math.random().toString(36).substring(16);
+
+function noop() {}
+
+var PENDING = void 0;
+var FULFILLED = 1;
+var REJECTED = 2;
+
+var GET_THEN_ERROR = new ErrorObject();
+
+function selfFulfillment() {
+  return new TypeError("You cannot resolve a promise with itself");
+}
+
+function cannotReturnOwn() {
+  return new TypeError('A promises callback cannot return that same promise.');
+}
+
+function getThen(promise) {
+  try {
+    return promise.then;
+  } catch (error) {
+    GET_THEN_ERROR.error = error;
+    return GET_THEN_ERROR;
+  }
+}
+
+function tryThen(then$$1, value, fulfillmentHandler, rejectionHandler) {
+  try {
+    then$$1.call(value, fulfillmentHandler, rejectionHandler);
+  } catch (e) {
+    return e;
+  }
+}
+
+function handleForeignThenable(promise, thenable, then$$1) {
+  asap(function (promise) {
+    var sealed = false;
+    var error = tryThen(then$$1, thenable, function (value) {
+      if (sealed) {
+        return;
+      }
+      sealed = true;
+      if (thenable !== value) {
+        resolve(promise, value);
+      } else {
+        fulfill(promise, value);
+      }
+    }, function (reason) {
+      if (sealed) {
+        return;
+      }
+      sealed = true;
+
+      reject(promise, reason);
+    }, 'Settle: ' + (promise._label || ' unknown promise'));
+
+    if (!sealed && error) {
+      sealed = true;
+      reject(promise, error);
+    }
+  }, promise);
+}
+
+function handleOwnThenable(promise, thenable) {
+  if (thenable._state === FULFILLED) {
+    fulfill(promise, thenable._result);
+  } else if (thenable._state === REJECTED) {
+    reject(promise, thenable._result);
+  } else {
+    subscribe(thenable, undefined, function (value) {
+      return resolve(promise, value);
+    }, function (reason) {
+      return reject(promise, reason);
+    });
+  }
+}
+
+function handleMaybeThenable(promise, maybeThenable, then$$1) {
+  if (maybeThenable.constructor === promise.constructor && then$$1 === then && maybeThenable.constructor.resolve === resolve$1) {
+    handleOwnThenable(promise, maybeThenable);
+  } else {
+    if (then$$1 === GET_THEN_ERROR) {
+      reject(promise, GET_THEN_ERROR.error);
+      GET_THEN_ERROR.error = null;
+    } else if (then$$1 === undefined) {
+      fulfill(promise, maybeThenable);
+    } else if (isFunction(then$$1)) {
+      handleForeignThenable(promise, maybeThenable, then$$1);
+    } else {
+      fulfill(promise, maybeThenable);
+    }
+  }
+}
+
+function resolve(promise, value) {
+  if (promise === value) {
+    reject(promise, selfFulfillment());
+  } else if (objectOrFunction(value)) {
+    handleMaybeThenable(promise, value, getThen(value));
+  } else {
+    fulfill(promise, value);
+  }
+}
+
+function publishRejection(promise) {
+  if (promise._onerror) {
+    promise._onerror(promise._result);
+  }
+
+  publish(promise);
+}
+
+function fulfill(promise, value) {
+  if (promise._state !== PENDING) {
+    return;
+  }
+
+  promise._result = value;
+  promise._state = FULFILLED;
+
+  if (promise._subscribers.length !== 0) {
+    asap(publish, promise);
+  }
+}
+
+function reject(promise, reason) {
+  if (promise._state !== PENDING) {
+    return;
+  }
+  promise._state = REJECTED;
+  promise._result = reason;
+
+  asap(publishRejection, promise);
+}
+
+function subscribe(parent, child, onFulfillment, onRejection) {
+  var _subscribers = parent._subscribers;
+  var length = _subscribers.length;
+
+
+  parent._onerror = null;
+
+  _subscribers[length] = child;
+  _subscribers[length + FULFILLED] = onFulfillment;
+  _subscribers[length + REJECTED] = onRejection;
+
+  if (length === 0 && parent._state) {
+    asap(publish, parent);
+  }
+}
+
+function publish(promise) {
+  var subscribers = promise._subscribers;
+  var settled = promise._state;
+
+  if (subscribers.length === 0) {
+    return;
+  }
+
+  var child = void 0,
+      callback = void 0,
+      detail = promise._result;
+
+  for (var i = 0; i < subscribers.length; i += 3) {
+    child = subscribers[i];
+    callback = subscribers[i + settled];
+
+    if (child) {
+      invokeCallback(settled, child, callback, detail);
+    } else {
+      callback(detail);
+    }
+  }
+
+  promise._subscribers.length = 0;
+}
+
+function ErrorObject() {
+  this.error = null;
+}
+
+var TRY_CATCH_ERROR = new ErrorObject();
+
+function tryCatch(callback, detail) {
+  try {
+    return callback(detail);
+  } catch (e) {
+    TRY_CATCH_ERROR.error = e;
+    return TRY_CATCH_ERROR;
+  }
+}
+
+function invokeCallback(settled, promise, callback, detail) {
+  var hasCallback = isFunction(callback),
+      value = void 0,
+      error = void 0,
+      succeeded = void 0,
+      failed = void 0;
+
+  if (hasCallback) {
+    value = tryCatch(callback, detail);
+
+    if (value === TRY_CATCH_ERROR) {
+      failed = true;
+      error = value.error;
+      value.error = null;
+    } else {
+      succeeded = true;
+    }
+
+    if (promise === value) {
+      reject(promise, cannotReturnOwn());
+      return;
+    }
+  } else {
+    value = detail;
+    succeeded = true;
+  }
+
+  if (promise._state !== PENDING) {
+    // noop
+  } else if (hasCallback && succeeded) {
+    resolve(promise, value);
+  } else if (failed) {
+    reject(promise, error);
+  } else if (settled === FULFILLED) {
+    fulfill(promise, value);
+  } else if (settled === REJECTED) {
+    reject(promise, value);
+  }
+}
+
+function initializePromise(promise, resolver) {
+  try {
+    resolver(function resolvePromise(value) {
+      resolve(promise, value);
+    }, function rejectPromise(reason) {
+      reject(promise, reason);
+    });
+  } catch (e) {
+    reject(promise, e);
+  }
+}
+
+var id = 0;
+function nextId() {
+  return id++;
+}
+
+function makePromise(promise) {
+  promise[PROMISE_ID] = id++;
+  promise._state = undefined;
+  promise._result = undefined;
+  promise._subscribers = [];
+}
+
+function validationError() {
+  return new Error('Array Methods must be provided an Array');
+}
+
+function validationError() {
+  return new Error('Array Methods must be provided an Array');
+}
+
+var Enumerator = function () {
+  function Enumerator(Constructor, input) {
+    this._instanceConstructor = Constructor;
+    this.promise = new Constructor(noop);
+
+    if (!this.promise[PROMISE_ID]) {
+      makePromise(this.promise);
+    }
+
+    if (isArray(input)) {
+      this.length = input.length;
+      this._remaining = input.length;
+
+      this._result = new Array(this.length);
+
+      if (this.length === 0) {
+        fulfill(this.promise, this._result);
+      } else {
+        this.length = this.length || 0;
+        this._enumerate(input);
+        if (this._remaining === 0) {
+          fulfill(this.promise, this._result);
+        }
+      }
+    } else {
+      reject(this.promise, validationError());
+    }
+  }
+
+  Enumerator.prototype._enumerate = function _enumerate(input) {
+    for (var i = 0; this._state === PENDING && i < input.length; i++) {
+      this._eachEntry(input[i], i);
+    }
+  };
+
+  Enumerator.prototype._eachEntry = function _eachEntry(entry, i) {
+    var c = this._instanceConstructor;
+    var resolve$$1 = c.resolve;
+
+
+    if (resolve$$1 === resolve$1) {
+      var _then = getThen(entry);
+
+      if (_then === then && entry._state !== PENDING) {
+        this._settledAt(entry._state, i, entry._result);
+      } else if (typeof _then !== 'function') {
+        this._remaining--;
+        this._result[i] = entry;
+      } else if (c === Promise$1) {
+        var promise = new c(noop);
+        handleMaybeThenable(promise, entry, _then);
+        this._willSettleAt(promise, i);
+      } else {
+        this._willSettleAt(new c(function (resolve$$1) {
+          return resolve$$1(entry);
+        }), i);
+      }
+    } else {
+      this._willSettleAt(resolve$$1(entry), i);
+    }
+  };
+
+  Enumerator.prototype._settledAt = function _settledAt(state, i, value) {
+    var promise = this.promise;
+
+
+    if (promise._state === PENDING) {
+      this._remaining--;
+
+      if (state === REJECTED) {
+        reject(promise, value);
+      } else {
+        this._result[i] = value;
+      }
+    }
+
+    if (this._remaining === 0) {
+      fulfill(promise, this._result);
+    }
+  };
+
+  Enumerator.prototype._willSettleAt = function _willSettleAt(promise, i) {
+    var enumerator = this;
+
+    subscribe(promise, undefined, function (value) {
+      return enumerator._settledAt(FULFILLED, i, value);
+    }, function (reason) {
+      return enumerator._settledAt(REJECTED, i, reason);
+    });
+  };
+
+  return Enumerator;
+}();
+
+/**
+  `Promise.all` accepts an array of promises, and returns a new promise which
+  is fulfilled with an array of fulfillment values for the passed promises, or
+  rejected with the reason of the first passed promise to be rejected. It casts all
+  elements of the passed iterable to promises as it runs this algorithm.
+
+  Example:
+
+  ```javascript
+  let promise1 = resolve(1);
+  let promise2 = resolve(2);
+  let promise3 = resolve(3);
+  let promises = [ promise1, promise2, promise3 ];
+
+  Promise.all(promises).then(function(array){
+    // The array here would be [ 1, 2, 3 ];
+  });
+  ```
+
+  If any of the `promises` given to `all` are rejected, the first promise
+  that is rejected will be given as an argument to the returned promises's
+  rejection handler. For example:
+
+  Example:
+
+  ```javascript
+  let promise1 = resolve(1);
+  let promise2 = reject(new Error("2"));
+  let promise3 = reject(new Error("3"));
+  let promises = [ promise1, promise2, promise3 ];
+
+  Promise.all(promises).then(function(array){
+    // Code here never runs because there are rejected promises!
+  }, function(error) {
+    // error.message === "2"
+  });
+  ```
+
+  @method all
+  @static
+  @param {Array} entries array of promises
+  @param {String} label optional string for labeling the promise.
+  Useful for tooling.
+  @return {Promise} promise that is fulfilled when all `promises` have been
+  fulfilled, or rejected if any of them become rejected.
+  @static
+*/
+function all(entries) {
+  return new Enumerator(this, entries).promise;
+}
+
+/**
+  `Promise.race` returns a new promise which is settled in the same way as the
+  first passed promise to settle.
+
+  Example:
+
+  ```javascript
+  let promise1 = new Promise(function(resolve, reject){
+    setTimeout(function(){
+      resolve('promise 1');
+    }, 200);
+  });
+
+  let promise2 = new Promise(function(resolve, reject){
+    setTimeout(function(){
+      resolve('promise 2');
+    }, 100);
+  });
+
+  Promise.race([promise1, promise2]).then(function(result){
+    // result === 'promise 2' because it was resolved before promise1
+    // was resolved.
+  });
+  ```
+
+  `Promise.race` is deterministic in that only the state of the first
+  settled promise matters. For example, even if other promises given to the
+  `promises` array argument are resolved, but the first settled promise has
+  become rejected before the other promises became fulfilled, the returned
+  promise will become rejected:
+
+  ```javascript
+  let promise1 = new Promise(function(resolve, reject){
+    setTimeout(function(){
+      resolve('promise 1');
+    }, 200);
+  });
+
+  let promise2 = new Promise(function(resolve, reject){
+    setTimeout(function(){
+      reject(new Error('promise 2'));
+    }, 100);
+  });
+
+  Promise.race([promise1, promise2]).then(function(result){
+    // Code here never runs
+  }, function(reason){
+    // reason.message === 'promise 2' because promise 2 became rejected before
+    // promise 1 became fulfilled
+  });
+  ```
+
+  An example real-world use case is implementing timeouts:
+
+  ```javascript
+  Promise.race([ajax('foo.json'), timeout(5000)])
+  ```
+
+  @method race
+  @static
+  @param {Array} promises array of promises to observe
+  Useful for tooling.
+  @return {Promise} a promise which settles in the same way as the first passed
+  promise to settle.
+*/
+function race(entries) {
+  /*jshint validthis:true */
+  var Constructor = this;
+
+  if (!isArray(entries)) {
+    return new Constructor(function (_, reject) {
+      return reject(new TypeError('You must pass an array to race.'));
+    });
+  } else {
+    return new Constructor(function (resolve, reject) {
+      var length = entries.length;
+      for (var i = 0; i < length; i++) {
+        Constructor.resolve(entries[i]).then(resolve, reject);
+      }
+    });
+  }
+}
+
+/**
+  `Promise.reject` returns a promise rejected with the passed `reason`.
+  It is shorthand for the following:
+
+  ```javascript
+  let promise = new Promise(function(resolve, reject){
+    reject(new Error('WHOOPS'));
+  });
+
+  promise.then(function(value){
+    // Code here doesn't run because the promise is rejected!
+  }, function(reason){
+    // reason.message === 'WHOOPS'
+  });
+  ```
+
+  Instead of writing the above, your code now simply becomes the following:
+
+  ```javascript
+  let promise = Promise.reject(new Error('WHOOPS'));
+
+  promise.then(function(value){
+    // Code here doesn't run because the promise is rejected!
+  }, function(reason){
+    // reason.message === 'WHOOPS'
+  });
+  ```
+
+  @method reject
+  @static
+  @param {Any} reason value that the returned promise will be rejected with.
+  Useful for tooling.
+  @return {Promise} a promise rejected with the given `reason`.
+*/
+function reject$1(reason) {
+  /*jshint validthis:true */
+  var Constructor = this;
+  var promise = new Constructor(noop);
+  reject(promise, reason);
+  return promise;
+}
+
+function needsResolver() {
+  throw new TypeError('You must pass a resolver function as the first argument to the promise constructor');
+}
+
+function needsNew() {
+  throw new TypeError("Failed to construct 'Promise': Please use the 'new' operator, this object constructor cannot be called as a function.");
+}
+
+/**
+  Promise objects represent the eventual result of an asynchronous operation. The
+  primary way of interacting with a promise is through its `then` method, which
+  registers callbacks to receive either a promise's eventual value or the reason
+  why the promise cannot be fulfilled.
+
+  Terminology
+  -----------
+
+  - `promise` is an object or function with a `then` method whose behavior conforms to this specification.
+  - `thenable` is an object or function that defines a `then` method.
+  - `value` is any legal JavaScript value (including undefined, a thenable, or a promise).
+  - `exception` is a value that is thrown using the throw statement.
+  - `reason` is a value that indicates why a promise was rejected.
+  - `settled` the final resting state of a promise, fulfilled or rejected.
+
+  A promise can be in one of three states: pending, fulfilled, or rejected.
+
+  Promises that are fulfilled have a fulfillment value and are in the fulfilled
+  state.  Promises that are rejected have a rejection reason and are in the
+  rejected state.  A fulfillment value is never a thenable.
+
+  Promises can also be said to *resolve* a value.  If this value is also a
+  promise, then the original promise's settled state will match the value's
+  settled state.  So a promise that *resolves* a promise that rejects will
+  itself reject, and a promise that *resolves* a promise that fulfills will
+  itself fulfill.
+
+
+  Basic Usage:
+  ------------
+
+  ```js
+  let promise = new Promise(function(resolve, reject) {
+    // on success
+    resolve(value);
+
+    // on failure
+    reject(reason);
+  });
+
+  promise.then(function(value) {
+    // on fulfillment
+  }, function(reason) {
+    // on rejection
+  });
+  ```
+
+  Advanced Usage:
+  ---------------
+
+  Promises shine when abstracting away asynchronous interactions such as
+  `XMLHttpRequest`s.
+
+  ```js
+  function getJSON(url) {
+    return new Promise(function(resolve, reject){
+      let xhr = new XMLHttpRequest();
+
+      xhr.open('GET', url);
+      xhr.onreadystatechange = handler;
+      xhr.responseType = 'json';
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.send();
+
+      function handler() {
+        if (this.readyState === this.DONE) {
+          if (this.status === 200) {
+            resolve(this.response);
+          } else {
+            reject(new Error('getJSON: `' + url + '` failed with status: [' + this.status + ']'));
+          }
+        }
+      };
+    });
+  }
+
+  getJSON('/posts.json').then(function(json) {
+    // on fulfillment
+  }, function(reason) {
+    // on rejection
+  });
+  ```
+
+  Unlike callbacks, promises are great composable primitives.
+
+  ```js
+  Promise.all([
+    getJSON('/posts'),
+    getJSON('/comments')
+  ]).then(function(values){
+    values[0] // => postsJSON
+    values[1] // => commentsJSON
+
+    return values;
+  });
+  ```
+
+  @class Promise
+  @param {Function} resolver
+  Useful for tooling.
+  @constructor
+*/
+
+var Promise$1 = function () {
+  function Promise(resolver) {
+    this[PROMISE_ID] = nextId();
+    this._result = this._state = undefined;
+    this._subscribers = [];
+
+    if (noop !== resolver) {
+      typeof resolver !== 'function' && needsResolver();
+      this instanceof Promise ? initializePromise(this, resolver) : needsNew();
+    }
+  }
+
+  /**
+  The primary way of interacting with a promise is through its `then` method,
+  which registers callbacks to receive either a promise's eventual value or the
+  reason why the promise cannot be fulfilled.
+   ```js
+  findUser().then(function(user){
+    // user is available
+  }, function(reason){
+    // user is unavailable, and you are given the reason why
+  });
+  ```
+   Chaining
+  --------
+   The return value of `then` is itself a promise.  This second, 'downstream'
+  promise is resolved with the return value of the first promise's fulfillment
+  or rejection handler, or rejected if the handler throws an exception.
+   ```js
+  findUser().then(function (user) {
+    return user.name;
+  }, function (reason) {
+    return 'default name';
+  }).then(function (userName) {
+    // If `findUser` fulfilled, `userName` will be the user's name, otherwise it
+    // will be `'default name'`
+  });
+   findUser().then(function (user) {
+    throw new Error('Found user, but still unhappy');
+  }, function (reason) {
+    throw new Error('`findUser` rejected and we're unhappy');
+  }).then(function (value) {
+    // never reached
+  }, function (reason) {
+    // if `findUser` fulfilled, `reason` will be 'Found user, but still unhappy'.
+    // If `findUser` rejected, `reason` will be '`findUser` rejected and we're unhappy'.
+  });
+  ```
+  If the downstream promise does not specify a rejection handler, rejection reasons will be propagated further downstream.
+   ```js
+  findUser().then(function (user) {
+    throw new PedagogicalException('Upstream error');
+  }).then(function (value) {
+    // never reached
+  }).then(function (value) {
+    // never reached
+  }, function (reason) {
+    // The `PedgagocialException` is propagated all the way down to here
+  });
+  ```
+   Assimilation
+  ------------
+   Sometimes the value you want to propagate to a downstream promise can only be
+  retrieved asynchronously. This can be achieved by returning a promise in the
+  fulfillment or rejection handler. The downstream promise will then be pending
+  until the returned promise is settled. This is called *assimilation*.
+   ```js
+  findUser().then(function (user) {
+    return findCommentsByAuthor(user);
+  }).then(function (comments) {
+    // The user's comments are now available
+  });
+  ```
+   If the assimliated promise rejects, then the downstream promise will also reject.
+   ```js
+  findUser().then(function (user) {
+    return findCommentsByAuthor(user);
+  }).then(function (comments) {
+    // If `findCommentsByAuthor` fulfills, we'll have the value here
+  }, function (reason) {
+    // If `findCommentsByAuthor` rejects, we'll have the reason here
+  });
+  ```
+   Simple Example
+  --------------
+   Synchronous Example
+   ```javascript
+  let result;
+   try {
+    result = findResult();
+    // success
+  } catch(reason) {
+    // failure
+  }
+  ```
+   Errback Example
+   ```js
+  findResult(function(result, err){
+    if (err) {
+      // failure
+    } else {
+      // success
+    }
+  });
+  ```
+   Promise Example;
+   ```javascript
+  findResult().then(function(result){
+    // success
+  }, function(reason){
+    // failure
+  });
+  ```
+   Advanced Example
+  --------------
+   Synchronous Example
+   ```javascript
+  let author, books;
+   try {
+    author = findAuthor();
+    books  = findBooksByAuthor(author);
+    // success
+  } catch(reason) {
+    // failure
+  }
+  ```
+   Errback Example
+   ```js
+   function foundBooks(books) {
+   }
+   function failure(reason) {
+   }
+   findAuthor(function(author, err){
+    if (err) {
+      failure(err);
+      // failure
+    } else {
+      try {
+        findBoooksByAuthor(author, function(books, err) {
+          if (err) {
+            failure(err);
+          } else {
+            try {
+              foundBooks(books);
+            } catch(reason) {
+              failure(reason);
+            }
+          }
+        });
+      } catch(error) {
+        failure(err);
+      }
+      // success
+    }
+  });
+  ```
+   Promise Example;
+   ```javascript
+  findAuthor().
+    then(findBooksByAuthor).
+    then(function(books){
+      // found books
+  }).catch(function(reason){
+    // something went wrong
+  });
+  ```
+   @method then
+  @param {Function} onFulfilled
+  @param {Function} onRejected
+  Useful for tooling.
+  @return {Promise}
+  */
+
+  /**
+  `catch` is simply sugar for `then(undefined, onRejection)` which makes it the same
+  as the catch block of a try/catch statement.
+  ```js
+  function findAuthor(){
+  throw new Error('couldn't find that author');
+  }
+  // synchronous
+  try {
+  findAuthor();
+  } catch(reason) {
+  // something went wrong
+  }
+  // async with promises
+  findAuthor().catch(function(reason){
+  // something went wrong
+  });
+  ```
+  @method catch
+  @param {Function} onRejection
+  Useful for tooling.
+  @return {Promise}
+  */
+
+
+  Promise.prototype.catch = function _catch(onRejection) {
+    return this.then(null, onRejection);
+  };
+
+  /**
+    `finally` will be invoked regardless of the promise's fate just as native
+    try/catch/finally behaves
+  
+    Synchronous example:
+  
+    ```js
+    findAuthor() {
+      if (Math.random() > 0.5) {
+        throw new Error();
+      }
+      return new Author();
+    }
+  
+    try {
+      return findAuthor(); // succeed or fail
+    } catch(error) {
+      return findOtherAuther();
+    } finally {
+      // always runs
+      // doesn't affect the return value
+    }
+    ```
+  
+    Asynchronous example:
+  
+    ```js
+    findAuthor().catch(function(reason){
+      return findOtherAuther();
+    }).finally(function(){
+      // author was either found, or not
+    });
+    ```
+  
+    @method finally
+    @param {Function} callback
+    @return {Promise}
+  */
+
+
+  Promise.prototype.finally = function _finally(callback) {
+    var promise = this;
+    var constructor = promise.constructor;
+
+    return promise.then(function (value) {
+      return constructor.resolve(callback()).then(function () {
+        return value;
+      });
+    }, function (reason) {
+      return constructor.resolve(callback()).then(function () {
+        throw reason;
+      });
+    });
+  };
+
+  return Promise;
+}();
+
+Promise$1.prototype.then = then;
+Promise$1.all = all;
+Promise$1.race = race;
+Promise$1.resolve = resolve$1;
+Promise$1.reject = reject$1;
+Promise$1._setScheduler = setScheduler;
+Promise$1._setAsap = setAsap;
+Promise$1._asap = asap;
+
+/*global self*/
+function polyfill() {
+    var local = void 0;
+
+    if (typeof global !== 'undefined') {
+        local = global;
+    } else if (typeof self !== 'undefined') {
+        local = self;
+    } else {
+        try {
+            local = Function('return this')();
+        } catch (e) {
+            throw new Error('polyfill failed because global object is unavailable in this environment');
+        }
+    }
+
+    var P = local.Promise;
+
+    if (P) {
+        var promiseToString = null;
+        try {
+            promiseToString = Object.prototype.toString.call(P.resolve());
+        } catch (e) {
+            // silently ignored
+        }
+
+        if (promiseToString === '[object Promise]' && !P.cast) {
+            return;
+        }
+    }
+
+    local.Promise = Promise$1;
+}
+
+// Strange compat..
+Promise$1.polyfill = polyfill;
+Promise$1.Promise = Promise$1;
+
+return Promise$1;
+
+})));
+
+
+
+//# sourceMappingURL=es6-promise.map
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(17), __webpack_require__(8)))
+
+/***/ }),
+/* 99 */
+/***/ (function(module, exports) {
+
+/* (ignored) */
+
+/***/ }),
+/* 100 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* unused harmony export Store */
+/* unused harmony export install */
+/* unused harmony export mapState */
+/* unused harmony export mapMutations */
+/* unused harmony export mapGetters */
+/* unused harmony export mapActions */
+/* unused harmony export createNamespacedHelpers */
+/**
+ * vuex v3.0.1
+ * (c) 2017 Evan You
+ * @license MIT
+ */
+var applyMixin = function (Vue) {
+  var version = Number(Vue.version.split('.')[0]);
+
+  if (version >= 2) {
+    Vue.mixin({ beforeCreate: vuexInit });
+  } else {
+    // override init and inject vuex init procedure
+    // for 1.x backwards compatibility.
+    var _init = Vue.prototype._init;
+    Vue.prototype._init = function (options) {
+      if ( options === void 0 ) options = {};
+
+      options.init = options.init
+        ? [vuexInit].concat(options.init)
+        : vuexInit;
+      _init.call(this, options);
+    };
+  }
+
+  /**
+   * Vuex init hook, injected into each instances init hooks list.
+   */
+
+  function vuexInit () {
+    var options = this.$options;
+    // store injection
+    if (options.store) {
+      this.$store = typeof options.store === 'function'
+        ? options.store()
+        : options.store;
+    } else if (options.parent && options.parent.$store) {
+      this.$store = options.parent.$store;
+    }
+  }
+};
+
+var devtoolHook =
+  typeof window !== 'undefined' &&
+  window.__VUE_DEVTOOLS_GLOBAL_HOOK__;
+
+function devtoolPlugin (store) {
+  if (!devtoolHook) { return }
+
+  store._devtoolHook = devtoolHook;
+
+  devtoolHook.emit('vuex:init', store);
+
+  devtoolHook.on('vuex:travel-to-state', function (targetState) {
+    store.replaceState(targetState);
+  });
+
+  store.subscribe(function (mutation, state) {
+    devtoolHook.emit('vuex:mutation', mutation, state);
+  });
+}
+
+/**
+ * Get the first item that pass the test
+ * by second argument function
+ *
+ * @param {Array} list
+ * @param {Function} f
+ * @return {*}
+ */
+/**
+ * Deep copy the given object considering circular structure.
+ * This function caches all nested objects and its copies.
+ * If it detects circular structure, use cached copy to avoid infinite loop.
+ *
+ * @param {*} obj
+ * @param {Array<Object>} cache
+ * @return {*}
+ */
+
+
+/**
+ * forEach for object
+ */
+function forEachValue (obj, fn) {
+  Object.keys(obj).forEach(function (key) { return fn(obj[key], key); });
+}
+
+function isObject (obj) {
+  return obj !== null && typeof obj === 'object'
+}
+
+function isPromise (val) {
+  return val && typeof val.then === 'function'
+}
+
+function assert (condition, msg) {
+  if (!condition) { throw new Error(("[vuex] " + msg)) }
+}
+
+var Module = function Module (rawModule, runtime) {
+  this.runtime = runtime;
+  this._children = Object.create(null);
+  this._rawModule = rawModule;
+  var rawState = rawModule.state;
+  this.state = (typeof rawState === 'function' ? rawState() : rawState) || {};
+};
+
+var prototypeAccessors$1 = { namespaced: { configurable: true } };
+
+prototypeAccessors$1.namespaced.get = function () {
+  return !!this._rawModule.namespaced
+};
+
+Module.prototype.addChild = function addChild (key, module) {
+  this._children[key] = module;
+};
+
+Module.prototype.removeChild = function removeChild (key) {
+  delete this._children[key];
+};
+
+Module.prototype.getChild = function getChild (key) {
+  return this._children[key]
+};
+
+Module.prototype.update = function update (rawModule) {
+  this._rawModule.namespaced = rawModule.namespaced;
+  if (rawModule.actions) {
+    this._rawModule.actions = rawModule.actions;
+  }
+  if (rawModule.mutations) {
+    this._rawModule.mutations = rawModule.mutations;
+  }
+  if (rawModule.getters) {
+    this._rawModule.getters = rawModule.getters;
+  }
+};
+
+Module.prototype.forEachChild = function forEachChild (fn) {
+  forEachValue(this._children, fn);
+};
+
+Module.prototype.forEachGetter = function forEachGetter (fn) {
+  if (this._rawModule.getters) {
+    forEachValue(this._rawModule.getters, fn);
+  }
+};
+
+Module.prototype.forEachAction = function forEachAction (fn) {
+  if (this._rawModule.actions) {
+    forEachValue(this._rawModule.actions, fn);
+  }
+};
+
+Module.prototype.forEachMutation = function forEachMutation (fn) {
+  if (this._rawModule.mutations) {
+    forEachValue(this._rawModule.mutations, fn);
+  }
+};
+
+Object.defineProperties( Module.prototype, prototypeAccessors$1 );
+
+var ModuleCollection = function ModuleCollection (rawRootModule) {
+  // register root module (Vuex.Store options)
+  this.register([], rawRootModule, false);
+};
+
+ModuleCollection.prototype.get = function get (path) {
+  return path.reduce(function (module, key) {
+    return module.getChild(key)
+  }, this.root)
+};
+
+ModuleCollection.prototype.getNamespace = function getNamespace (path) {
+  var module = this.root;
+  return path.reduce(function (namespace, key) {
+    module = module.getChild(key);
+    return namespace + (module.namespaced ? key + '/' : '')
+  }, '')
+};
+
+ModuleCollection.prototype.update = function update$1 (rawRootModule) {
+  update([], this.root, rawRootModule);
+};
+
+ModuleCollection.prototype.register = function register (path, rawModule, runtime) {
+    var this$1 = this;
+    if ( runtime === void 0 ) runtime = true;
+
+  if (true) {
+    assertRawModule(path, rawModule);
+  }
+
+  var newModule = new Module(rawModule, runtime);
+  if (path.length === 0) {
+    this.root = newModule;
+  } else {
+    var parent = this.get(path.slice(0, -1));
+    parent.addChild(path[path.length - 1], newModule);
+  }
+
+  // register nested modules
+  if (rawModule.modules) {
+    forEachValue(rawModule.modules, function (rawChildModule, key) {
+      this$1.register(path.concat(key), rawChildModule, runtime);
+    });
+  }
+};
+
+ModuleCollection.prototype.unregister = function unregister (path) {
+  var parent = this.get(path.slice(0, -1));
+  var key = path[path.length - 1];
+  if (!parent.getChild(key).runtime) { return }
+
+  parent.removeChild(key);
+};
+
+function update (path, targetModule, newModule) {
+  if (true) {
+    assertRawModule(path, newModule);
+  }
+
+  // update target module
+  targetModule.update(newModule);
+
+  // update nested modules
+  if (newModule.modules) {
+    for (var key in newModule.modules) {
+      if (!targetModule.getChild(key)) {
+        if (true) {
+          console.warn(
+            "[vuex] trying to add a new module '" + key + "' on hot reloading, " +
+            'manual reload is needed'
+          );
+        }
+        return
+      }
+      update(
+        path.concat(key),
+        targetModule.getChild(key),
+        newModule.modules[key]
+      );
+    }
+  }
+}
+
+var functionAssert = {
+  assert: function (value) { return typeof value === 'function'; },
+  expected: 'function'
+};
+
+var objectAssert = {
+  assert: function (value) { return typeof value === 'function' ||
+    (typeof value === 'object' && typeof value.handler === 'function'); },
+  expected: 'function or object with "handler" function'
+};
+
+var assertTypes = {
+  getters: functionAssert,
+  mutations: functionAssert,
+  actions: objectAssert
+};
+
+function assertRawModule (path, rawModule) {
+  Object.keys(assertTypes).forEach(function (key) {
+    if (!rawModule[key]) { return }
+
+    var assertOptions = assertTypes[key];
+
+    forEachValue(rawModule[key], function (value, type) {
+      assert(
+        assertOptions.assert(value),
+        makeAssertionMessage(path, key, type, value, assertOptions.expected)
+      );
+    });
+  });
+}
+
+function makeAssertionMessage (path, key, type, value, expected) {
+  var buf = key + " should be " + expected + " but \"" + key + "." + type + "\"";
+  if (path.length > 0) {
+    buf += " in module \"" + (path.join('.')) + "\"";
+  }
+  buf += " is " + (JSON.stringify(value)) + ".";
+  return buf
+}
+
+var Vue; // bind on install
+
+var Store = function Store (options) {
+  var this$1 = this;
+  if ( options === void 0 ) options = {};
+
+  // Auto install if it is not done yet and `window` has `Vue`.
+  // To allow users to avoid auto-installation in some cases,
+  // this code should be placed here. See #731
+  if (!Vue && typeof window !== 'undefined' && window.Vue) {
+    install(window.Vue);
+  }
+
+  if (true) {
+    assert(Vue, "must call Vue.use(Vuex) before creating a store instance.");
+    assert(typeof Promise !== 'undefined', "vuex requires a Promise polyfill in this browser.");
+    assert(this instanceof Store, "Store must be called with the new operator.");
+  }
+
+  var plugins = options.plugins; if ( plugins === void 0 ) plugins = [];
+  var strict = options.strict; if ( strict === void 0 ) strict = false;
+
+  var state = options.state; if ( state === void 0 ) state = {};
+  if (typeof state === 'function') {
+    state = state() || {};
+  }
+
+  // store internal state
+  this._committing = false;
+  this._actions = Object.create(null);
+  this._actionSubscribers = [];
+  this._mutations = Object.create(null);
+  this._wrappedGetters = Object.create(null);
+  this._modules = new ModuleCollection(options);
+  this._modulesNamespaceMap = Object.create(null);
+  this._subscribers = [];
+  this._watcherVM = new Vue();
+
+  // bind commit and dispatch to self
+  var store = this;
+  var ref = this;
+  var dispatch = ref.dispatch;
+  var commit = ref.commit;
+  this.dispatch = function boundDispatch (type, payload) {
+    return dispatch.call(store, type, payload)
+  };
+  this.commit = function boundCommit (type, payload, options) {
+    return commit.call(store, type, payload, options)
+  };
+
+  // strict mode
+  this.strict = strict;
+
+  // init root module.
+  // this also recursively registers all sub-modules
+  // and collects all module getters inside this._wrappedGetters
+  installModule(this, state, [], this._modules.root);
+
+  // initialize the store vm, which is responsible for the reactivity
+  // (also registers _wrappedGetters as computed properties)
+  resetStoreVM(this, state);
+
+  // apply plugins
+  plugins.forEach(function (plugin) { return plugin(this$1); });
+
+  if (Vue.config.devtools) {
+    devtoolPlugin(this);
+  }
+};
+
+var prototypeAccessors = { state: { configurable: true } };
+
+prototypeAccessors.state.get = function () {
+  return this._vm._data.$$state
+};
+
+prototypeAccessors.state.set = function (v) {
+  if (true) {
+    assert(false, "Use store.replaceState() to explicit replace store state.");
+  }
+};
+
+Store.prototype.commit = function commit (_type, _payload, _options) {
+    var this$1 = this;
+
+  // check object-style commit
+  var ref = unifyObjectStyle(_type, _payload, _options);
+    var type = ref.type;
+    var payload = ref.payload;
+    var options = ref.options;
+
+  var mutation = { type: type, payload: payload };
+  var entry = this._mutations[type];
+  if (!entry) {
+    if (true) {
+      console.error(("[vuex] unknown mutation type: " + type));
+    }
+    return
+  }
+  this._withCommit(function () {
+    entry.forEach(function commitIterator (handler) {
+      handler(payload);
+    });
+  });
+  this._subscribers.forEach(function (sub) { return sub(mutation, this$1.state); });
+
+  if (
+    "development" !== 'production' &&
+    options && options.silent
+  ) {
+    console.warn(
+      "[vuex] mutation type: " + type + ". Silent option has been removed. " +
+      'Use the filter functionality in the vue-devtools'
+    );
+  }
+};
+
+Store.prototype.dispatch = function dispatch (_type, _payload) {
+    var this$1 = this;
+
+  // check object-style dispatch
+  var ref = unifyObjectStyle(_type, _payload);
+    var type = ref.type;
+    var payload = ref.payload;
+
+  var action = { type: type, payload: payload };
+  var entry = this._actions[type];
+  if (!entry) {
+    if (true) {
+      console.error(("[vuex] unknown action type: " + type));
+    }
+    return
+  }
+
+  this._actionSubscribers.forEach(function (sub) { return sub(action, this$1.state); });
+
+  return entry.length > 1
+    ? Promise.all(entry.map(function (handler) { return handler(payload); }))
+    : entry[0](payload)
+};
+
+Store.prototype.subscribe = function subscribe (fn) {
+  return genericSubscribe(fn, this._subscribers)
+};
+
+Store.prototype.subscribeAction = function subscribeAction (fn) {
+  return genericSubscribe(fn, this._actionSubscribers)
+};
+
+Store.prototype.watch = function watch (getter, cb, options) {
+    var this$1 = this;
+
+  if (true) {
+    assert(typeof getter === 'function', "store.watch only accepts a function.");
+  }
+  return this._watcherVM.$watch(function () { return getter(this$1.state, this$1.getters); }, cb, options)
+};
+
+Store.prototype.replaceState = function replaceState (state) {
+    var this$1 = this;
+
+  this._withCommit(function () {
+    this$1._vm._data.$$state = state;
+  });
+};
+
+Store.prototype.registerModule = function registerModule (path, rawModule, options) {
+    if ( options === void 0 ) options = {};
+
+  if (typeof path === 'string') { path = [path]; }
+
+  if (true) {
+    assert(Array.isArray(path), "module path must be a string or an Array.");
+    assert(path.length > 0, 'cannot register the root module by using registerModule.');
+  }
+
+  this._modules.register(path, rawModule);
+  installModule(this, this.state, path, this._modules.get(path), options.preserveState);
+  // reset store to update getters...
+  resetStoreVM(this, this.state);
+};
+
+Store.prototype.unregisterModule = function unregisterModule (path) {
+    var this$1 = this;
+
+  if (typeof path === 'string') { path = [path]; }
+
+  if (true) {
+    assert(Array.isArray(path), "module path must be a string or an Array.");
+  }
+
+  this._modules.unregister(path);
+  this._withCommit(function () {
+    var parentState = getNestedState(this$1.state, path.slice(0, -1));
+    Vue.delete(parentState, path[path.length - 1]);
+  });
+  resetStore(this);
+};
+
+Store.prototype.hotUpdate = function hotUpdate (newOptions) {
+  this._modules.update(newOptions);
+  resetStore(this, true);
+};
+
+Store.prototype._withCommit = function _withCommit (fn) {
+  var committing = this._committing;
+  this._committing = true;
+  fn();
+  this._committing = committing;
+};
+
+Object.defineProperties( Store.prototype, prototypeAccessors );
+
+function genericSubscribe (fn, subs) {
+  if (subs.indexOf(fn) < 0) {
+    subs.push(fn);
+  }
+  return function () {
+    var i = subs.indexOf(fn);
+    if (i > -1) {
+      subs.splice(i, 1);
+    }
+  }
+}
+
+function resetStore (store, hot) {
+  store._actions = Object.create(null);
+  store._mutations = Object.create(null);
+  store._wrappedGetters = Object.create(null);
+  store._modulesNamespaceMap = Object.create(null);
+  var state = store.state;
+  // init all modules
+  installModule(store, state, [], store._modules.root, true);
+  // reset vm
+  resetStoreVM(store, state, hot);
+}
+
+function resetStoreVM (store, state, hot) {
+  var oldVm = store._vm;
+
+  // bind store public getters
+  store.getters = {};
+  var wrappedGetters = store._wrappedGetters;
+  var computed = {};
+  forEachValue(wrappedGetters, function (fn, key) {
+    // use computed to leverage its lazy-caching mechanism
+    computed[key] = function () { return fn(store); };
+    Object.defineProperty(store.getters, key, {
+      get: function () { return store._vm[key]; },
+      enumerable: true // for local getters
+    });
+  });
+
+  // use a Vue instance to store the state tree
+  // suppress warnings just in case the user has added
+  // some funky global mixins
+  var silent = Vue.config.silent;
+  Vue.config.silent = true;
+  store._vm = new Vue({
+    data: {
+      $$state: state
+    },
+    computed: computed
+  });
+  Vue.config.silent = silent;
+
+  // enable strict mode for new vm
+  if (store.strict) {
+    enableStrictMode(store);
+  }
+
+  if (oldVm) {
+    if (hot) {
+      // dispatch changes in all subscribed watchers
+      // to force getter re-evaluation for hot reloading.
+      store._withCommit(function () {
+        oldVm._data.$$state = null;
+      });
+    }
+    Vue.nextTick(function () { return oldVm.$destroy(); });
+  }
+}
+
+function installModule (store, rootState, path, module, hot) {
+  var isRoot = !path.length;
+  var namespace = store._modules.getNamespace(path);
+
+  // register in namespace map
+  if (module.namespaced) {
+    store._modulesNamespaceMap[namespace] = module;
+  }
+
+  // set state
+  if (!isRoot && !hot) {
+    var parentState = getNestedState(rootState, path.slice(0, -1));
+    var moduleName = path[path.length - 1];
+    store._withCommit(function () {
+      Vue.set(parentState, moduleName, module.state);
+    });
+  }
+
+  var local = module.context = makeLocalContext(store, namespace, path);
+
+  module.forEachMutation(function (mutation, key) {
+    var namespacedType = namespace + key;
+    registerMutation(store, namespacedType, mutation, local);
+  });
+
+  module.forEachAction(function (action, key) {
+    var type = action.root ? key : namespace + key;
+    var handler = action.handler || action;
+    registerAction(store, type, handler, local);
+  });
+
+  module.forEachGetter(function (getter, key) {
+    var namespacedType = namespace + key;
+    registerGetter(store, namespacedType, getter, local);
+  });
+
+  module.forEachChild(function (child, key) {
+    installModule(store, rootState, path.concat(key), child, hot);
+  });
+}
+
+/**
+ * make localized dispatch, commit, getters and state
+ * if there is no namespace, just use root ones
+ */
+function makeLocalContext (store, namespace, path) {
+  var noNamespace = namespace === '';
+
+  var local = {
+    dispatch: noNamespace ? store.dispatch : function (_type, _payload, _options) {
+      var args = unifyObjectStyle(_type, _payload, _options);
+      var payload = args.payload;
+      var options = args.options;
+      var type = args.type;
+
+      if (!options || !options.root) {
+        type = namespace + type;
+        if ("development" !== 'production' && !store._actions[type]) {
+          console.error(("[vuex] unknown local action type: " + (args.type) + ", global type: " + type));
+          return
+        }
+      }
+
+      return store.dispatch(type, payload)
+    },
+
+    commit: noNamespace ? store.commit : function (_type, _payload, _options) {
+      var args = unifyObjectStyle(_type, _payload, _options);
+      var payload = args.payload;
+      var options = args.options;
+      var type = args.type;
+
+      if (!options || !options.root) {
+        type = namespace + type;
+        if ("development" !== 'production' && !store._mutations[type]) {
+          console.error(("[vuex] unknown local mutation type: " + (args.type) + ", global type: " + type));
+          return
+        }
+      }
+
+      store.commit(type, payload, options);
+    }
+  };
+
+  // getters and state object must be gotten lazily
+  // because they will be changed by vm update
+  Object.defineProperties(local, {
+    getters: {
+      get: noNamespace
+        ? function () { return store.getters; }
+        : function () { return makeLocalGetters(store, namespace); }
+    },
+    state: {
+      get: function () { return getNestedState(store.state, path); }
+    }
+  });
+
+  return local
+}
+
+function makeLocalGetters (store, namespace) {
+  var gettersProxy = {};
+
+  var splitPos = namespace.length;
+  Object.keys(store.getters).forEach(function (type) {
+    // skip if the target getter is not match this namespace
+    if (type.slice(0, splitPos) !== namespace) { return }
+
+    // extract local getter type
+    var localType = type.slice(splitPos);
+
+    // Add a port to the getters proxy.
+    // Define as getter property because
+    // we do not want to evaluate the getters in this time.
+    Object.defineProperty(gettersProxy, localType, {
+      get: function () { return store.getters[type]; },
+      enumerable: true
+    });
+  });
+
+  return gettersProxy
+}
+
+function registerMutation (store, type, handler, local) {
+  var entry = store._mutations[type] || (store._mutations[type] = []);
+  entry.push(function wrappedMutationHandler (payload) {
+    handler.call(store, local.state, payload);
+  });
+}
+
+function registerAction (store, type, handler, local) {
+  var entry = store._actions[type] || (store._actions[type] = []);
+  entry.push(function wrappedActionHandler (payload, cb) {
+    var res = handler.call(store, {
+      dispatch: local.dispatch,
+      commit: local.commit,
+      getters: local.getters,
+      state: local.state,
+      rootGetters: store.getters,
+      rootState: store.state
+    }, payload, cb);
+    if (!isPromise(res)) {
+      res = Promise.resolve(res);
+    }
+    if (store._devtoolHook) {
+      return res.catch(function (err) {
+        store._devtoolHook.emit('vuex:error', err);
+        throw err
+      })
+    } else {
+      return res
+    }
+  });
+}
+
+function registerGetter (store, type, rawGetter, local) {
+  if (store._wrappedGetters[type]) {
+    if (true) {
+      console.error(("[vuex] duplicate getter key: " + type));
+    }
+    return
+  }
+  store._wrappedGetters[type] = function wrappedGetter (store) {
+    return rawGetter(
+      local.state, // local state
+      local.getters, // local getters
+      store.state, // root state
+      store.getters // root getters
+    )
+  };
+}
+
+function enableStrictMode (store) {
+  store._vm.$watch(function () { return this._data.$$state }, function () {
+    if (true) {
+      assert(store._committing, "Do not mutate vuex store state outside mutation handlers.");
+    }
+  }, { deep: true, sync: true });
+}
+
+function getNestedState (state, path) {
+  return path.length
+    ? path.reduce(function (state, key) { return state[key]; }, state)
+    : state
+}
+
+function unifyObjectStyle (type, payload, options) {
+  if (isObject(type) && type.type) {
+    options = payload;
+    payload = type;
+    type = type.type;
+  }
+
+  if (true) {
+    assert(typeof type === 'string', ("Expects string as the type, but found " + (typeof type) + "."));
+  }
+
+  return { type: type, payload: payload, options: options }
+}
+
+function install (_Vue) {
+  if (Vue && _Vue === Vue) {
+    if (true) {
+      console.error(
+        '[vuex] already installed. Vue.use(Vuex) should be called only once.'
+      );
+    }
+    return
+  }
+  Vue = _Vue;
+  applyMixin(Vue);
+}
+
+var mapState = normalizeNamespace(function (namespace, states) {
+  var res = {};
+  normalizeMap(states).forEach(function (ref) {
+    var key = ref.key;
+    var val = ref.val;
+
+    res[key] = function mappedState () {
+      var state = this.$store.state;
+      var getters = this.$store.getters;
+      if (namespace) {
+        var module = getModuleByNamespace(this.$store, 'mapState', namespace);
+        if (!module) {
+          return
+        }
+        state = module.context.state;
+        getters = module.context.getters;
+      }
+      return typeof val === 'function'
+        ? val.call(this, state, getters)
+        : state[val]
+    };
+    // mark vuex getter for devtools
+    res[key].vuex = true;
+  });
+  return res
+});
+
+var mapMutations = normalizeNamespace(function (namespace, mutations) {
+  var res = {};
+  normalizeMap(mutations).forEach(function (ref) {
+    var key = ref.key;
+    var val = ref.val;
+
+    res[key] = function mappedMutation () {
+      var args = [], len = arguments.length;
+      while ( len-- ) args[ len ] = arguments[ len ];
+
+      var commit = this.$store.commit;
+      if (namespace) {
+        var module = getModuleByNamespace(this.$store, 'mapMutations', namespace);
+        if (!module) {
+          return
+        }
+        commit = module.context.commit;
+      }
+      return typeof val === 'function'
+        ? val.apply(this, [commit].concat(args))
+        : commit.apply(this.$store, [val].concat(args))
+    };
+  });
+  return res
+});
+
+var mapGetters = normalizeNamespace(function (namespace, getters) {
+  var res = {};
+  normalizeMap(getters).forEach(function (ref) {
+    var key = ref.key;
+    var val = ref.val;
+
+    val = namespace + val;
+    res[key] = function mappedGetter () {
+      if (namespace && !getModuleByNamespace(this.$store, 'mapGetters', namespace)) {
+        return
+      }
+      if ("development" !== 'production' && !(val in this.$store.getters)) {
+        console.error(("[vuex] unknown getter: " + val));
+        return
+      }
+      return this.$store.getters[val]
+    };
+    // mark vuex getter for devtools
+    res[key].vuex = true;
+  });
+  return res
+});
+
+var mapActions = normalizeNamespace(function (namespace, actions) {
+  var res = {};
+  normalizeMap(actions).forEach(function (ref) {
+    var key = ref.key;
+    var val = ref.val;
+
+    res[key] = function mappedAction () {
+      var args = [], len = arguments.length;
+      while ( len-- ) args[ len ] = arguments[ len ];
+
+      var dispatch = this.$store.dispatch;
+      if (namespace) {
+        var module = getModuleByNamespace(this.$store, 'mapActions', namespace);
+        if (!module) {
+          return
+        }
+        dispatch = module.context.dispatch;
+      }
+      return typeof val === 'function'
+        ? val.apply(this, [dispatch].concat(args))
+        : dispatch.apply(this.$store, [val].concat(args))
+    };
+  });
+  return res
+});
+
+var createNamespacedHelpers = function (namespace) { return ({
+  mapState: mapState.bind(null, namespace),
+  mapGetters: mapGetters.bind(null, namespace),
+  mapMutations: mapMutations.bind(null, namespace),
+  mapActions: mapActions.bind(null, namespace)
+}); };
+
+function normalizeMap (map) {
+  return Array.isArray(map)
+    ? map.map(function (key) { return ({ key: key, val: key }); })
+    : Object.keys(map).map(function (key) { return ({ key: key, val: map[key] }); })
+}
+
+function normalizeNamespace (fn) {
+  return function (namespace, map) {
+    if (typeof namespace !== 'string') {
+      map = namespace;
+      namespace = '';
+    } else if (namespace.charAt(namespace.length - 1) !== '/') {
+      namespace += '/';
+    }
+    return fn(namespace, map)
+  }
+}
+
+function getModuleByNamespace (store, helper, namespace) {
+  var module = store._modulesNamespaceMap[namespace];
+  if ("development" !== 'production' && !module) {
+    console.error(("[vuex] module namespace not found in " + helper + "(): " + namespace));
+  }
+  return module
+}
+
+var index_esm = {
+  Store: Store,
+  install: install,
+  version: '3.0.1',
+  mapState: mapState,
+  mapMutations: mapMutations,
+  mapGetters: mapGetters,
+  mapActions: mapActions,
+  createNamespacedHelpers: createNamespacedHelpers
+};
+
+
+/* harmony default export */ __webpack_exports__["a"] = (index_esm);
+
+
+/***/ }),
+/* 101 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return cafes; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__api_cafe_js__ = __webpack_require__(102);
+/**
+ * Vuex modules/cafe.js
+ * the vuex data store for the cafes
+ */
+
+
+var cafes = {
+  state: {
+    cafes: [],
+    cafesLoadStatus: 0,
+    cafe: {},
+    cafeLoadStatus: 0
+  },
+
+  actions: {
+    loadCafes: function loadCafes(_ref) {
+      var commit = _ref.commit;
+
+      commit('setCafesLoadStatus', 1);
+
+      __WEBPACK_IMPORTED_MODULE_0__api_cafe_js__["a" /* default */].getCafes().then(function (response) {
+        commit('setCafes', response.data);
+        commit('setCafesLoadStatus', 2);
+      }).catch(function () {
+        commit('setCafes', []);
+        commit('setCafesLoadStatus', 3);
+      });
+    },
+    loadCafe: function loadCafe(_ref2, data) {
+      var commit = _ref2.commit;
+
+      commit('setCafeLoadStatus', 1);
+
+      __WEBPACK_IMPORTED_MODULE_0__api_cafe_js__["a" /* default */].getCafe(data.id).then(function (response) {
+        commit('setCafe', response.data);
+        commit('setCafeLoadStatus', 2);
+      }).catch(function () {
+        commit('setCafe', []);
+        commit('setCafeLoadStatus', 3);
+      });
+    }
+  },
+  mutations: {
+    setCafesLoadStatus: function setCafesLoadStatus(state, status) {
+      state.cafesLoadStatus = status;
+    },
+    setCafes: function setCafes(state, status) {
+      state.cafes = cafes;
+    },
+    setCafeLoadStatus: function setCafeLoadStatus(state, status) {
+      state.cafeLoadStatus = status;
+    },
+    setCafe: function setCafe(state, status) {
+      state.cafe = cafe;
+    }
+  },
+  /**
+   * defined the getters used by module 
+   */
+  getters: {
+    /**
+     * return the cafes load status
+     */
+    getCafesLoadStatus: function getCafesLoadStatus(state) {
+      return state.cafesLoadStatus;
+    },
+
+    /**
+     * return the cafes
+     */
+    getCafes: function getCafes(state) {
+      return state.cafes;
+    },
+
+    /**
+     * return the cafe load status
+     */
+    getCafeLoadStatus: function getCafeLoadStatus(state) {
+      return state.cafeLoadStatus;
+    },
+
+    /**
+     * return the cafe
+     */
+    getCafe: function getCafe(state) {
+      return state.cafe;
+    }
+  }
+};
+
+/***/ }),
+/* 102 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__config_js__ = __webpack_require__(103);
+/**
+ *  Import the Caffe API URL  from the config
+ */
+
+
+/* harmony default export */ __webpack_exports__["a"] = ({
+  /**
+   * GET /api/v1/cafes
+  */
+
+  getCafes: function getCafes() {
+    return axios.get(__WEBPACK_IMPORTED_MODULE_0__config_js__["a" /* COFFE_CONFIG */].API_URL + '/cafes');
+  },
+
+  /**
+   *  GET /api/v1/cafes/{cafeID}
+   */
+
+  getCafe: function getCafe(cafeID) {
+    return axios.get(__WEBPACK_IMPORTED_MODULE_0__config_js__["a" /* COFFE_CONFIG */].API_URL + '/cafes/' + cafeID);
+  },
+
+  /**
+   *  POST /api/v1/cafes
+   */
+  postAddNewCafe: function postAddNewCafe(name, addres, city, state, zip) {
+    return axios.post(__WEBPACK_IMPORTED_MODULE_0__config_js__["a" /* COFFE_CONFIG */].API_URL + '/cafes', {
+      name: name,
+      addres: addres,
+      city: city,
+      state: state,
+      zip: zip
+    });
+  }
+});
+
+/***/ }),
+/* 103 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return COFFE_CONFIG; });
+/**
+ * Defines the API route we are using
+ */
+var api_url = '';
+switch ("development") {
+  case 'development':
+    api_url = 'http://coffe.in/api/v1';
+    break;
+
+  case 'production':
+    api_url = 'http://coffe.com/api/v1';
+    break;
+}
+
+var COFFE_CONFIG = {
+  API_URL: api_url
+};
+
+/***/ }),
+/* 104 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
