@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Socialite;
 use App\User;
+
 use Auth;
 
 class AuthenticationController extends Controller
@@ -47,6 +48,6 @@ class AuthenticationController extends Controller
         Auth::login($user);
 
         //redirect ti the app
-        return redirect('/');
+        return redirect('/#/home');
     }
 }
