@@ -10,29 +10,24 @@
         </router-link>
       </li>
     </ul>
-     <div class="right">
-        <img class="avatar" v-if="user != '' && userLoadStatus == 2" :src="user.avatar" v-show="userLoadStatus == 2"/>
-        <router-link :to="{ name: 'profile'}" v-if="user != '' && userLoadStatus == 2" class="profile">
-          Profile
-        </router-link>
-        <span class="logout" v-if="user != '' && userLoadStatus == 2" v-on:click="logout()">Logout</span>
-        <span class="login" v-if="user == ''" v-on:click="login()">Login</span>
+      <div class="right">
+        <img class="avatar" :src="user.avatar" v-show="userLoadStatus == 2"/>
       </div>
-  </div>
+  </nav>
   
 </template>
 <script>
-  import { EventBus} from '../../event-bus.js';
+  //import { EventBus} from '../../event-bus.js';
   export default {
     computed: {
       userLoadStatus() {
-        return this.$store.getters.getUserLoadStatus();
+        return this.$store.getters.getUserLoadStatus;
       },
       user() {
         return this.$store.getters.getUser;
       }
     },
-    methods: {
+    /*methods: {
       login() {
         EventBus.$emit('prompt-login');
       },
@@ -40,7 +35,7 @@
         this.$store.dispatch('logoutUser');
         window.location ='/logout';
       }
-    }
+    }*/
   }
   
 </script>

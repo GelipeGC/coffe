@@ -9,7 +9,9 @@ export const cafes = {
     cafes:[],
     cafesLoadStatus:0,
     cafe:{},
-    cafeLoadStatus:0
+    cafeLoadStatus:0,
+
+    cafeAddStatus:0
   },
 
   actions: {
@@ -36,6 +38,20 @@ export const cafes = {
                 commit('setCafe', []);
                 commit('setCafeLoadStatus', 3);
               });
+    },
+    /**
+     * adds a cafe
+     */
+    addCafe( { commit, state, dispatch}, data) {
+      commit( 'setCafeAddedStatus', 1);
+
+      CafeAPI.postAddNewCafe( data.name, data.address, data.city, data.state, data.zip)
+              .then(function() {
+                commit('setCafeAddedStatus', 2);
+                dispatch('loadCafes');
+              }).catch(function() {
+                commit('setCafeAddedStatus', 3);
+              })
     }
   },
   mutations: {
@@ -50,6 +66,9 @@ export const cafes = {
     },
     setCafe(state, status) {
       state.cafe = cafe;
+    },
+    setCafeAddedStatus( state, status) {
+      state.cafeAddStatus = status;
     }
 
   },
@@ -80,6 +99,12 @@ export const cafes = {
      */
     getCafe(state) {
       return state.cafe;
+    },
+    /**
+     * gets the cafe add statues
+     */
+    getCafeAddStatus(state) {
+      return state.cafeAddStatus;
     }
   }
 }

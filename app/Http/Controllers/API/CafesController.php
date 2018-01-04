@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreCafeRequest;
+
 
 use App\Models\Cafe;
 
@@ -50,7 +52,7 @@ class CafesController extends Controller
     | Method:         POST
     | Description:    Adds a new cafe to the application
     */
-    public function postNewCafe()
+    public function postNewCafe(StoreCafeRequest $request)
     {
         $cafe = new Cafe();
         $cafe->name     = Request::get('name');
