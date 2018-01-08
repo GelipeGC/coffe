@@ -1,6 +1,6 @@
 <template>
   <div id="app-layout">
-    <navigation></navigation
+    <navigation></navigation>
     <router-view></router-view>
   </div>
 </template>
@@ -14,7 +14,7 @@
     },
     created() {
       this.$store.dispatch('loadCafes');
-      this.$store.dispatch('loadUser');
+      //this.$store.dispatch('loadUser');
     }
   }
 </script>

@@ -23,11 +23,11 @@ export default {
    /**
     *  POST /api/v1/cafes
     */
-  postAddNewCafe: function(name, addres, city,state,zip) {
+  postAddNewCafe: function(name, address, city,state,zip) {
     return axios.post( COFFE_CONFIG.API_URL + '/cafes',
             {
               name: name,
-              addres: addres,
+              address: address,
               city: city,
               state: state,
               zip: zip

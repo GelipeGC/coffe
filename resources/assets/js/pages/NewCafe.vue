@@ -152,7 +152,7 @@
           this.validations.zip.is_valid = true;
           this.validations.zip.text = '';
         }
-        return validateNewCafe;
+        return validNewCafeForm;
       }
     }
   }

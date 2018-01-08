@@ -10,9 +10,9 @@
         </router-link>
       </li>
     </ul>
-      <div class="right">
+      <!--<div class="right">
         <img class="avatar" :src="user.avatar" v-show="userLoadStatus == 2"/>
-      </div>
+      </div>-->
   </nav>
   
 </template>
