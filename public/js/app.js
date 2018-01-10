@@ -56112,12 +56112,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
   },
   data: function data() {
     return {
-      markers: []
+      markers: [],
+      infoWindows: []
     };
   },
 
   methods: {
     buildMarkers: function buildMarkers() {
+      var _this = this;
+
       /*
         Initialize the markers to an empty array.
       */
@@ -56126,24 +56129,48 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       /*
         Iterate over all of the cafes
       */
-      for (var i = 0; i < this.cafes.length; i++) {
+
+      var _loop = function _loop() {
 
         /*
           Create the marker for each of the cafes and set the
           latitude and longitude to the latitude and longitude
           of the cafe. Also set the map to be the local map.
         */
-        var image = 'img/coffee-icon-png-13684.png';
-        var marker = new google.maps.Marker({
-          position: { lat: parseFloat(this.cafes[i].latitude), lng: parseFloat(this.cafes[i].longitude) },
-          map: this.map,
+        image = 'img/coffee-icon-png-13684.png';
+        marker = new google.maps.Marker({
+          position: { lat: parseFloat(_this.cafes[i].latitude), lng: parseFloat(_this.cafes[i].longitude) },
+          map: _this.map,
           icon: image
         });
+
+        /**
+          create info window and add it ti the loca
+        */
+
+        var infoWindow = new google.maps.InfoWindow({
+          content: _this.cafes[i].name
+        });
+        _this.infoWindows.push(infoWindow);
 
         /*
           Push the new marker on to the array.
         */
-        this.markers.push(marker);
+        _this.markers.push(marker);
+
+        /**
+          Add the event listener to open the info window for the marker 
+        */
+        marker.addListener('click', function () {
+          infoWindow.open(this.map, this);
+        });
+      };
+
+      for (var i = 0; i < this.cafes.length; i++) {
+        var image;
+        var marker;
+
+        _loop();
       }
     },
 

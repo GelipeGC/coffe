@@ -22,7 +22,7 @@ class CafesController extends Controller
     */
     public function getCafes()
     {
-         $cafes = Cafe::all();
+         $cafes = Cafe::with('brewMethods')->get();
 
         return response()->json($cafes);
 
@@ -40,7 +40,9 @@ class CafesController extends Controller
     */
     public function getCafe($id)
     {
-        $cafe = Cafe::where('id', '=', $id)->first();
+        $cafe = Cafe::where('id', '=', $id)
+                    ->with('brewMethods')
+                    ->first();
 
         return response()->json($cafe);
 
@@ -70,6 +72,11 @@ class CafesController extends Controller
         $cafe->longitude  = $coordinates['lng'];
         
         $cafe->save();
+        /**
+         * Sync the brew methods on the cafe
+         */
+        $brewMethods = $request->get('brew_methods');
+        $cafe->brewMethods()->sync($brewMethods);
 
         return response()->json($cafe, 201);
         

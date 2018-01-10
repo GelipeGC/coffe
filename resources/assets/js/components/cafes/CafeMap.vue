@@ -1,6 +1,5 @@
 <template>
   <div id="cafe-map">
-
   </div>
   
 </template>
@@ -29,7 +28,8 @@
     },
     data() {
       return {
-        markers:[]
+        markers:[],
+        infoWindows:[]
       }
     },
     methods: {
@@ -56,10 +56,26 @@
             icon:image
           });
 
+          /**
+            create info window and add it ti the loca
+          */
+          let infoWindow = new google.maps.InfoWindow({
+            content: this.cafes[i].name
+          });
+          this.infoWindows.push(infoWindow);
+
           /*
             Push the new marker on to the array.
           */
           this.markers.push( marker );
+
+          /**
+            Add the event listener to open the info window for the marker 
+          */
+          marker.addListener('click', function() {
+            infoWindow.open(this.map, this);
+          });
+
         }
       },
       /*
@@ -110,7 +126,10 @@
 
 <style lang="scss">
   div#cafe-map{
-    width: 100%;
-    height: 400px;
+    position:absolute;
+    top:50px;
+    left:0px;
+    right:0px;
+    bottom:100px;
   }
 </style>

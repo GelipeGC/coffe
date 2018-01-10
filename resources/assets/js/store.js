@@ -18,6 +18,10 @@ Vue.use(Vuex)
     Imports all of the modules used in the application to build the data store.
 */
 import { cafes } from './modules/cafes.js'
+/**
+ * imports all of the modules use in the application to build data store
+ */
+import { cafes } from './modules/brewMethods.js'
 
 /**
  * export our data store
