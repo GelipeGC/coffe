@@ -56094,19 +56094,19 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     'latitude': {
       type: Number,
       default: function _default() {
-        return 22.48;
+        return 20.67;
       }
     },
     'longitude': {
       type: Number,
       default: function _default() {
-        return -120.88;
+        return -103.40;
       }
     },
     'zoom': {
       type: Number,
       default: function _default() {
-        return 4;
+        return 6;
       }
     }
   },
@@ -56133,9 +56133,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
           latitude and longitude to the latitude and longitude
           of the cafe. Also set the map to be the local map.
         */
+        var image = 'img/coffee-icon-png-13684.png';
         var marker = new google.maps.Marker({
           position: { lat: parseFloat(this.cafes[i].latitude), lng: parseFloat(this.cafes[i].longitude) },
-          map: this.map
+          map: this.map,
+          icon: image
         });
 
         /*
