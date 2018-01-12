@@ -28,4 +28,9 @@ class User extends Authenticatable
     protected $hidden = [
         'password', 'remember_token', 'provider', 'provider_id'
     ];
+
+    public function likes()
+    {
+        return $this->belongsToMany(Cafe::class, 'users_cafes_likes', 'user_id','cafe_id');
+    }
 }

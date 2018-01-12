@@ -21,7 +21,7 @@ import { cafes } from './modules/cafes.js'
 /**
  * imports all of the modules use in the application to build data store
  */
-import { cafes } from './modules/brewMethods.js'
+import { brewMethods } from './modules/brewMethods.js'
 
 /**
  * export our data store
@@ -29,6 +29,7 @@ import { cafes } from './modules/brewMethods.js'
 
  export default new Vuex.Store({
    modules: {
-    cafes
+    cafes,
+    brewMethods
    }
  });
