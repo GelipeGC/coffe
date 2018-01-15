@@ -12,8 +12,9 @@
 </template>
 
 <script>
-  import { ROAST_CONFIG } from '../../../config.js';
-  import { EventBus} from '../../../event-bus.js';
+  import { COFFE_CONFIG } from '../../../config.js';
+  import { EventBus } from '../../../event-bus.js';
+  import _ from 'lodash'
 
   export default {
     props:['unique'],
@@ -59,7 +60,7 @@
           var newTagName = this.cleanTagName(this.currentTag);
           this.tagsArray.push(newTagName);
 
-          EventBus.$emit('tags-edited', { unique: this.unique, tags: this.tagsArray}):
+          EventBus.$emit('tags-edited', { unique: this.unique, tags: this.tagsArray});
           this.resetInputs();
         }else {
           this.duplicateFlag = true;
@@ -84,18 +85,21 @@
         }
       },
 
-      searchTags() {
-        if(this.currentTag.length > 2 && !this.pauseSearch) {
+      /*
+        Searches the API route for tags with the autocomplete.
+      */
+      searchTags: _.debounce( function(e) {
+        if( this.currentTag.length > 2 && !this.pauseSearch ){
           this.searchSelectedIndex = -1;
-          axios.get(ROAST_CONFIG.API_URL + '/tags', {
+          axios.get( COFFE_CONFIG.API_URL + '/tags' , {
             params: {
               search: this.currentTag
             }
-          }).then(function(response){
+          }).then( function( response ){
             this.tagSearchResults = response.data;
           }.bind(this));
         }
-      },
+      }, 300),
 
       checkDuplicates(tagName) {
         tagName = this.cleanTagName(tagName);
@@ -121,7 +125,7 @@
 
       trimCharacter(string, character) {
         if(character === "]") c = "\\]";
-        if(character === "\\") c = "\\\";
+        //if(character === "\\") c = "\\\";
         return string.replace(new RegExp(
            "^[" + character + "]+|[" + character + "]+$", "g"
         ), "");

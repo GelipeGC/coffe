@@ -10,6 +10,8 @@
 </template>
 
 <script>
+  import CafeFilter from '../components/cafes/CafeFilter.vue';
+
   export default {
 
     created () {
@@ -27,6 +29,21 @@
   
 </script>
 
-<style>
-  
+<style lang="scss">
+  @import '~@/abstracts/_variables.scss';
+
+  div#home{
+    a.add-cafe-button{
+      float: right;
+      display: block;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      background-color: $dark-color;
+      color: white;
+      padding-top: 5px;
+      padding-bottom: 5px;
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+  }
 </style>

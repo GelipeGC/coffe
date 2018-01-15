@@ -25,7 +25,11 @@ class CafesController extends Controller
     */
     public function getCafes()
     {
-         $cafes = Cafe::with('brewMethods')->get();
+         $cafes = Cafe::with('brewMethods')
+                        ->with(['tags' => function($query){
+                            $query->select('tag');
+                        }])
+                        ->get();
 
         return response()->json($cafes);
 
@@ -46,6 +50,7 @@ class CafesController extends Controller
         $cafe = Cafe::where('id', '=', $id)
                     ->with('brewMethods')
                     ->with('userLike')
+                    ->with('tags')
                     ->first();
 
         return response()->json($cafe);

@@ -131,4 +131,19 @@
       }
     }
   }
+  div.tags-container{
+    max-width: 700px;
+    margin: auto;
+    text-align: center;
+    margin-top: 30px;
+
+    span.tag{
+      color: $dark-color;
+      font-family: 'Josefin Sans', sans-serif;
+      margin-right: 20px;
+      display: inline-block;
+      line-height: 20px;
+    }
+  }
+
 </style>
