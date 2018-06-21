@@ -26,3 +26,15 @@
     }
   }
 </script>
+
+
+<style lang="scss">
+  @import '~@/abstracts/_variables.scss';
+  div.loader{
+    margin: auto;
+  }
+  svg path,
+  svg rect{
+    fill: $secondary-color;
+  }
+</style>

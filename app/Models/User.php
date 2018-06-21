@@ -33,4 +33,8 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Cafe::class, 'users_cafes_likes', 'user_id','cafe_id');
     }
+    public function cafePhotos()
+    {
+        return $this->hasMany(CafePhoto::class, 'id', 'cafe_id'); 
+    }
 }

@@ -1,28 +1,55 @@
 <template>
-  <div id="home">
-    <span v-show="cafesLoadStatus == 1">Loading</span>
-    <span v-show="cafesLoadStatus == 2">Cafes loaded successfully!</span>
-    <span v-show="cafesLoadStatus == 3">Cafes loaded unsuccessfully!</span>
-    <ul>
-      <li v-for="cafe in cafes">{{ cafe.name }}</li>
-    </ul>
+  <div id="home" class="page">
+    <div class="grid-container">
+      <div class="grid-x">
+        <div class="large-12 medium-12 small-12 columns">
+          <router-link :to="{ name: 'newcafe' }" v-if="user != '' && userLoadStatus == 2"  class="add-cafe-button">+ Add Cafe</router-link>
+          <a class="add-cafe-text" v-if="user == '' && userLoadStatus == 2" v-on:click="login()">Want to add a cafe? Create a profile and add your favorite cafe!</a>
+        </div>
+      </div>
+    </div>
+
+    <cafe-filter></cafe-filter>
+
+    <div class="grid-container">
+      <div class="grid-x grid-padding-x">
+        <loader v-show="cafesLoadStatus == 1" :width="100" :height="100"></loader>
+        <cafe-card v-for="cafe in cafes" :key="cafe.id" :cafe="cafe"></cafe-card>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
+  import { EventBus} from '../event-bus.js';
+  import CafeCard from '../components/cafes/CafeCard.vue';
+  import Loader from '../components/global/Loader.vue';
   import CafeFilter from '../components/cafes/CafeFilter.vue';
 
   export default {
-
-    created () {
-      this.$store.dispatch('loadCafes');
+    components: {
+      CafeCard,
+      Loader,
+      CafeFilter
     },
+    
     computed: {
       cafesLoadStatus() {
         return this.$store.getters.getCafesLoadStatus;
       },
-      cafes() {
+       cafes() {
         return this.$store.getters.getCafes;
+      },
+      user() {
+        return this.$store.getters.getUser;
+      },
+      userLoadStatus() {
+        return this.$store.getters.getUserLoadStatus();
+      }
+    },
+    methods: {
+      login() {
+        EventBus.$emit('prompt-login');
       }
     }
   }

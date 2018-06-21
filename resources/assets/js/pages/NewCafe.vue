@@ -1,6 +1,42 @@
 <template>
   <div class="page">
+    <div id="cafe-added-successfully" class="notification success">
+      Cafe Added Successfully!
+    </div>
+    <div id="cafe-added-unsuccessfully" class="notification failure">
+      Cafe Failed to be Added Successfully! Please Try Again!
+    </div>
     <form>
+      <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+          <div class="large-12 medium-12 small-12 cell">
+            <label>Name
+              <input type="text" placeholder="Cafe name" v-model="name">
+            </label>
+            <span class="validation" v-show="!validations.name.is_valid">{{ validations.name.text }}</span>
+          </div>
+          <div class="large-12 medium-12 small-12 cell">
+            <label>Website
+              <input type="text" placeholder="Website" v-model="website">
+            </label>
+            <span class="validation" v-show="!validations.website.is_valid">{{ validations.website.text }}</span>
+          </div>
+          <div class="large-12 medium-12 small-12 cell">
+            <label>Photo
+              <input type="file" id="cafe-photo" ref="photo" v-on:change="handleFileUpload()"/>
+            </label>
+          </div>
+          <div class="large-12 medium-12 small-12 cell">
+            <label>Description
+              <textarea v-model="description"></textarea>
+            </label>
+          </div>
+          <div class="large-12 medium-12 small-12 cell">
+            <input id="is-roaster" type="checkbox" v-model="roaster" value="1"><label for="is-roaster">Is roaster?</label>
+          </div>
+        </div>
+      </div>
+
       <div class="grid-container">
         <div class="grid-x grid-padding-x" v-for="(location, key) in locations">
           <div class="large-12 medium-12 small-12 cell">
@@ -42,11 +78,27 @@
             </span>
           </div>
           <div class="large-12 medium-12 small-12 cell">
-            <a class="button" v-on:click="removeLocation( key )">Remove Location</a>
+            <tags-input v-bind:unique="key"></tags-input>
           </div>
-
           <div class="large-12 medium-12 small-12 cell">
-            <tags-input :unique="key"></tags-input>
+            <a class="button remove-location" v-on:click="removeLocation( key )">Remove Location</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+          <div class="large-12 medium-12 small-12 cell">
+            <span class="validation" v-show="!validations.oneLocation.is_valid">{{ validations.oneLocation.text }}</span>
+            <a class="button add-location" v-on:click="addLocation()">+ Add Location</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+          <div class="large-12 medium-12 small-12 cell">
+            <a class="button save-cafe" v-on:click="submitNewCafe()">Save Cafe</a>
           </div>
         </div>
       </div>
@@ -69,6 +121,7 @@
         website:'',
         description:'',
         roaster: false,
+        picture:'',
         validations: {
           name: {
             is_valid: true,
@@ -107,7 +160,8 @@
             locations: this.locations,
             website: this.website,
             description: this.description,
-            roaster: this.roaster
+            roaster: this.roaster,
+            picture: this.picture
           });
         }
       },
@@ -225,6 +279,8 @@
         this.website = '';
         this.description = '';
         this.roaster = false;
+        this.picture = '';
+        this.$refs.photo.value = '';
         this.validations = {
           name: {
             is_valid: true,
@@ -242,6 +298,9 @@
         };
         this.addLocation();
         EventBus.$emit('clear-tags');
+      },
+      handleFileUpload() {
+        this.picture = this.$refs.photo.files[0];
       }
     },
     created() {
@@ -263,6 +322,34 @@
   
 </script>
 
-<style>
-  
+<style scoped lang="scss">
+  @import '~@/abstracts/_variables.scss';
+  form{
+    max-width: 900px;
+    margin: auto;
+    h3{
+      font-family: 'Josefin Sans', sans-serif;
+      font-size: 24px;
+      border-bottom: 1px solid $primary-color;
+      color: $primary-color;
+    }
+    span.brew-method{
+      display: block;
+      width: 33%;
+      float: left;
+    }
+    a.add-location{
+      background-color: $dull-color;
+    }
+    a.remove-location{
+      color: red;
+      background-color: white;
+      float: right;
+      text-decoration: underline;
+    }
+    a.save-cafe{
+      float: right;
+      background-color: $dark-color;
+    }
+  }
 </style>

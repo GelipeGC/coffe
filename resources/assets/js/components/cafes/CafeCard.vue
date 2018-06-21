@@ -1,10 +1,17 @@
 <template>
-  <div class="grid-container">
-    <div class="grid-x grid-padding-x">
-      <loader v-show="cafesLoadStatus == 1" :width="100" :height="100"></loader>
-      <cafe-card v-for="cafe in cafes" :key="cafe.id" :cafe="cafe"></cafe-card>
-    </div>
-    <router-link :to="{name:'cafe', params: {id: cafe.id}}"></router-link>
+  <div class="grid-container" v-show="show">
+    
+    <router-link :to="{name:'cafe', params: {id: cafe.id}}">
+      <div class="cafe-card">
+        <span class="tittle">{{ cafe.name}}</span>
+        <span class="address">
+          <span class="street">{{ cafe.address}}</span>
+          <span class="city">{{ cafe.city}}</span>
+          <span class="state">{{ cafe.state}}</span>
+          <span class="zip">{{ cafe.zip}}</span>
+        </span>
+      </div>
+    </router-link>
   </div>  
 </template>
 
@@ -17,6 +24,8 @@
   import { EventBus } from '../../event-bus.js';
 
   export default {
+    props: ['cafe'],
+    
     mixins: [
       CafeIsRoasterFilter,
       CafeBrewMethodsFilter,
@@ -27,7 +36,7 @@
       return {
         show: true
       }
-    }
+    },
     mounted(){
       EventBus.$on('filters-updated', function( filters ){
         this.processFilters( filters );

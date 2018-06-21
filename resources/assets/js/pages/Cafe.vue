@@ -12,11 +12,26 @@
             <h2>{{ cafe.name }}</h2>
             <h3 v-if="cafe.location_name != ''">{{ cafe.location_name }}</h3>
 
+            <div class="edit-container" v-if="this.user != '' && this.userLoadStatus == 2">
+              <router-link :to="{ name: 'editcafe', params: { id: cafe.id} }">Edit</router-link>
+            </div>
+
             <span class="address">
               {{ cafe.address }}<br>
               {{ cafe.city }}, {{ cafe.state }}<br>
               {{ cafe.zip }}
             </span>
+
+            <toggle-like v-if="user != '' && userLoadStatus == 2"></toggle-like>
+            <a class="prompt-log-in" v-if="user == '' && userLoadStatus == 2" v-on:click="login()">Did you know you can "like" this cafe and save it to your profile? Just log in!</a>
+
+            <div class="tags-container">
+              <div class="grid-x grid-padding-x">
+                <div class="large-12 medium-12 small-12 cell">
+                  <span class="tag" v-for="tag in cafe.tags">#{{ tag.tag }}</span>
+                </div>
+              </div>
+            </div>
 
             <a class="website" v-bind:href="cafe.website" target="_blank">{{ cafe.website }}</a>
 
@@ -40,11 +55,13 @@
 </template>
 
 <script>
+  import { EventBus } from '../event-bus.js';
   /*
     Import the loader and cafe map for use in the component.
   */
   import Loader from '../components/global/Loader.vue';
   import IndividualCafeMap from '../components/cafes/IndividualCafeMap.vue';
+  import ToggleLike from '../components/cafes/ToggleLike.vue';
 
   export default {
     /*
@@ -52,7 +69,8 @@
     */
     components: {
       Loader,
-      IndividualCafeMap
+      IndividualCafeMap,
+      ToggleLike
     },
 
     /*
@@ -81,6 +99,23 @@
       */
       cafe(){
         return this.$store.getters.getCafe;
+      },
+      /**
+        Grabs the authenticated user
+       */
+      user() {
+        return this.$store.getters.getUser;
+      },
+      /**
+        Gets the users load status
+       */
+      userLoadStatus() {
+        return this.$store.getters.getCafeLoadStatus();
+      }
+    },
+    methods: {
+      login() {
+        EventBus.$emit('prompt-login');
       }
     }
   }

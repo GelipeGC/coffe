@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 36);
+/******/ 	return __webpack_require__(__webpack_require__.s = 42);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -10469,13 +10469,425 @@ function getPluginName(obj) {
 
 /***/ }),
 /* 3 */
+/***/ (function(module, exports) {
+
+/* globals __VUE_SSR_CONTEXT__ */
+
+// IMPORTANT: Do NOT use ES2015 features in this file.
+// This module is a runtime utility for cleaner component module output and will
+// be included in the final webpack user bundle.
+
+module.exports = function normalizeComponent (
+  rawScriptExports,
+  compiledTemplate,
+  functionalTemplate,
+  injectStyles,
+  scopeId,
+  moduleIdentifier /* server only */
+) {
+  var esModule
+  var scriptExports = rawScriptExports = rawScriptExports || {}
+
+  // ES6 modules interop
+  var type = typeof rawScriptExports.default
+  if (type === 'object' || type === 'function') {
+    esModule = rawScriptExports
+    scriptExports = rawScriptExports.default
+  }
+
+  // Vue.extend constructor export interop
+  var options = typeof scriptExports === 'function'
+    ? scriptExports.options
+    : scriptExports
+
+  // render functions
+  if (compiledTemplate) {
+    options.render = compiledTemplate.render
+    options.staticRenderFns = compiledTemplate.staticRenderFns
+    options._compiled = true
+  }
+
+  // functional template
+  if (functionalTemplate) {
+    options.functional = true
+  }
+
+  // scopedId
+  if (scopeId) {
+    options._scopeId = scopeId
+  }
+
+  var hook
+  if (moduleIdentifier) { // server build
+    hook = function (context) {
+      // 2.3 injection
+      context =
+        context || // cached call
+        (this.$vnode && this.$vnode.ssrContext) || // stateful
+        (this.parent && this.parent.$vnode && this.parent.$vnode.ssrContext) // functional
+      // 2.2 with runInNewContext: true
+      if (!context && typeof __VUE_SSR_CONTEXT__ !== 'undefined') {
+        context = __VUE_SSR_CONTEXT__
+      }
+      // inject component styles
+      if (injectStyles) {
+        injectStyles.call(this, context)
+      }
+      // register component module identifier for async chunk inferrence
+      if (context && context._registeredComponents) {
+        context._registeredComponents.add(moduleIdentifier)
+      }
+    }
+    // used by ssr in case component is cached and beforeCreate
+    // never gets called
+    options._ssrRegister = hook
+  } else if (injectStyles) {
+    hook = injectStyles
+  }
+
+  if (hook) {
+    var functional = options.functional
+    var existing = functional
+      ? options.render
+      : options.beforeCreate
+
+    if (!functional) {
+      // inject component registration as beforeCreate hook
+      options.beforeCreate = existing
+        ? [].concat(existing, hook)
+        : [hook]
+    } else {
+      // for template-only hot-reload because in that case the render fn doesn't
+      // go through the normalizer
+      options._injectStyles = hook
+      // register for functioal component in vue file
+      options.render = function renderWithStyleInjection (h, context) {
+        hook.call(context)
+        return existing(h, context)
+      }
+    }
+  }
+
+  return {
+    esModule: esModule,
+    exports: scriptExports,
+    options: options
+  }
+}
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports) {
+
+/*
+	MIT License http://www.opensource.org/licenses/mit-license.php
+	Author Tobias Koppers @sokra
+*/
+// css base code, injected by the css-loader
+module.exports = function(useSourceMap) {
+	var list = [];
+
+	// return the list of modules as css string
+	list.toString = function toString() {
+		return this.map(function (item) {
+			var content = cssWithMappingToString(item, useSourceMap);
+			if(item[2]) {
+				return "@media " + item[2] + "{" + content + "}";
+			} else {
+				return content;
+			}
+		}).join("");
+	};
+
+	// import a list of modules into the list
+	list.i = function(modules, mediaQuery) {
+		if(typeof modules === "string")
+			modules = [[null, modules, ""]];
+		var alreadyImportedModules = {};
+		for(var i = 0; i < this.length; i++) {
+			var id = this[i][0];
+			if(typeof id === "number")
+				alreadyImportedModules[id] = true;
+		}
+		for(i = 0; i < modules.length; i++) {
+			var item = modules[i];
+			// skip already imported module
+			// this implementation is not 100% perfect for weird media query combinations
+			//  when a module is imported multiple times with different media queries.
+			//  I hope this will never occur (Hey this way we have smaller bundles)
+			if(typeof item[0] !== "number" || !alreadyImportedModules[item[0]]) {
+				if(mediaQuery && !item[2]) {
+					item[2] = mediaQuery;
+				} else if(mediaQuery) {
+					item[2] = "(" + item[2] + ") and (" + mediaQuery + ")";
+				}
+				list.push(item);
+			}
+		}
+	};
+	return list;
+};
+
+function cssWithMappingToString(item, useSourceMap) {
+	var content = item[1] || '';
+	var cssMapping = item[3];
+	if (!cssMapping) {
+		return content;
+	}
+
+	if (useSourceMap && typeof btoa === 'function') {
+		var sourceMapping = toComment(cssMapping);
+		var sourceURLs = cssMapping.sources.map(function (source) {
+			return '/*# sourceURL=' + cssMapping.sourceRoot + source + ' */'
+		});
+
+		return [content].concat(sourceURLs).concat([sourceMapping]).join('\n');
+	}
+
+	return [content].join('\n');
+}
+
+// Adapted from convert-source-map (MIT)
+function toComment(sourceMap) {
+	// eslint-disable-next-line no-undef
+	var base64 = btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap))));
+	var data = 'sourceMappingURL=data:application/json;charset=utf-8;base64,' + base64;
+
+	return '/*# ' + data + ' */';
+}
+
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/*
+  MIT License http://www.opensource.org/licenses/mit-license.php
+  Author Tobias Koppers @sokra
+  Modified by Evan You @yyx990803
+*/
+
+var hasDocument = typeof document !== 'undefined'
+
+if (typeof DEBUG !== 'undefined' && DEBUG) {
+  if (!hasDocument) {
+    throw new Error(
+    'vue-style-loader cannot be used in a non-browser environment. ' +
+    "Use { target: 'node' } in your Webpack config to indicate a server-rendering environment."
+  ) }
+}
+
+var listToStyles = __webpack_require__(97)
+
+/*
+type StyleObject = {
+  id: number;
+  parts: Array<StyleObjectPart>
+}
+
+type StyleObjectPart = {
+  css: string;
+  media: string;
+  sourceMap: ?string
+}
+*/
+
+var stylesInDom = {/*
+  [id: number]: {
+    id: number,
+    refs: number,
+    parts: Array<(obj?: StyleObjectPart) => void>
+  }
+*/}
+
+var head = hasDocument && (document.head || document.getElementsByTagName('head')[0])
+var singletonElement = null
+var singletonCounter = 0
+var isProduction = false
+var noop = function () {}
+
+// Force single-tag solution on IE6-9, which has a hard limit on the # of <style>
+// tags it will allow on a page
+var isOldIE = typeof navigator !== 'undefined' && /msie [6-9]\b/.test(navigator.userAgent.toLowerCase())
+
+module.exports = function (parentId, list, _isProduction) {
+  isProduction = _isProduction
+
+  var styles = listToStyles(parentId, list)
+  addStylesToDom(styles)
+
+  return function update (newList) {
+    var mayRemove = []
+    for (var i = 0; i < styles.length; i++) {
+      var item = styles[i]
+      var domStyle = stylesInDom[item.id]
+      domStyle.refs--
+      mayRemove.push(domStyle)
+    }
+    if (newList) {
+      styles = listToStyles(parentId, newList)
+      addStylesToDom(styles)
+    } else {
+      styles = []
+    }
+    for (var i = 0; i < mayRemove.length; i++) {
+      var domStyle = mayRemove[i]
+      if (domStyle.refs === 0) {
+        for (var j = 0; j < domStyle.parts.length; j++) {
+          domStyle.parts[j]()
+        }
+        delete stylesInDom[domStyle.id]
+      }
+    }
+  }
+}
+
+function addStylesToDom (styles /* Array<StyleObject> */) {
+  for (var i = 0; i < styles.length; i++) {
+    var item = styles[i]
+    var domStyle = stylesInDom[item.id]
+    if (domStyle) {
+      domStyle.refs++
+      for (var j = 0; j < domStyle.parts.length; j++) {
+        domStyle.parts[j](item.parts[j])
+      }
+      for (; j < item.parts.length; j++) {
+        domStyle.parts.push(addStyle(item.parts[j]))
+      }
+      if (domStyle.parts.length > item.parts.length) {
+        domStyle.parts.length = item.parts.length
+      }
+    } else {
+      var parts = []
+      for (var j = 0; j < item.parts.length; j++) {
+        parts.push(addStyle(item.parts[j]))
+      }
+      stylesInDom[item.id] = { id: item.id, refs: 1, parts: parts }
+    }
+  }
+}
+
+function createStyleElement () {
+  var styleElement = document.createElement('style')
+  styleElement.type = 'text/css'
+  head.appendChild(styleElement)
+  return styleElement
+}
+
+function addStyle (obj /* StyleObjectPart */) {
+  var update, remove
+  var styleElement = document.querySelector('style[data-vue-ssr-id~="' + obj.id + '"]')
+
+  if (styleElement) {
+    if (isProduction) {
+      // has SSR styles and in production mode.
+      // simply do nothing.
+      return noop
+    } else {
+      // has SSR styles but in dev mode.
+      // for some reason Chrome can't handle source map in server-rendered
+      // style tags - source maps in <style> only works if the style tag is
+      // created and inserted dynamically. So we remove the server rendered
+      // styles and inject new ones.
+      styleElement.parentNode.removeChild(styleElement)
+    }
+  }
+
+  if (isOldIE) {
+    // use singleton mode for IE9.
+    var styleIndex = singletonCounter++
+    styleElement = singletonElement || (singletonElement = createStyleElement())
+    update = applyToSingletonTag.bind(null, styleElement, styleIndex, false)
+    remove = applyToSingletonTag.bind(null, styleElement, styleIndex, true)
+  } else {
+    // use multi-style-tag mode in all other cases
+    styleElement = createStyleElement()
+    update = applyToTag.bind(null, styleElement)
+    remove = function () {
+      styleElement.parentNode.removeChild(styleElement)
+    }
+  }
+
+  update(obj)
+
+  return function updateStyle (newObj /* StyleObjectPart */) {
+    if (newObj) {
+      if (newObj.css === obj.css &&
+          newObj.media === obj.media &&
+          newObj.sourceMap === obj.sourceMap) {
+        return
+      }
+      update(obj = newObj)
+    } else {
+      remove()
+    }
+  }
+}
+
+var replaceText = (function () {
+  var textStore = []
+
+  return function (index, replacement) {
+    textStore[index] = replacement
+    return textStore.filter(Boolean).join('\n')
+  }
+})()
+
+function applyToSingletonTag (styleElement, index, remove, obj) {
+  var css = remove ? '' : obj.css
+
+  if (styleElement.styleSheet) {
+    styleElement.styleSheet.cssText = replaceText(index, css)
+  } else {
+    var cssNode = document.createTextNode(css)
+    var childNodes = styleElement.childNodes
+    if (childNodes[index]) styleElement.removeChild(childNodes[index])
+    if (childNodes.length) {
+      styleElement.insertBefore(cssNode, childNodes[index])
+    } else {
+      styleElement.appendChild(cssNode)
+    }
+  }
+}
+
+function applyToTag (styleElement, obj) {
+  var css = obj.css
+  var media = obj.media
+  var sourceMap = obj.sourceMap
+
+  if (media) {
+    styleElement.setAttribute('media', media)
+  }
+
+  if (sourceMap) {
+    // https://developer.chrome.com/devtools/docs/javascript-debugging
+    // this makes source maps inside style tags work properly in Chrome
+    css += '\n/*# sourceURL=' + sourceMap.sources[0] + ' */'
+    // http://stackoverflow.com/a/26603875
+    css += '\n/*# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap)))) + ' */'
+  }
+
+  if (styleElement.styleSheet) {
+    styleElement.styleSheet.cssText = css
+  } else {
+    while (styleElement.firstChild) {
+      styleElement.removeChild(styleElement.firstChild)
+    }
+    styleElement.appendChild(document.createTextNode(css))
+  }
+}
+
+
+/***/ }),
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var bind = __webpack_require__(29);
-var isBuffer = __webpack_require__(58);
+var bind = __webpack_require__(32);
+var isBuffer = __webpack_require__(64);
 
 /*global toString:true*/
 
@@ -10778,7 +11190,7 @@ module.exports = {
 
 
 /***/ }),
-/* 4 */
+/* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -11024,7 +11436,7 @@ function parseStyleToObject(str) {
 
 
 /***/ }),
-/* 5 */
+/* 8 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -11205,426 +11617,25 @@ function getKeyCodes(kcs) {
 
 
 /***/ }),
-/* 6 */
-/***/ (function(module, exports) {
-
-/*
-	MIT License http://www.opensource.org/licenses/mit-license.php
-	Author Tobias Koppers @sokra
-*/
-// css base code, injected by the css-loader
-module.exports = function(useSourceMap) {
-	var list = [];
-
-	// return the list of modules as css string
-	list.toString = function toString() {
-		return this.map(function (item) {
-			var content = cssWithMappingToString(item, useSourceMap);
-			if(item[2]) {
-				return "@media " + item[2] + "{" + content + "}";
-			} else {
-				return content;
-			}
-		}).join("");
-	};
-
-	// import a list of modules into the list
-	list.i = function(modules, mediaQuery) {
-		if(typeof modules === "string")
-			modules = [[null, modules, ""]];
-		var alreadyImportedModules = {};
-		for(var i = 0; i < this.length; i++) {
-			var id = this[i][0];
-			if(typeof id === "number")
-				alreadyImportedModules[id] = true;
-		}
-		for(i = 0; i < modules.length; i++) {
-			var item = modules[i];
-			// skip already imported module
-			// this implementation is not 100% perfect for weird media query combinations
-			//  when a module is imported multiple times with different media queries.
-			//  I hope this will never occur (Hey this way we have smaller bundles)
-			if(typeof item[0] !== "number" || !alreadyImportedModules[item[0]]) {
-				if(mediaQuery && !item[2]) {
-					item[2] = mediaQuery;
-				} else if(mediaQuery) {
-					item[2] = "(" + item[2] + ") and (" + mediaQuery + ")";
-				}
-				list.push(item);
-			}
-		}
-	};
-	return list;
-};
-
-function cssWithMappingToString(item, useSourceMap) {
-	var content = item[1] || '';
-	var cssMapping = item[3];
-	if (!cssMapping) {
-		return content;
-	}
-
-	if (useSourceMap && typeof btoa === 'function') {
-		var sourceMapping = toComment(cssMapping);
-		var sourceURLs = cssMapping.sources.map(function (source) {
-			return '/*# sourceURL=' + cssMapping.sourceRoot + source + ' */'
-		});
-
-		return [content].concat(sourceURLs).concat([sourceMapping]).join('\n');
-	}
-
-	return [content].join('\n');
-}
-
-// Adapted from convert-source-map (MIT)
-function toComment(sourceMap) {
-	// eslint-disable-next-line no-undef
-	var base64 = btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap))));
-	var data = 'sourceMappingURL=data:application/json;charset=utf-8;base64,' + base64;
-
-	return '/*# ' + data + ' */';
-}
-
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports) {
-
-/* globals __VUE_SSR_CONTEXT__ */
-
-// IMPORTANT: Do NOT use ES2015 features in this file.
-// This module is a runtime utility for cleaner component module output and will
-// be included in the final webpack user bundle.
-
-module.exports = function normalizeComponent (
-  rawScriptExports,
-  compiledTemplate,
-  functionalTemplate,
-  injectStyles,
-  scopeId,
-  moduleIdentifier /* server only */
-) {
-  var esModule
-  var scriptExports = rawScriptExports = rawScriptExports || {}
-
-  // ES6 modules interop
-  var type = typeof rawScriptExports.default
-  if (type === 'object' || type === 'function') {
-    esModule = rawScriptExports
-    scriptExports = rawScriptExports.default
-  }
-
-  // Vue.extend constructor export interop
-  var options = typeof scriptExports === 'function'
-    ? scriptExports.options
-    : scriptExports
-
-  // render functions
-  if (compiledTemplate) {
-    options.render = compiledTemplate.render
-    options.staticRenderFns = compiledTemplate.staticRenderFns
-    options._compiled = true
-  }
-
-  // functional template
-  if (functionalTemplate) {
-    options.functional = true
-  }
-
-  // scopedId
-  if (scopeId) {
-    options._scopeId = scopeId
-  }
-
-  var hook
-  if (moduleIdentifier) { // server build
-    hook = function (context) {
-      // 2.3 injection
-      context =
-        context || // cached call
-        (this.$vnode && this.$vnode.ssrContext) || // stateful
-        (this.parent && this.parent.$vnode && this.parent.$vnode.ssrContext) // functional
-      // 2.2 with runInNewContext: true
-      if (!context && typeof __VUE_SSR_CONTEXT__ !== 'undefined') {
-        context = __VUE_SSR_CONTEXT__
-      }
-      // inject component styles
-      if (injectStyles) {
-        injectStyles.call(this, context)
-      }
-      // register component module identifier for async chunk inferrence
-      if (context && context._registeredComponents) {
-        context._registeredComponents.add(moduleIdentifier)
-      }
-    }
-    // used by ssr in case component is cached and beforeCreate
-    // never gets called
-    options._ssrRegister = hook
-  } else if (injectStyles) {
-    hook = injectStyles
-  }
-
-  if (hook) {
-    var functional = options.functional
-    var existing = functional
-      ? options.render
-      : options.beforeCreate
-
-    if (!functional) {
-      // inject component registration as beforeCreate hook
-      options.beforeCreate = existing
-        ? [].concat(existing, hook)
-        : [hook]
-    } else {
-      // for template-only hot-reload because in that case the render fn doesn't
-      // go through the normalizer
-      options._injectStyles = hook
-      // register for functioal component in vue file
-      options.render = function renderWithStyleInjection (h, context) {
-        hook.call(context)
-        return existing(h, context)
-      }
-    }
-  }
-
-  return {
-    esModule: esModule,
-    exports: scriptExports,
-    options: options
-  }
-}
-
-
-/***/ }),
-/* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/*
-  MIT License http://www.opensource.org/licenses/mit-license.php
-  Author Tobias Koppers @sokra
-  Modified by Evan You @yyx990803
-*/
-
-var hasDocument = typeof document !== 'undefined'
-
-if (typeof DEBUG !== 'undefined' && DEBUG) {
-  if (!hasDocument) {
-    throw new Error(
-    'vue-style-loader cannot be used in a non-browser environment. ' +
-    "Use { target: 'node' } in your Webpack config to indicate a server-rendering environment."
-  ) }
-}
-
-var listToStyles = __webpack_require__(82)
-
-/*
-type StyleObject = {
-  id: number;
-  parts: Array<StyleObjectPart>
-}
-
-type StyleObjectPart = {
-  css: string;
-  media: string;
-  sourceMap: ?string
-}
-*/
-
-var stylesInDom = {/*
-  [id: number]: {
-    id: number,
-    refs: number,
-    parts: Array<(obj?: StyleObjectPart) => void>
-  }
-*/}
-
-var head = hasDocument && (document.head || document.getElementsByTagName('head')[0])
-var singletonElement = null
-var singletonCounter = 0
-var isProduction = false
-var noop = function () {}
-
-// Force single-tag solution on IE6-9, which has a hard limit on the # of <style>
-// tags it will allow on a page
-var isOldIE = typeof navigator !== 'undefined' && /msie [6-9]\b/.test(navigator.userAgent.toLowerCase())
-
-module.exports = function (parentId, list, _isProduction) {
-  isProduction = _isProduction
-
-  var styles = listToStyles(parentId, list)
-  addStylesToDom(styles)
-
-  return function update (newList) {
-    var mayRemove = []
-    for (var i = 0; i < styles.length; i++) {
-      var item = styles[i]
-      var domStyle = stylesInDom[item.id]
-      domStyle.refs--
-      mayRemove.push(domStyle)
-    }
-    if (newList) {
-      styles = listToStyles(parentId, newList)
-      addStylesToDom(styles)
-    } else {
-      styles = []
-    }
-    for (var i = 0; i < mayRemove.length; i++) {
-      var domStyle = mayRemove[i]
-      if (domStyle.refs === 0) {
-        for (var j = 0; j < domStyle.parts.length; j++) {
-          domStyle.parts[j]()
-        }
-        delete stylesInDom[domStyle.id]
-      }
-    }
-  }
-}
-
-function addStylesToDom (styles /* Array<StyleObject> */) {
-  for (var i = 0; i < styles.length; i++) {
-    var item = styles[i]
-    var domStyle = stylesInDom[item.id]
-    if (domStyle) {
-      domStyle.refs++
-      for (var j = 0; j < domStyle.parts.length; j++) {
-        domStyle.parts[j](item.parts[j])
-      }
-      for (; j < item.parts.length; j++) {
-        domStyle.parts.push(addStyle(item.parts[j]))
-      }
-      if (domStyle.parts.length > item.parts.length) {
-        domStyle.parts.length = item.parts.length
-      }
-    } else {
-      var parts = []
-      for (var j = 0; j < item.parts.length; j++) {
-        parts.push(addStyle(item.parts[j]))
-      }
-      stylesInDom[item.id] = { id: item.id, refs: 1, parts: parts }
-    }
-  }
-}
-
-function createStyleElement () {
-  var styleElement = document.createElement('style')
-  styleElement.type = 'text/css'
-  head.appendChild(styleElement)
-  return styleElement
-}
-
-function addStyle (obj /* StyleObjectPart */) {
-  var update, remove
-  var styleElement = document.querySelector('style[data-vue-ssr-id~="' + obj.id + '"]')
-
-  if (styleElement) {
-    if (isProduction) {
-      // has SSR styles and in production mode.
-      // simply do nothing.
-      return noop
-    } else {
-      // has SSR styles but in dev mode.
-      // for some reason Chrome can't handle source map in server-rendered
-      // style tags - source maps in <style> only works if the style tag is
-      // created and inserted dynamically. So we remove the server rendered
-      // styles and inject new ones.
-      styleElement.parentNode.removeChild(styleElement)
-    }
-  }
-
-  if (isOldIE) {
-    // use singleton mode for IE9.
-    var styleIndex = singletonCounter++
-    styleElement = singletonElement || (singletonElement = createStyleElement())
-    update = applyToSingletonTag.bind(null, styleElement, styleIndex, false)
-    remove = applyToSingletonTag.bind(null, styleElement, styleIndex, true)
-  } else {
-    // use multi-style-tag mode in all other cases
-    styleElement = createStyleElement()
-    update = applyToTag.bind(null, styleElement)
-    remove = function () {
-      styleElement.parentNode.removeChild(styleElement)
-    }
-  }
-
-  update(obj)
-
-  return function updateStyle (newObj /* StyleObjectPart */) {
-    if (newObj) {
-      if (newObj.css === obj.css &&
-          newObj.media === obj.media &&
-          newObj.sourceMap === obj.sourceMap) {
-        return
-      }
-      update(obj = newObj)
-    } else {
-      remove()
-    }
-  }
-}
-
-var replaceText = (function () {
-  var textStore = []
-
-  return function (index, replacement) {
-    textStore[index] = replacement
-    return textStore.filter(Boolean).join('\n')
-  }
-})()
-
-function applyToSingletonTag (styleElement, index, remove, obj) {
-  var css = remove ? '' : obj.css
-
-  if (styleElement.styleSheet) {
-    styleElement.styleSheet.cssText = replaceText(index, css)
-  } else {
-    var cssNode = document.createTextNode(css)
-    var childNodes = styleElement.childNodes
-    if (childNodes[index]) styleElement.removeChild(childNodes[index])
-    if (childNodes.length) {
-      styleElement.insertBefore(cssNode, childNodes[index])
-    } else {
-      styleElement.appendChild(cssNode)
-    }
-  }
-}
-
-function applyToTag (styleElement, obj) {
-  var css = obj.css
-  var media = obj.media
-  var sourceMap = obj.sourceMap
-
-  if (media) {
-    styleElement.setAttribute('media', media)
-  }
-
-  if (sourceMap) {
-    // https://developer.chrome.com/devtools/docs/javascript-debugging
-    // this makes source maps inside style tags work properly in Chrome
-    css += '\n/*# sourceURL=' + sourceMap.sources[0] + ' */'
-    // http://stackoverflow.com/a/26603875
-    css += '\n/*# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap)))) + ' */'
-  }
-
-  if (styleElement.styleSheet) {
-    styleElement.styleSheet.cssText = css
-  } else {
-    while (styleElement.firstChild) {
-      styleElement.removeChild(styleElement.firstChild)
-    }
-    styleElement.appendChild(document.createTextNode(css))
-  }
-}
-
-
-/***/ }),
 /* 9 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return EventBus; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
+
+var EventBus = new __WEBPACK_IMPORTED_MODULE_0_vue___default.a();
+
+/***/ }),
+/* 10 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Triggers; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_motion__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_motion__ = __webpack_require__(11);
 
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -11897,7 +11908,7 @@ Triggers.init = function ($, Foundation) {
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12010,7 +12021,7 @@ function animate(isIn, element, animation, cb) {
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports) {
 
 var g;
@@ -12037,7 +12048,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12270,7 +12281,7 @@ function GetExplicitOffsets(element, anchor, position, alignment, vOffset, hOffs
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12323,7 +12334,7 @@ function onImagesLoaded(images, callback) {
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12394,7 +12405,7 @@ var Nest = {
 
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23208,10 +23219,88 @@ Vue$3.compile = compileToFunctions;
 
 module.exports = Vue$3;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(11), __webpack_require__(75).setImmediate))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(12), __webpack_require__(81).setImmediate))
 
 /***/ }),
-/* 16 */
+/* 17 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return COFFE_CONFIG; });
+/**
+ * Defines the API route we are using
+ */
+var api_url = "";
+var google_maps_js_api = "AIzaSyAK43fIXX8mAu1tyOcpJiXxfayH2DrxRSw";
+
+switch ("development") {
+  case "development":
+    api_url = "http://coffe.in/api/v1";
+    break;
+
+  case "production":
+    api_url = "http://coffe.com/api/v1";
+    break;
+}
+
+var COFFE_CONFIG = {
+  API_URL: api_url,
+  GOOGLE_MAPS_JS_API: google_maps_js_api
+};
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(123)
+}
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(125)
+/* template */
+var __vue_template__ = __webpack_require__(126)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/components/global/Loader.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-5795fc18", Component.options)
+  } else {
+    hotAPI.reload("data-v-5795fc18", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 19 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -23381,14 +23470,14 @@ Touch.init = function ($) {
 
 
 /***/ }),
-/* 17 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {
 
-var utils = __webpack_require__(3);
-var normalizeHeaderName = __webpack_require__(60);
+var utils = __webpack_require__(6);
+var normalizeHeaderName = __webpack_require__(66);
 
 var DEFAULT_CONTENT_TYPE = {
   'Content-Type': 'application/x-www-form-urlencoded'
@@ -23404,10 +23493,10 @@ function getDefaultAdapter() {
   var adapter;
   if (typeof XMLHttpRequest !== 'undefined') {
     // For browsers use XHR adapter
-    adapter = __webpack_require__(30);
+    adapter = __webpack_require__(33);
   } else if (typeof process !== 'undefined') {
     // For node use HTTP adapter
-    adapter = __webpack_require__(30);
+    adapter = __webpack_require__(33);
   }
   return adapter;
 }
@@ -23478,10 +23567,10 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 
 module.exports = defaults;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(18)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(21)))
 
 /***/ }),
-/* 18 */
+/* 21 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -23671,18 +23760,58 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 19 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return EventBus; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(15);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(131)
+}
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(133)
+/* template */
+var __vue_template__ = __webpack_require__(134)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/components/global/forms/TagsInput.vue"
 
-var EventBus = new __WEBPACK_IMPORTED_MODULE_0_vue___default.a();
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-6674a71c", Component.options)
+  } else {
+    hotAPI.reload("data-v-6674a71c", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
 
 /***/ }),
-/* 20 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -40771,10 +40900,10 @@ var EventBus = new __WEBPACK_IMPORTED_MODULE_0_vue___default.a();
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(11), __webpack_require__(38)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(12), __webpack_require__(44)(module)))
 
 /***/ }),
-/* 21 */
+/* 24 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -40834,14 +40963,14 @@ function Timer(elem, options, cb) {
 
 
 /***/ }),
-/* 22 */
+/* 25 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Accordion; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_core__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_plugin__ = __webpack_require__(2);
 
@@ -41212,15 +41341,15 @@ Accordion.defaults = {
 
 
 /***/ }),
-/* 23 */
+/* 26 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return AccordionMenu; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_core__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_plugin__ = __webpack_require__(2);
 
@@ -41611,17 +41740,17 @@ AccordionMenu.defaults = {
 
 
 /***/ }),
-/* 24 */
+/* 27 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Drilldown; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_core__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_util_box__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_util_box__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_plugin__ = __webpack_require__(2);
 
 
@@ -42313,12 +42442,12 @@ Drilldown.defaults = {
 
 
 /***/ }),
-/* 25 */
+/* 28 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Positionable; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__foundation_util_box__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__foundation_util_box__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_plugin__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_core__ = __webpack_require__(1);
 
@@ -42572,16 +42701,16 @@ Positionable.defaults = {
 
 
 /***/ }),
-/* 26 */
+/* 29 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return DropdownMenu; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_box__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_nest__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_box__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_util_core__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_plugin__ = __webpack_require__(2);
 
@@ -43100,7 +43229,7 @@ DropdownMenu.defaults = {
 
 
 /***/ }),
-/* 27 */
+/* 30 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -43278,15 +43407,15 @@ SmoothScroll.defaults = {
 
 
 /***/ }),
-/* 28 */
+/* 31 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Tabs; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_imageLoader__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_imageLoader__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_plugin__ = __webpack_require__(2);
 
 
@@ -43825,7 +43954,7 @@ Tabs.defaults = {
 
 
 /***/ }),
-/* 29 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -43843,19 +43972,19 @@ module.exports = function bind(fn, thisArg) {
 
 
 /***/ }),
-/* 30 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(3);
-var settle = __webpack_require__(61);
-var buildURL = __webpack_require__(63);
-var parseHeaders = __webpack_require__(64);
-var isURLSameOrigin = __webpack_require__(65);
-var createError = __webpack_require__(31);
-var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(66);
+var utils = __webpack_require__(6);
+var settle = __webpack_require__(67);
+var buildURL = __webpack_require__(69);
+var parseHeaders = __webpack_require__(70);
+var isURLSameOrigin = __webpack_require__(71);
+var createError = __webpack_require__(34);
+var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(72);
 
 module.exports = function xhrAdapter(config) {
   return new Promise(function dispatchXhrRequest(resolve, reject) {
@@ -43952,7 +44081,7 @@ module.exports = function xhrAdapter(config) {
     // This is only done if running in a standard browser environment.
     // Specifically not if we're in a web worker, or react-native.
     if (utils.isStandardBrowserEnv()) {
-      var cookies = __webpack_require__(67);
+      var cookies = __webpack_require__(73);
 
       // Add xsrf header
       var xsrfValue = (config.withCredentials || isURLSameOrigin(config.url)) && config.xsrfCookieName ?
@@ -44030,13 +44159,13 @@ module.exports = function xhrAdapter(config) {
 
 
 /***/ }),
-/* 31 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var enhanceError = __webpack_require__(62);
+var enhanceError = __webpack_require__(68);
 
 /**
  * Create an Error with the specified message, config, error code, request and response.
@@ -44055,7 +44184,7 @@ module.exports = function createError(message, config, code, request, response) 
 
 
 /***/ }),
-/* 32 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44067,7 +44196,7 @@ module.exports = function isCancel(value) {
 
 
 /***/ }),
-/* 33 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44093,108 +44222,226 @@ module.exports = Cancel;
 
 
 /***/ }),
-/* 34 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var disposed = false
-function injectStyle (ssrContext) {
-  if (disposed) return
-  __webpack_require__(99)
-}
-var normalizeComponent = __webpack_require__(7)
-/* script */
-var __vue_script__ = __webpack_require__(101)
-/* template */
-var __vue_template__ = __webpack_require__(102)
-/* template functional */
-var __vue_template_functional__ = false
-/* styles */
-var __vue_styles__ = injectStyle
-/* scopeId */
-var __vue_scopeId__ = null
-/* moduleIdentifier (server only) */
-var __vue_module_identifier__ = null
-var Component = normalizeComponent(
-  __vue_script__,
-  __vue_template__,
-  __vue_template_functional__,
-  __vue_styles__,
-  __vue_scopeId__,
-  __vue_module_identifier__
-)
-Component.options.__file = "resources/assets/js/components/global/forms/TagsInput.vue"
-
-/* hot reload */
-if (false) {(function () {
-  var hotAPI = require("vue-hot-reload-api")
-  hotAPI.install(require("vue"), false)
-  if (!hotAPI.compatible) return
-  module.hot.accept()
-  if (!module.hot.data) {
-    hotAPI.createRecord("data-v-6674a71c", Component.options)
-  } else {
-    hotAPI.reload("data-v-6674a71c", Component.options)
-  }
-  module.hot.dispose(function (data) {
-    disposed = true
-  })
-})()}
-
-module.exports = Component.exports
-
-
-/***/ }),
-/* 35 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return COFFE_CONFIG; });
-/**
- * Defines the API route we are using
- */
-var api_url = '';
-var google_maps_js_api = 'AIzaSyAK43fIXX8mAu1tyOcpJiXxfayH2DrxRSw';
-
-switch ("development") {
-  case 'development':
-    api_url = 'http://coffe.in/api/v1';
-    break;
-
-  case 'production':
-    api_url = 'http://coffe.com/api/v1';
-    break;
-}
-
-var COFFE_CONFIG = {
-  API_URL: api_url,
-  GOOGLE_MAPS_JS_API: google_maps_js_api
-
-};
-
-/***/ }),
-/* 36 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(37);
-module.exports = __webpack_require__(140);
-
-
-/***/ }),
 /* 37 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__routes_js__ = __webpack_require__(77);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__store_js__ = __webpack_require__(133);
-window._ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vuex__ = __webpack_require__(87);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__modules_cafes_js__ = __webpack_require__(88);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__modules_users_js__ = __webpack_require__(90);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__modules_brewMethods_js__ = __webpack_require__(92);
+/*
+  Adds the promise polyfill for IE 11
+*/
+__webpack_require__(85).polyfill();
+
+/**
+ * Imports vue and vuex
+ */
+
+
+
+/**
+ * initialize vuex in vue
+ */
+__WEBPACK_IMPORTED_MODULE_0_vue___default.a.use(__WEBPACK_IMPORTED_MODULE_1_vuex__["a" /* default */]);
+
+/*
+    Imports all of the modules used in the application to build the data store.
+*/
+
+
+
+
+/**
+ * export our data store
+ */
+
+/* harmony default export */ __webpack_exports__["a"] = (new __WEBPACK_IMPORTED_MODULE_1_vuex__["a" /* default */].Store({
+  modules: {
+    cafes: __WEBPACK_IMPORTED_MODULE_2__modules_cafes_js__["a" /* cafes */],
+    users: __WEBPACK_IMPORTED_MODULE_3__modules_users_js__["a" /* users */],
+    brewMethods: __WEBPACK_IMPORTED_MODULE_4__modules_brewMethods_js__["a" /* brewMethods */]
+  }
+}));
+
+/***/ }),
+/* 38 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return CafeIsRoasterFilter; });
+var CafeIsRoasterFilter = {
+  methods: {
+    processCafeIsRoasterFilter: function processCafeIsRoasterFilter(cafe) {
+      /**
+       * Checks to see if the cafe is a roaster or not
+       */
+      if (cafe.roaster == 1) {
+        return true;
+      }
+      return false;
+    }
+  }
+};
+
+/***/ }),
+/* 39 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return CafeBrewMethodsFilter; });
+var CafeBrewMethodsFilter = {
+  methods: {
+    processCafeBrewMethodsFilter: function processCafeBrewMethodsFilter(cafe, brewMethods) {
+      /*
+        If there are brew methods to be filtered, run the filter.
+      */
+      if (brewMethods.length > 0) {
+        /*
+          Makes array of the brew methods for the cafe
+        */
+        var cafeBrewMethods = [];
+
+        /*
+          Makes array of brew methods tags so we can see if they
+          are in the filter.
+        */
+        for (var i = 0; i < cafe.brew_methods.length; i++) {
+          cafeBrewMethods.push(cafe.brew_methods[i].method);
+        }
+
+        /*
+          Iterate over all of the brew methods being filtered.
+        */
+        for (var i = 0; i < brewMethods.length; i++) {
+          /*
+            If the tag is in the array of cafe tags then we return
+            true.
+          */
+          if (cafeBrewMethods.indexOf(brewMethods[i]) > -1) {
+            return true;
+          }
+        }
+
+        /*
+          If we made it this far, then we return false because the
+          cafe doesn't contain the tags.
+        */
+        return false;
+      } else {
+        return true;
+      }
+    }
+  }
+};
+
+/***/ }),
+/* 40 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return CafeTagsFilter; });
+var CafeTagsFilter = {
+  methods: {
+    processCafeTagsFilter: function processCafeTagsFilter(cafe, tags) {
+      /*
+        If there are tags to be filtered, run the filter.
+      */
+      if (tags.length > 0) {
+        /*
+            Makes array of the tags for the cafe
+        */
+        var cafeTags = [];
+
+        /*
+        Make array of cafe tags this is what we will check to
+        see contains a filter.
+        */
+        for (var i = 0; i < cafe.tags.length; i++) {
+          cafeTags.push(cafe.tags[i].tag);
+        }
+
+        /*
+          Iterate over all of the tags being filtered.
+        */
+        for (var i = 0; i < tags.length; i++) {
+          /*
+            If the tag is in the array of cafe tags then
+            we return true.
+          */
+          if (cafeTags.indexOf(tags[i]) > -1) {
+            return true;
+          }
+        }
+
+        /*
+          If we made it this far, then we return false because
+          the cafe doesn't contain the tags
+        */
+        return false;
+      } else {
+        return true;
+      }
+    }
+  }
+};
+
+/***/ }),
+/* 41 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return CafeTextFilter; });
+var CafeTextFilter = {
+  methods: {
+    processCafeTextFilter: function processCafeTextFilter(cafe, text) {
+      /**
+       * Only process if the text is grater than 0
+       */
+      if (text.length > 0) {
+        /**
+         * If the name, location name, address, or city match the text that has been added,
+         * return true otherwise return false.
+         */
+        if (cafe.name.toLowerCase().match('[^,]*' + text.toLowerCase() + '[,$]*') || cafe.location_name.toLowerCase().match('[^,]*' + text.toLowerCase() + '[,$]*') || cafe.address.toLowerCase().match('[^,]*' + text.toLowerCase() + '[,$]*') || cafe.city.toLowerCase().match('[^,]*' + text.toLowerCase() + '[,$]*')) {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        return true;
+      }
+    }
+  }
+};
+
+/***/ }),
+/* 42 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(43);
+module.exports = __webpack_require__(180);
+
+
+/***/ }),
+/* 43 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__routes_js__ = __webpack_require__(83);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__store_js__ = __webpack_require__(37);
+window._ = __webpack_require__(23);
 
 try {
   window.$ = window.jQuery = __webpack_require__(0);
 
-  __webpack_require__(39);
+  __webpack_require__(45);
 } catch (e) {}
 
 /**
@@ -44203,9 +44450,9 @@ try {
  * CSRF token as a header based on the value of the "XSRF" token cookie.
  */
 
-window.axios = __webpack_require__(56);
+window.axios = __webpack_require__(62);
 
-window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+window.axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
 
 /**
  * Next we will register the CSRF Token as a common header with Axios so that
@@ -44216,9 +44463,9 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 var token = document.head.querySelector('meta[name="csrf-token"]');
 
 if (token) {
-  window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
+  window.axios.defaults.headers.common["X-CSRF-TOKEN"] = token.content;
 } else {
-  console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
+  console.error("CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token");
 }
 
 /**
@@ -44240,10 +44487,18 @@ if (token) {
 new __WEBPACK_IMPORTED_MODULE_0_vue___default.a({
   router: __WEBPACK_IMPORTED_MODULE_1__routes_js__["a" /* default */],
   store: __WEBPACK_IMPORTED_MODULE_2__store_js__["a" /* default */]
-}).$mount('#app');
+}).$mount("#app");
+
+ga("set", "page", __WEBPACK_IMPORTED_MODULE_1__routes_js__["a" /* default */].currentRoute.path);
+ga("send", "pageview");
+
+__WEBPACK_IMPORTED_MODULE_1__routes_js__["a" /* default */].afterEach(function (to, from) {
+  ga("set", "page", to.path);
+  ga("send", "pageview");
+});
 
 /***/ }),
-/* 38 */
+/* 44 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -44271,45 +44526,45 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 39 */
+/* 45 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__js_foundation_core__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__js_foundation_core__ = __webpack_require__(46);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__js_foundation_util_core__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__js_foundation_util_box__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__js_foundation_util_imageLoader__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__js_foundation_util_keyboard__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__js_foundation_util_mediaQuery__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__js_foundation_util_motion__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__js_foundation_util_nest__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__js_foundation_util_timer__ = __webpack_require__(21);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__js_foundation_util_touch__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_foundation_util_triggers__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__js_foundation_abide__ = __webpack_require__(41);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__js_foundation_accordion__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__js_foundation_accordionMenu__ = __webpack_require__(23);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__js_foundation_drilldown__ = __webpack_require__(24);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__js_foundation_dropdown__ = __webpack_require__(42);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__js_foundation_dropdownMenu__ = __webpack_require__(26);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_18__js_foundation_equalizer__ = __webpack_require__(43);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_19__js_foundation_interchange__ = __webpack_require__(44);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_20__js_foundation_magellan__ = __webpack_require__(45);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_21__js_foundation_offcanvas__ = __webpack_require__(46);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_22__js_foundation_orbit__ = __webpack_require__(47);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_23__js_foundation_responsiveMenu__ = __webpack_require__(48);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_24__js_foundation_responsiveToggle__ = __webpack_require__(49);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_25__js_foundation_reveal__ = __webpack_require__(50);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_26__js_foundation_slider__ = __webpack_require__(51);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_27__js_foundation_smoothScroll__ = __webpack_require__(27);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_28__js_foundation_sticky__ = __webpack_require__(52);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_29__js_foundation_tabs__ = __webpack_require__(28);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_30__js_foundation_toggler__ = __webpack_require__(53);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_31__js_foundation_tooltip__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_32__js_foundation_responsiveAccordionTabs__ = __webpack_require__(55);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__js_foundation_util_box__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__js_foundation_util_imageLoader__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__js_foundation_util_keyboard__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__js_foundation_util_mediaQuery__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__js_foundation_util_motion__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__js_foundation_util_nest__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__js_foundation_util_timer__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__js_foundation_util_touch__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__js_foundation_util_triggers__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__js_foundation_abide__ = __webpack_require__(47);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__js_foundation_accordion__ = __webpack_require__(25);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__js_foundation_accordionMenu__ = __webpack_require__(26);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__js_foundation_drilldown__ = __webpack_require__(27);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__js_foundation_dropdown__ = __webpack_require__(48);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__js_foundation_dropdownMenu__ = __webpack_require__(29);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_18__js_foundation_equalizer__ = __webpack_require__(49);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_19__js_foundation_interchange__ = __webpack_require__(50);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_20__js_foundation_magellan__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_21__js_foundation_offcanvas__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_22__js_foundation_orbit__ = __webpack_require__(53);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_23__js_foundation_responsiveMenu__ = __webpack_require__(54);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_24__js_foundation_responsiveToggle__ = __webpack_require__(55);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_25__js_foundation_reveal__ = __webpack_require__(56);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_26__js_foundation_slider__ = __webpack_require__(57);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_27__js_foundation_smoothScroll__ = __webpack_require__(30);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_28__js_foundation_sticky__ = __webpack_require__(58);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_29__js_foundation_tabs__ = __webpack_require__(31);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_30__js_foundation_toggler__ = __webpack_require__(59);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_31__js_foundation_tooltip__ = __webpack_require__(60);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_32__js_foundation_responsiveAccordionTabs__ = __webpack_require__(61);
 
 
 
@@ -44415,7 +44670,7 @@ __WEBPACK_IMPORTED_MODULE_1__js_foundation_core__["a" /* Foundation */].plugin(_
 /* harmony default export */ __webpack_exports__["default"] = (__WEBPACK_IMPORTED_MODULE_1__js_foundation_core__["a" /* Foundation */]);
 
 /***/ }),
-/* 40 */
+/* 46 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -44423,7 +44678,7 @@ __WEBPACK_IMPORTED_MODULE_1__js_foundation_core__["a" /* Foundation */].plugin(_
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_core__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_mediaQuery__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_mediaQuery__ = __webpack_require__(7);
 
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -44774,7 +45029,7 @@ function hyphenate(str) {
 
 
 /***/ }),
-/* 41 */
+/* 47 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -45438,17 +45693,17 @@ Abide.defaults = {
 
 
 /***/ }),
-/* 42 */
+/* 48 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Dropdown; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_core__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_positionable__ = __webpack_require__(25);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_util_triggers__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_positionable__ = __webpack_require__(28);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_util_triggers__ = __webpack_require__(10);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -45910,15 +46165,15 @@ Dropdown.defaults = {
 
 
 /***/ }),
-/* 43 */
+/* 49 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Equalizer; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_mediaQuery__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_imageLoader__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_mediaQuery__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_imageLoader__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_core__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_plugin__ = __webpack_require__(2);
 
@@ -46311,14 +46566,14 @@ Equalizer.defaults = {
 
 
 /***/ }),
-/* 44 */
+/* 50 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Interchange; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_mediaQuery__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_mediaQuery__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_plugin__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_core__ = __webpack_require__(1);
 
@@ -46577,7 +46832,7 @@ Interchange.SPECIAL_QUERIES = {
 
 
 /***/ }),
-/* 45 */
+/* 51 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -46586,7 +46841,7 @@ Interchange.SPECIAL_QUERIES = {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_core__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_plugin__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_smoothScroll__ = __webpack_require__(27);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_smoothScroll__ = __webpack_require__(30);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -46893,18 +47148,18 @@ Magellan.defaults = {
 
 
 /***/ }),
-/* 46 */
+/* 52 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return OffCanvas; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_mediaQuery__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_mediaQuery__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_core__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_plugin__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_util_triggers__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_util_triggers__ = __webpack_require__(10);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -47519,20 +47774,20 @@ OffCanvas.defaults = {
 
 
 /***/ }),
-/* 47 */
+/* 53 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Orbit; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_motion__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_timer__ = __webpack_require__(21);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_util_imageLoader__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_motion__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_timer__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_util_imageLoader__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_util_core__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__foundation_plugin__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__foundation_util_touch__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__foundation_util_touch__ = __webpack_require__(19);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -48121,19 +48376,19 @@ Orbit.defaults = {
 
 
 /***/ }),
-/* 48 */
+/* 54 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return ResponsiveMenu; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_mediaQuery__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_mediaQuery__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_core__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_plugin__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_dropdownMenu__ = __webpack_require__(26);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_drilldown__ = __webpack_require__(24);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__foundation_accordionMenu__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_dropdownMenu__ = __webpack_require__(29);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_drilldown__ = __webpack_require__(27);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__foundation_accordionMenu__ = __webpack_require__(26);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -48326,15 +48581,15 @@ ResponsiveMenu.defaults = {};
 
 
 /***/ }),
-/* 49 */
+/* 55 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return ResponsiveToggle; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_mediaQuery__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_motion__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_mediaQuery__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_motion__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_plugin__ = __webpack_require__(2);
 
 
@@ -48529,18 +48784,18 @@ ResponsiveToggle.defaults = {
 
 
 /***/ }),
-/* 50 */
+/* 56 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Reveal; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_mediaQuery__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_motion__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_mediaQuery__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_motion__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_plugin__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_util_triggers__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_util_triggers__ = __webpack_require__(10);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -49180,19 +49435,19 @@ Reveal.defaults = {
 
 
 /***/ }),
-/* 51 */
+/* 57 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Slider; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_motion__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_keyboard__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_motion__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_core__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_plugin__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_util_touch__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__foundation_util_triggers__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_util_touch__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__foundation_util_triggers__ = __webpack_require__(10);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -49986,7 +50241,7 @@ function baseLog(base, value) {
 
 
 /***/ }),
-/* 52 */
+/* 58 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -49994,9 +50249,9 @@ function baseLog(base, value) {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_core__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_mediaQuery__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_mediaQuery__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_plugin__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_util_triggers__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_util_triggers__ = __webpack_require__(10);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -50566,16 +50821,16 @@ function emCalc(em) {
 
 
 /***/ }),
-/* 53 */
+/* 59 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Toggler; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_motion__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_motion__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_plugin__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_triggers__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_triggers__ = __webpack_require__(10);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -50762,7 +51017,7 @@ Toggler.defaults = {
 
 
 /***/ }),
-/* 54 */
+/* 60 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -50770,9 +51025,9 @@ Toggler.defaults = {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_core__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_mediaQuery__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_triggers__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_positionable__ = __webpack_require__(25);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_mediaQuery__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_util_triggers__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_positionable__ = __webpack_require__(28);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -51275,18 +51530,18 @@ Tooltip.defaults = {
 
 
 /***/ }),
-/* 55 */
+/* 61 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return ResponsiveAccordionTabs; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_mediaQuery__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__foundation_util_mediaQuery__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__foundation_util_core__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__foundation_plugin__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_accordion__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_tabs__ = __webpack_require__(28);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__foundation_accordion__ = __webpack_require__(25);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__foundation_tabs__ = __webpack_require__(31);
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -51566,22 +51821,22 @@ ResponsiveAccordionTabs.defaults = {};
 
 
 /***/ }),
-/* 56 */
+/* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(57);
+module.exports = __webpack_require__(63);
 
 /***/ }),
-/* 57 */
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(3);
-var bind = __webpack_require__(29);
-var Axios = __webpack_require__(59);
-var defaults = __webpack_require__(17);
+var utils = __webpack_require__(6);
+var bind = __webpack_require__(32);
+var Axios = __webpack_require__(65);
+var defaults = __webpack_require__(20);
 
 /**
  * Create an instance of Axios
@@ -51614,15 +51869,15 @@ axios.create = function create(instanceConfig) {
 };
 
 // Expose Cancel & CancelToken
-axios.Cancel = __webpack_require__(33);
-axios.CancelToken = __webpack_require__(73);
-axios.isCancel = __webpack_require__(32);
+axios.Cancel = __webpack_require__(36);
+axios.CancelToken = __webpack_require__(79);
+axios.isCancel = __webpack_require__(35);
 
 // Expose all/spread
 axios.all = function all(promises) {
   return Promise.all(promises);
 };
-axios.spread = __webpack_require__(74);
+axios.spread = __webpack_require__(80);
 
 module.exports = axios;
 
@@ -51631,7 +51886,7 @@ module.exports.default = axios;
 
 
 /***/ }),
-/* 58 */
+/* 64 */
 /***/ (function(module, exports) {
 
 /*!
@@ -51658,16 +51913,16 @@ function isSlowBuffer (obj) {
 
 
 /***/ }),
-/* 59 */
+/* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var defaults = __webpack_require__(17);
-var utils = __webpack_require__(3);
-var InterceptorManager = __webpack_require__(68);
-var dispatchRequest = __webpack_require__(69);
+var defaults = __webpack_require__(20);
+var utils = __webpack_require__(6);
+var InterceptorManager = __webpack_require__(74);
+var dispatchRequest = __webpack_require__(75);
 
 /**
  * Create a new instance of Axios
@@ -51744,13 +51999,13 @@ module.exports = Axios;
 
 
 /***/ }),
-/* 60 */
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(3);
+var utils = __webpack_require__(6);
 
 module.exports = function normalizeHeaderName(headers, normalizedName) {
   utils.forEach(headers, function processHeader(value, name) {
@@ -51763,13 +52018,13 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
 
 
 /***/ }),
-/* 61 */
+/* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var createError = __webpack_require__(31);
+var createError = __webpack_require__(34);
 
 /**
  * Resolve or reject a Promise based on response status.
@@ -51796,7 +52051,7 @@ module.exports = function settle(resolve, reject, response) {
 
 
 /***/ }),
-/* 62 */
+/* 68 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -51824,13 +52079,13 @@ module.exports = function enhanceError(error, config, code, request, response) {
 
 
 /***/ }),
-/* 63 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(3);
+var utils = __webpack_require__(6);
 
 function encode(val) {
   return encodeURIComponent(val).
@@ -51899,13 +52154,13 @@ module.exports = function buildURL(url, params, paramsSerializer) {
 
 
 /***/ }),
-/* 64 */
+/* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(3);
+var utils = __webpack_require__(6);
 
 // Headers whose duplicates are ignored by node
 // c.f. https://nodejs.org/api/http.html#http_message_headers
@@ -51959,13 +52214,13 @@ module.exports = function parseHeaders(headers) {
 
 
 /***/ }),
-/* 65 */
+/* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(3);
+var utils = __webpack_require__(6);
 
 module.exports = (
   utils.isStandardBrowserEnv() ?
@@ -52034,7 +52289,7 @@ module.exports = (
 
 
 /***/ }),
-/* 66 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -52077,13 +52332,13 @@ module.exports = btoa;
 
 
 /***/ }),
-/* 67 */
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(3);
+var utils = __webpack_require__(6);
 
 module.exports = (
   utils.isStandardBrowserEnv() ?
@@ -52137,13 +52392,13 @@ module.exports = (
 
 
 /***/ }),
-/* 68 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(3);
+var utils = __webpack_require__(6);
 
 function InterceptorManager() {
   this.handlers = [];
@@ -52196,18 +52451,18 @@ module.exports = InterceptorManager;
 
 
 /***/ }),
-/* 69 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(3);
-var transformData = __webpack_require__(70);
-var isCancel = __webpack_require__(32);
-var defaults = __webpack_require__(17);
-var isAbsoluteURL = __webpack_require__(71);
-var combineURLs = __webpack_require__(72);
+var utils = __webpack_require__(6);
+var transformData = __webpack_require__(76);
+var isCancel = __webpack_require__(35);
+var defaults = __webpack_require__(20);
+var isAbsoluteURL = __webpack_require__(77);
+var combineURLs = __webpack_require__(78);
 
 /**
  * Throws a `Cancel` if cancellation has been requested.
@@ -52289,13 +52544,13 @@ module.exports = function dispatchRequest(config) {
 
 
 /***/ }),
-/* 70 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var utils = __webpack_require__(3);
+var utils = __webpack_require__(6);
 
 /**
  * Transform the data for a request or a response
@@ -52316,7 +52571,7 @@ module.exports = function transformData(data, headers, fns) {
 
 
 /***/ }),
-/* 71 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -52337,7 +52592,7 @@ module.exports = function isAbsoluteURL(url) {
 
 
 /***/ }),
-/* 72 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -52358,13 +52613,13 @@ module.exports = function combineURLs(baseURL, relativeURL) {
 
 
 /***/ }),
-/* 73 */
+/* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var Cancel = __webpack_require__(33);
+var Cancel = __webpack_require__(36);
 
 /**
  * A `CancelToken` is an object that can be used to request cancellation of an operation.
@@ -52422,7 +52677,7 @@ module.exports = CancelToken;
 
 
 /***/ }),
-/* 74 */
+/* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -52456,7 +52711,7 @@ module.exports = function spread(callback) {
 
 
 /***/ }),
-/* 75 */
+/* 81 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var apply = Function.prototype.apply;
@@ -52509,13 +52764,13 @@ exports._unrefActive = exports.active = function(item) {
 };
 
 // setimmediate attaches itself to the global object
-__webpack_require__(76);
+__webpack_require__(82);
 exports.setImmediate = setImmediate;
 exports.clearImmediate = clearImmediate;
 
 
 /***/ }),
-/* 76 */
+/* 82 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
@@ -52705,16 +52960,17 @@ exports.clearImmediate = clearImmediate;
     attachTo.clearImmediate = clearImmediate;
 }(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(11), __webpack_require__(18)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(12), __webpack_require__(21)))
 
 /***/ }),
-/* 77 */
+/* 83 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vue_router__ = __webpack_require__(78);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vue_router__ = __webpack_require__(84);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__store_js__ = __webpack_require__(37);
 /*
 |-------------------------------------------------------------------------------
 | routes.js
@@ -52728,38 +52984,84 @@ exports.clearImmediate = clearImmediate;
 
 
 
+
 /*
     Extends Vue to use Vue Router
 */
 __WEBPACK_IMPORTED_MODULE_0_vue___default.a.use(__WEBPACK_IMPORTED_MODULE_1_vue_router__["a" /* default */]);
 
+/**
+ * This will check to see if the user is authenticated or not
+ */
+function requireAuth(to, from, next) {
+  /**
+   * Determines where we should send the user
+   */
+  function proceed() {
+    if (__WEBPACK_IMPORTED_MODULE_2__store_js__["a" /* default */].getters.getUserLoadStatus() == 2) {
+      if (__WEBPACK_IMPORTED_MODULE_2__store_js__["a" /* default */].getters.getUser != "") {
+        next();
+      } else {
+        next("/home");
+      }
+    }
+
+    /**
+     * Confirm the user has been loaded
+     */
+    if (__WEBPACK_IMPORTED_MODULE_2__store_js__["a" /* default */].getters.getUserLoadStatus != 2) {
+      __WEBPACK_IMPORTED_MODULE_2__store_js__["a" /* default */].dispatch("loadUser");
+
+      __WEBPACK_IMPORTED_MODULE_2__store_js__["a" /* default */].watch(__WEBPACK_IMPORTED_MODULE_2__store_js__["a" /* default */].getters.getUserLoadStatus, function () {
+        if (__WEBPACK_IMPORTED_MODULE_2__store_js__["a" /* default */].getters.getUserLoadStatus() == 2) {
+          proceed();
+        }
+      });
+    } else {
+      proceed();
+    }
+  }
+}
+
 /* harmony default export */ __webpack_exports__["a"] = (new __WEBPACK_IMPORTED_MODULE_1_vue_router__["a" /* default */]({
   routes: [{
-    path: '/',
-    name: 'layout',
-    component: __WEBPACK_IMPORTED_MODULE_0_vue___default.a.component('home', __webpack_require__(79)),
+    path: "/",
+    redirect: { name: "home" },
+    name: "layout",
+    component: __WEBPACK_IMPORTED_MODULE_0_vue___default.a.component("Layout", __webpack_require__(94)),
     children: [{
-      path: 'home',
-      name: 'home',
-      component: __WEBPACK_IMPORTED_MODULE_0_vue___default.a.component('home', __webpack_require__(91))
+      path: "home",
+      name: "home",
+      component: __WEBPACK_IMPORTED_MODULE_0_vue___default.a.component("Home", __webpack_require__(116))
     }, {
-      path: 'cafes',
-      name: 'cafes',
-      component: __WEBPACK_IMPORTED_MODULE_0_vue___default.a.component('home', __webpack_require__(105))
+      path: "cafes",
+      name: "cafes",
+      component: __WEBPACK_IMPORTED_MODULE_0_vue___default.a.component("Cafes", __webpack_require__(137))
     }, {
-      path: 'cafes/new',
-      name: 'newcafes',
-      component: __WEBPACK_IMPORTED_MODULE_0_vue___default.a.component('home', __webpack_require__(115))
+      path: "cafes/new",
+      name: "newcafe",
+      component: __WEBPACK_IMPORTED_MODULE_0_vue___default.a.component("NewCafe", __webpack_require__(152)),
+      beforeEnter: requireAuth
     }, {
-      path: 'cafes/:id',
-      name: 'cafe',
-      component: __WEBPACK_IMPORTED_MODULE_0_vue___default.a.component('home', __webpack_require__(120))
+      path: "cafes/:id",
+      name: "cafe",
+      component: __WEBPACK_IMPORTED_MODULE_0_vue___default.a.component("Cafe", __webpack_require__(157))
+    }, {
+      path: "cafes/:id/edit",
+      name: "editcafe",
+      component: __WEBPACK_IMPORTED_MODULE_0_vue___default.a.component("EditCafe", __webpack_require__(170)),
+      beforeEnter: requireAuth
+    }, {
+      path: "profile",
+      name: "profile",
+      component: __WEBPACK_IMPORTED_MODULE_0_vue___default.a.component("Profile", __webpack_require__(175)),
+      beforeEnter: requireAuth
     }]
   }]
 }));
 
 /***/ }),
-/* 78 */
+/* 84 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -55389,3009 +55691,7 @@ if (inBrowser && window.Vue) {
 
 
 /***/ }),
-/* 79 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var disposed = false
-function injectStyle (ssrContext) {
-  if (disposed) return
-  __webpack_require__(80)
-}
-var normalizeComponent = __webpack_require__(7)
-/* script */
-var __vue_script__ = __webpack_require__(83)
-/* template */
-var __vue_template__ = __webpack_require__(90)
-/* template functional */
-var __vue_template_functional__ = false
-/* styles */
-var __vue_styles__ = injectStyle
-/* scopeId */
-var __vue_scopeId__ = null
-/* moduleIdentifier (server only) */
-var __vue_module_identifier__ = null
-var Component = normalizeComponent(
-  __vue_script__,
-  __vue_template__,
-  __vue_template_functional__,
-  __vue_styles__,
-  __vue_scopeId__,
-  __vue_module_identifier__
-)
-Component.options.__file = "resources/assets/js/pages/Layout.vue"
-
-/* hot reload */
-if (false) {(function () {
-  var hotAPI = require("vue-hot-reload-api")
-  hotAPI.install(require("vue"), false)
-  if (!hotAPI.compatible) return
-  module.hot.accept()
-  if (!module.hot.data) {
-    hotAPI.createRecord("data-v-d32a9ab2", Component.options)
-  } else {
-    hotAPI.reload("data-v-d32a9ab2", Component.options)
-  }
-  module.hot.dispose(function (data) {
-    disposed = true
-  })
-})()}
-
-module.exports = Component.exports
-
-
-/***/ }),
-/* 80 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(81);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var update = __webpack_require__(8)("d8ffc7f0", content, false);
-// Hot Module Replacement
-if(false) {
- // When the styles change, update the <style> tags
- if(!content.locals) {
-   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-d32a9ab2\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Layout.vue", function() {
-     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-d32a9ab2\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Layout.vue");
-     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-     update(newContent);
-   });
- }
- // When the module is disposed, remove the <style> tags
- module.hot.dispose(function() { update(); });
-}
-
-/***/ }),
-/* 81 */
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(6)(undefined);
-// imports
-
-
-// module
-exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
-
-// exports
-
-
-/***/ }),
-/* 82 */
-/***/ (function(module, exports) {
-
-/**
- * Translates the list format produced by css-loader into something
- * easier to manipulate.
- */
-module.exports = function listToStyles (parentId, list) {
-  var styles = []
-  var newStyles = {}
-  for (var i = 0; i < list.length; i++) {
-    var item = list[i]
-    var id = item[0]
-    var css = item[1]
-    var media = item[2]
-    var sourceMap = item[3]
-    var part = {
-      id: parentId + ':' + i,
-      css: css,
-      media: media,
-      sourceMap: sourceMap
-    }
-    if (!newStyles[id]) {
-      styles.push(newStyles[id] = { id: id, parts: [part] })
-    } else {
-      newStyles[id].parts.push(part)
-    }
-  }
-  return styles
-}
-
-
-/***/ }),
-/* 83 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_global_Navigation_vue__ = __webpack_require__(84);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_global_Navigation_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__components_global_Navigation_vue__);
-//
-//
-//
-//
-//
-//
-//
-
-
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-  components: {
-    Navigation: __WEBPACK_IMPORTED_MODULE_0__components_global_Navigation_vue___default.a
-  },
-  created: function created() {
-    this.$store.dispatch('loadCafes');
-    //this.$store.dispatch('loadUser');
-    //this.$store.dispatch('loadBrewMethods');
-  }
-});
-
-/***/ }),
-/* 84 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var disposed = false
-function injectStyle (ssrContext) {
-  if (disposed) return
-  __webpack_require__(85)
-}
-var normalizeComponent = __webpack_require__(7)
-/* script */
-var __vue_script__ = __webpack_require__(88)
-/* template */
-var __vue_template__ = __webpack_require__(89)
-/* template functional */
-var __vue_template_functional__ = false
-/* styles */
-var __vue_styles__ = injectStyle
-/* scopeId */
-var __vue_scopeId__ = null
-/* moduleIdentifier (server only) */
-var __vue_module_identifier__ = null
-var Component = normalizeComponent(
-  __vue_script__,
-  __vue_template__,
-  __vue_template_functional__,
-  __vue_styles__,
-  __vue_scopeId__,
-  __vue_module_identifier__
-)
-Component.options.__file = "resources/assets/js/components/global/Navigation.vue"
-
-/* hot reload */
-if (false) {(function () {
-  var hotAPI = require("vue-hot-reload-api")
-  hotAPI.install(require("vue"), false)
-  if (!hotAPI.compatible) return
-  module.hot.accept()
-  if (!module.hot.data) {
-    hotAPI.createRecord("data-v-6666af19", Component.options)
-  } else {
-    hotAPI.reload("data-v-6666af19", Component.options)
-  }
-  module.hot.dispose(function (data) {
-    disposed = true
-  })
-})()}
-
-module.exports = Component.exports
-
-
-/***/ }),
 /* 85 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(86);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var update = __webpack_require__(8)("b5c450f0", content, false);
-// Hot Module Replacement
-if(false) {
- // When the styles change, update the <style> tags
- if(!content.locals) {
-   module.hot.accept("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-6666af19\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Navigation.vue", function() {
-     var newContent = require("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-6666af19\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Navigation.vue");
-     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-     update(newContent);
-   });
- }
- // When the module is disposed, remove the <style> tags
- module.hot.dispose(function() { update(); });
-}
-
-/***/ }),
-/* 86 */
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(6)(undefined);
-// imports
-exports.i(__webpack_require__(87), "");
-
-// module
-exports.push([module.i, "\nnav.top-navigation{\n  background-color: $white;\n  height: 50px;\n  border-bottom: 2px solid $dark-color;\nspan.logo{\n    border-right: 1px solid $dark-color;\n    display: block;\n    float: left;\n    height: 50px;\n    line-height: 50px;\n    padding: 0px 20px 0px 20px;\n    font-family: 'Josefin Sans', sans-serif;\n    font-weight: bold;\n    color: $dark-color;\n&:hover{\n      color: white;\n      background-color: $dark-color;\n}\n}\nul.links{\n    display: block;\n    float: left;\nli{\n      display: inline-block;\n      list-style-type: none;\n      line-height: 50px;\na{\n        font-family: 'Lato', sans-serif;\n        font-weight: bold;\n        color: $black;\n&:hover{\n          color: $dark-color;\n}\n}\n}\n}\ndiv.right{\n    float: right;\nimg.avatar{\n      width: 40px;\n      height: 40px;\n      border-radius: 40px;\n      margin-top: 5px;\n      margin-right: 10px;\n}\nspan.login{\n      height: 50px;\n      line-height: 50px;\n      padding: 0px 20px 0px 20px;\n      font-family: 'Josefin Sans', sans-serif;\n      font-weight: bold;\n      color: $dark-color;\n      cursor: pointer;\n}\na.profile{\n      height: 50px;\n      line-height: 50px;\n      padding: 0px 20px 0px 20px;\n      font-family: 'Josefin Sans', sans-serif;\n      font-weight: bold;\n      color: $dark-color;\n      cursor: pointer;\n}\nspan.logout{\n      height: 50px;\n      line-height: 50px;\n      padding: 0px 20px 0px 20px;\n      font-family: 'Josefin Sans', sans-serif;\n      font-weight: bold;\n      color: $dark-color;\n      cursor: pointer;\n}\n}\n&:after{\n    content: \"\";\n    display: table;\n    clear: both;\n}\n}\n", ""]);
-
-// exports
-
-
-/***/ }),
-/* 87 */
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(6)(undefined);
-// imports
-
-
-// module
-exports.push([module.i, "$white: #FFFFFF;\n$black: #111111;\n\n$primary-color: #7F6D50;\n$secondary-color: #FFBE54;\n$highlight-color: #FFDBA0;\n$dark-color: #7F5F2A;\n$dull-color: #CCAF80;", ""]);
-
-// exports
-
-
-/***/ }),
-/* 88 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-
-//import { EventBus} from '../../event-bus.js';
-/* harmony default export */ __webpack_exports__["default"] = ({
-  computed: {
-    userLoadStatus: function userLoadStatus() {
-      return this.$store.getters.getUserLoadStatus;
-    },
-    user: function user() {
-      return this.$store.getters.getUser;
-    }
-  }
-  /*methods: {
-    login() {
-      EventBus.$emit('prompt-login');
-    },
-    logout() {
-      this.$store.dispatch('logoutUser');
-      window.location ='/logout';
-    }
-  }*/
-});
-
-/***/ }),
-/* 89 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "nav",
-    { staticClass: "top-navigation" },
-    [
-      _c("router-link", { attrs: { to: { name: "home" } } }, [
-        _c("span", { staticClass: "logo" }, [_vm._v("Coffe in GDL")])
-      ]),
-      _vm._v(" "),
-      _c("ul", { staticClass: "links" }, [
-        _c(
-          "li",
-          [
-            _c("router-link", { attrs: { to: { name: "cafes" } } }, [
-              _vm._v("\n      cafes\n      ")
-            ])
-          ],
-          1
-        )
-      ])
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-module.exports = { render: render, staticRenderFns: staticRenderFns }
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-    require("vue-hot-reload-api")      .rerender("data-v-6666af19", module.exports)
-  }
-}
-
-/***/ }),
-/* 90 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    { attrs: { id: "app-layout" } },
-    [_c("navigation"), _vm._v(" "), _c("router-view")],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-module.exports = { render: render, staticRenderFns: staticRenderFns }
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-    require("vue-hot-reload-api")      .rerender("data-v-d32a9ab2", module.exports)
-  }
-}
-
-/***/ }),
-/* 91 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var disposed = false
-function injectStyle (ssrContext) {
-  if (disposed) return
-  __webpack_require__(92)
-}
-var normalizeComponent = __webpack_require__(7)
-/* script */
-var __vue_script__ = __webpack_require__(94)
-/* template */
-var __vue_template__ = __webpack_require__(104)
-/* template functional */
-var __vue_template_functional__ = false
-/* styles */
-var __vue_styles__ = injectStyle
-/* scopeId */
-var __vue_scopeId__ = null
-/* moduleIdentifier (server only) */
-var __vue_module_identifier__ = null
-var Component = normalizeComponent(
-  __vue_script__,
-  __vue_template__,
-  __vue_template_functional__,
-  __vue_styles__,
-  __vue_scopeId__,
-  __vue_module_identifier__
-)
-Component.options.__file = "resources/assets/js/pages/Home.vue"
-
-/* hot reload */
-if (false) {(function () {
-  var hotAPI = require("vue-hot-reload-api")
-  hotAPI.install(require("vue"), false)
-  if (!hotAPI.compatible) return
-  module.hot.accept()
-  if (!module.hot.data) {
-    hotAPI.createRecord("data-v-440dff1c", Component.options)
-  } else {
-    hotAPI.reload("data-v-440dff1c", Component.options)
-  }
-  module.hot.dispose(function (data) {
-    disposed = true
-  })
-})()}
-
-module.exports = Component.exports
-
-
-/***/ }),
-/* 92 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(93);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var update = __webpack_require__(8)("4012de3c", content, false);
-// Hot Module Replacement
-if(false) {
- // When the styles change, update the <style> tags
- if(!content.locals) {
-   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-440dff1c\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/sass-loader/lib/loader.js!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Home.vue", function() {
-     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-440dff1c\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/sass-loader/lib/loader.js!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Home.vue");
-     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-     update(newContent);
-   });
- }
- // When the module is disposed, remove the <style> tags
- module.hot.dispose(function() { update(); });
-}
-
-/***/ }),
-/* 93 */
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(6)(undefined);
-// imports
-
-
-// module
-exports.push([module.i, "\ndiv#home a.add-cafe-button {\n  float: right;\n  display: block;\n  margin-top: 10px;\n  margin-bottom: 10px;\n  background-color: #7F5F2A;\n  color: white;\n  padding-top: 5px;\n  padding-bottom: 5px;\n  padding-left: 10px;\n  padding-right: 10px;\n}\n", ""]);
-
-// exports
-
-
-/***/ }),
-/* 94 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_cafes_CafeFilter_vue__ = __webpack_require__(95);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_cafes_CafeFilter_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__components_cafes_CafeFilter_vue__);
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-
-
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-  created: function created() {
-    this.$store.dispatch('loadCafes');
-  },
-
-  computed: {
-    cafesLoadStatus: function cafesLoadStatus() {
-      return this.$store.getters.getCafesLoadStatus;
-    },
-    cafes: function cafes() {
-      return this.$store.getters.getCafes;
-    }
-  }
-});
-
-/***/ }),
-/* 95 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var disposed = false
-function injectStyle (ssrContext) {
-  if (disposed) return
-  __webpack_require__(96)
-}
-var normalizeComponent = __webpack_require__(7)
-/* script */
-var __vue_script__ = __webpack_require__(98)
-/* template */
-var __vue_template__ = __webpack_require__(103)
-/* template functional */
-var __vue_template_functional__ = false
-/* styles */
-var __vue_styles__ = injectStyle
-/* scopeId */
-var __vue_scopeId__ = null
-/* moduleIdentifier (server only) */
-var __vue_module_identifier__ = null
-var Component = normalizeComponent(
-  __vue_script__,
-  __vue_template__,
-  __vue_template_functional__,
-  __vue_styles__,
-  __vue_scopeId__,
-  __vue_module_identifier__
-)
-Component.options.__file = "resources/assets/js/components/cafes/CafeFilter.vue"
-
-/* hot reload */
-if (false) {(function () {
-  var hotAPI = require("vue-hot-reload-api")
-  hotAPI.install(require("vue"), false)
-  if (!hotAPI.compatible) return
-  module.hot.accept()
-  if (!module.hot.data) {
-    hotAPI.createRecord("data-v-5d26d3e5", Component.options)
-  } else {
-    hotAPI.reload("data-v-5d26d3e5", Component.options)
-  }
-  module.hot.dispose(function (data) {
-    disposed = true
-  })
-})()}
-
-module.exports = Component.exports
-
-
-/***/ }),
-/* 96 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(97);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var update = __webpack_require__(8)("1315c5a6", content, false);
-// Hot Module Replacement
-if(false) {
- // When the styles change, update the <style> tags
- if(!content.locals) {
-   module.hot.accept("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-5d26d3e5\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./CafeFilter.vue", function() {
-     var newContent = require("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-5d26d3e5\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./CafeFilter.vue");
-     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-     update(newContent);
-   });
- }
- // When the module is disposed, remove the <style> tags
- module.hot.dispose(function() { update(); });
-}
-
-/***/ }),
-/* 97 */
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(6)(undefined);
-// imports
-
-
-// module
-exports.push([module.i, "\ndiv.filter-brew-method {\n  display: inline-block;\n  height: 35px;\n  text-align: center;\n  border: 1px solid #ededed;\n  border-radius: 5px;\n  padding-left: 10px;\n  padding-right: 10px;\n  padding-top: 5px;\n  padding-bottom: 5px;\n  margin-right: 10px;\n  margin-top: 10px;\n  cursor: pointer;\n  color: #7F5F2A;\n  font-family: 'Josefin Sans', sans-serif;\n}\ndiv.filter-brew-method.active {\n    border-bottom: 4px solid #7F6D50;\n}\nspan.show-filters {\n  display: block;\n  margin: auto;\n  color: #7F5F2A;\n  font-family: 'Josefin Sans', sans-serif;\n  cursor: pointer;\n  font-size: 14px;\n}\n", ""]);
-
-// exports
-
-
-/***/ }),
-/* 98 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__global_forms_TagsInput_vue__ = __webpack_require__(34);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__global_forms_TagsInput_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__global_forms_TagsInput_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__event_bus_js__ = __webpack_require__(19);
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-
-
-
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-  components: {
-    TagsInput: __WEBPACK_IMPORTED_MODULE_0__global_forms_TagsInput_vue___default.a
-  },
-  data: function data() {
-    return {
-      textSearch: '',
-      tags: [],
-      isRoaster: false,
-      brewMethods: [],
-      show: true
-    };
-  },
-  mounted: function mounted() {
-    __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$on('tags-edited', function (tagsEdited) {
-      if (tagsEdited.unique == 'cafe-search') {
-        this.tags = tagsEdited.tags;
-      }
-    }.bind(this));
-  },
-
-  methods: {
-    toggleBrewMethodFilter: function toggleBrewMethodFilter(method) {
-      if (this.brewMethods.indexOf(method) > -1) {
-        this.brewMethods.splice(this.brewMethods.indexOf(method), 1);
-      } else {
-        this.brewMethods.push(method);
-      }
-    },
-    updateFilterDisplay: function updateFilterDisplay() {
-      __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$emit('filters-updated', {
-        text: this.textSearch,
-        tags: this.tags,
-        roaster: this.isRoaster,
-        brew_methods: this.brewMethods
-      });
-    }
-  },
-  computed: {
-    cafeBrewMethods: function cafeBrewMethods() {
-      return this.$store.getters.getBrewMethods;
-    }
-  },
-  watch: {
-    textSearch: function textSearch() {
-      this.updateFilterDisplay();
-    },
-    tags: function tags() {
-      this.updateFilterDisplay();
-    },
-    isRoaster: function isRoaster() {
-      this.updateFilterDisplay();
-    },
-    brewMethods: function brewMethods() {
-      this.updateFilterDisplay();
-    }
-  }
-});
-
-/***/ }),
-/* 99 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(100);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var update = __webpack_require__(8)("5b1c212e", content, false);
-// Hot Module Replacement
-if(false) {
- // When the styles change, update the <style> tags
- if(!content.locals) {
-   module.hot.accept("!!../../../../../../node_modules/css-loader/index.js!../../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-6674a71c\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../../node_modules/sass-loader/lib/loader.js!../../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./TagsInput.vue", function() {
-     var newContent = require("!!../../../../../../node_modules/css-loader/index.js!../../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-6674a71c\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../../node_modules/sass-loader/lib/loader.js!../../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./TagsInput.vue");
-     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-     update(newContent);
-   });
- }
- // When the module is disposed, remove the <style> tags
- module.hot.dispose(function() { update(); });
-}
-
-/***/ }),
-/* 100 */
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(6)(undefined);
-// imports
-
-
-// module
-exports.push([module.i, "\ndiv.tags-input-container {\n  position: relative;\n}\ndiv.tags-input-container div.tags-input {\n    display: block;\n    -webkit-box-sizing: border-box;\n    box-sizing: border-box;\n    width: 100%;\n    height: auto;\n    min-height: 100px;\n    padding-top: 4px;\n    border: 1px solid #cacaca;\n    border-radius: 0;\n    background-color: #FFFFFF;\n    -webkit-box-shadow: inset 0 1px 2px rgba(17, 17, 17, 0.1);\n    box-shadow: inset 0 1px 2px rgba(17, 17, 17, 0.1);\n    font-family: inherit;\n    font-size: 1rem;\n    font-weight: normal;\n    line-height: 1.5;\n    color: #111111;\n}\ndiv.tags-input-container div.tags-input div.selected-tag {\n      border: 1px solid #7F5F2A;\n      background: #FFDBA0;\n      font-size: 18px;\n      color: #7F5F2A;\n      padding: 3px;\n      margin: 5px;\n      float: left;\n      border-radius: 3px;\n}\ndiv.tags-input-container div.tags-input div.selected-tag span.remove-tag {\n        margin: 0 0 0 5px;\n        padding: 0;\n        border: none;\n        background: none;\n        cursor: pointer;\n        vertical-align: middle;\n        color: #7F5F2A;\n}\ndiv.tags-input-container div.tags-input input[type=\"text\"].new-tag-input {\n      border: 0px;\n      margin: 0px;\n      float: left;\n      width: auto;\n      min-width: 100px;\n      -webkit-box-shadow: none;\n      box-shadow: none;\n      margin: 5px;\n}\ndiv.tags-input-container div.tags-input input[type=\"text\"].new-tag-input.duplicate-warning {\n        color: red;\n}\ndiv.tags-input-container div.tags-input input[type=\"text\"].new-tag-input:focus {\n        -webkit-box-shadow: none;\n                box-shadow: none;\n}\ndiv.tags-input-container div.tag-autocomplete {\n    position: absolute;\n    background-color: white;\n    width: 100%;\n    padding: 5px 0;\n    z-index: 99999;\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    -webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);\n    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);\n}\ndiv.tags-input-container div.tag-autocomplete div.tag-search-result {\n      padding: 5px 10px;\n      cursor: pointer;\n      white-space: nowrap;\n      overflow: hidden;\n      text-overflow: ellipsis;\n      color: #7F5F2A;\n      font-size: 14px;\n      background-color: white;\n}\ndiv.tags-input-container div.tag-autocomplete div.tag-search-result:hover {\n        background-color: #FFDBA0;\n}\ndiv.tags-input-container div.tag-autocomplete div.tag-search-result.selected-search-index {\n        background-color: #FFDBA0;\n}\n", ""]);
-
-// exports
-
-
-/***/ }),
-/* 101 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__config_js__ = __webpack_require__(35);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__event_bus_js__ = __webpack_require__(19);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_lodash__ = __webpack_require__(20);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_lodash___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_lodash__);
-var _methods;
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-
-
-
-
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-  props: ['unique'],
-  data: function data() {
-    return {
-      currentTag: '',
-      tagsArray: [],
-      tagSearchResults: [],
-      duplicateFlag: false,
-      searchSelectedIndex: -1,
-      pauseSearch: false
-    };
-  },
-  mounted: function mounted() {
-    __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$on('clear-tags', function (unique) {
-      this.currentTag = '';
-      this.tagsArray = [];
-      this.tagSearchResults = [];
-      this.duplicateFlag = false;
-      this.searchSelectedIndex = -1;
-      this.pauseSearch = false;
-    }.bind(this));
-  },
-
-  computed: {
-    showAutocomplete: function showAutocomplete() {
-      return this.tagSearchResults.length == 0 ? false : true;
-    }
-  },
-  methods: (_methods = {
-    selectedTag: function selectedTag(tag) {
-      if (!this.checkDuplicates(tag)) {
-        tag = this.cleanTagName(tag);
-        this.tagsArray.push(tag);
-
-        __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$emit('tags-edited', { unique: this.unique, tags: this.tagsArray });
-        this.resetInputs();
-      } else {
-        this.duplicateFlag = true;
-      }
-    },
-    addNewTag: function addNewTag() {
-      if (!this.checkDuplicates(this.currentTag)) {
-        var newTagName = this.cleanTagName(this.currentTag);
-        this.tagsArray.push(newTagName);
-
-        __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$emit('tags-edited', { unique: this.unique, tags: this.tagsArray });
-        this.resetInputs();
-      } else {
-        this.duplicateFlag = true;
-      }
-    },
-    removeTag: function removeTag(tagIndex) {
-      this.tagsArray.splice(tagIndex, 1);
-
-      __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$emit('tags-edited', { unique: this.unique, tags: this.tagsArray });
-    },
-    changeIndex: function changeIndex(direction) {
-      this.pauseSearch = true;
-
-      if (direction == 'up' && this.searchSelectedIndex - 1 > -1) {
-        this.searchSelectedIndex = this.searchSelectedIndex - 1;
-        this.currentTag = this.tagSearchResults[this.searchSelectedIndex].tag;
-      }
-
-      if (direction == 'down' && this.searchSelectedIndex + 1 <= this.tagSearchResults.length - 1) {
-        this.searchSelectedIndex = this.searchSelectedIndex + 1;
-        this.currentTag = this.tagSearchResults[this.searchSelectedIndex].tag;
-      }
-    },
-
-
-    /*
-      Searches the API route for tags with the autocomplete.
-    */
-    searchTags: __WEBPACK_IMPORTED_MODULE_2_lodash___default.a.debounce(function (e) {
-      if (this.currentTag.length > 2 && !this.pauseSearch) {
-        this.searchSelectedIndex = -1;
-        axios.get(__WEBPACK_IMPORTED_MODULE_0__config_js__["a" /* COFFE_CONFIG */].API_URL + '/tags', {
-          params: {
-            search: this.currentTag
-          }
-        }).then(function (response) {
-          this.tagSearchResults = response.data;
-        }.bind(this));
-      }
-    }, 300),
-
-    checkDuplicates: function checkDuplicates(tagName) {
-      tagName = this.cleanTagName(tagName);
-
-      return this.tagsArray.indexOf(tagName) > -1;
-    },
-    cleanTagName: function cleanTagName(tagName) {
-      var cleanTag = tagName.toLowerCase();
-
-      cleanTag = cleanTag.trim().replace(/[^a-zA-Z0-9]/g, '-');
-
-      cleanTag = cleanTag.replace(/-{2,}/, '-');
-
-      cleanTag = this.trimCharacter(cleanTag, '-');
-
-      return cleanTag;
-    }
-  }, _defineProperty(_methods, 'removeTag', function removeTag(tagIndex) {
-    this.tagsArray.splice(tagIndex, 1);
-  }), _defineProperty(_methods, 'trimCharacter', function trimCharacter(string, character) {
-    if (character === "]") c = "\\]";
-    //if(character === "\\") c = "\\\";
-    return string.replace(new RegExp("^[" + character + "]+|[" + character + "]+$", "g"), "");
-  }), _defineProperty(_methods, 'resetInputs', function resetInputs() {
-    this.currentTag = '';
-    this.tagsArray = [];
-    this.duplicateFlag = false;
-    this.searchSelectedIndex = -1;
-    this.pauseSearch = false;
-  }), _defineProperty(_methods, 'focusTagInput', function focusTagInput() {
-    document.getElementById(this.unique).focus();
-  }), _defineProperty(_methods, 'handleDelete', function handleDelete() {
-    if (this.currentTag.length == 0) {
-      this.tagsArray.splice(this.tagsArray.length - 1, 1);
-
-      __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$emit('tags-edited', { unique: this.unique, tags: this.tagsArray });
-    }
-  }), _methods)
-});
-
-/***/ }),
-/* 102 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c("div", { staticClass: "tags-input-container" }, [
-    _c("label", [_vm._v("Tags")]),
-    _vm._v(" "),
-    _c(
-      "div",
-      {
-        staticClass: "tags-input",
-        on: {
-          click: function($event) {
-            _vm.focusTagInput()
-          }
-        }
-      },
-      [
-        _vm._l(_vm.tagsArray, function(selectedTag, key) {
-          return _c("div", { staticClass: "selected-tag" }, [
-            _vm._v(_vm._s(selectedTag) + " "),
-            _c(
-              "span",
-              {
-                staticClass: "remove-tag",
-                on: {
-                  click: function($event) {
-                    _vm.removeTag(key)
-                  }
-                }
-              },
-              [_vm._v("×")]
-            )
-          ])
-        }),
-        _vm._v(" "),
-        _c("input", {
-          directives: [
-            {
-              name: "model",
-              rawName: "v-model",
-              value: _vm.currentTag,
-              expression: "currentTag"
-            }
-          ],
-          staticClass: "new-tag-input",
-          class: { "duplicate-warning": _vm.duplicateFlag },
-          attrs: { type: "text", id: _vm.unique, placeholder: "Add a tag" },
-          domProps: { value: _vm.currentTag },
-          on: {
-            keyup: [
-              _vm.searchTags,
-              function($event) {
-                if (
-                  !("button" in $event) &&
-                  _vm._k($event.keyCode, "enter", 13, $event.key)
-                ) {
-                  return null
-                }
-                _vm.addNewTag($event)
-              }
-            ],
-            keydown: [
-              function($event) {
-                if (
-                  !("button" in $event) &&
-                  _vm._k($event.keyCode, "up", 38, $event.key)
-                ) {
-                  return null
-                }
-                _vm.changeIndex("up")
-              },
-              function($event) {
-                if (
-                  !("button" in $event) &&
-                  _vm._k($event.keyCode, "delete", [8, 46], $event.key)
-                ) {
-                  return null
-                }
-                _vm.handleDelete($event)
-              },
-              function($event) {
-                if (
-                  !("button" in $event) &&
-                  _vm._k($event.keyCode, "down", 40, $event.key)
-                ) {
-                  return null
-                }
-                _vm.changeIndex("down")
-              }
-            ],
-            input: function($event) {
-              if ($event.target.composing) {
-                return
-              }
-              _vm.currentTag = $event.target.value
-            }
-          }
-        })
-      ],
-      2
-    ),
-    _vm._v(" "),
-    _c(
-      "div",
-      {
-        directives: [
-          {
-            name: "show",
-            rawName: "v-show",
-            value: _vm.showAutocomplete,
-            expression: "showAutocomplete"
-          }
-        ],
-        staticClass: "tag-autocomplete"
-      },
-      _vm._l(_vm.tagSearchResults, function(tag, key) {
-        return _c(
-          "div",
-          {
-            staticClass: "tag-search-result",
-            class: { "selected-search-index": _vm.searchSelectedIndex == key },
-            on: {
-              click: function($event) {
-                _vm.selectTag(tag.tag)
-              }
-            }
-          },
-          [_vm._v(_vm._s(tag.tag))]
-        )
-      })
-    )
-  ])
-}
-var staticRenderFns = []
-render._withStripped = true
-module.exports = { render: render, staticRenderFns: staticRenderFns }
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-    require("vue-hot-reload-api")      .rerender("data-v-6674a71c", module.exports)
-  }
-}
-
-/***/ }),
-/* 103 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c("div", { attrs: { id: "cafe-filter" } }, [
-    _c(
-      "div",
-      {
-        directives: [
-          {
-            name: "show",
-            rawName: "v-show",
-            value: _vm.show,
-            expression: "show"
-          }
-        ],
-        staticClass: "grid-container"
-      },
-      [
-        _c("div", { staticClass: "grid-x grid-padding-x" }, [
-          _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
-            _c("label", [_vm._v("Search")]),
-            _vm._v(" "),
-            _c("input", {
-              directives: [
-                {
-                  name: "model",
-                  rawName: "v-model",
-                  value: _vm.textSearch,
-                  expression: "textSearch"
-                }
-              ],
-              attrs: { type: "text", placeholder: "Search" },
-              domProps: { value: _vm.textSearch },
-              on: {
-                input: function($event) {
-                  if ($event.target.composing) {
-                    return
-                  }
-                  _vm.textSearch = $event.target.value
-                }
-              }
-            }),
-            _vm._v(" "),
-            _c("div", { staticClass: "is-roaster-container" }, [
-              _c("input", {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model",
-                    value: _vm.isRoaster,
-                    expression: "isRoaster"
-                  }
-                ],
-                attrs: { type: "checkbox" },
-                domProps: {
-                  checked: Array.isArray(_vm.isRoaster)
-                    ? _vm._i(_vm.isRoaster, null) > -1
-                    : _vm.isRoaster
-                },
-                on: {
-                  change: function($event) {
-                    var $$a = _vm.isRoaster,
-                      $$el = $event.target,
-                      $$c = $$el.checked ? true : false
-                    if (Array.isArray($$a)) {
-                      var $$v = null,
-                        $$i = _vm._i($$a, $$v)
-                      if ($$el.checked) {
-                        $$i < 0 && (_vm.isRoaster = $$a.concat([$$v]))
-                      } else {
-                        $$i > -1 &&
-                          (_vm.isRoaster = $$a
-                            .slice(0, $$i)
-                            .concat($$a.slice($$i + 1)))
-                      }
-                    } else {
-                      _vm.isRoaster = $$c
-                    }
-                  }
-                }
-              }),
-              _vm._v(" "),
-              _c("label", [_vm._v("Is Roaster?")])
-            ]),
-            _vm._v(" "),
-            _c(
-              "div",
-              { staticClass: "brew-methods-container" },
-              _vm._l(_vm.cafeBrewMethods, function(method) {
-                return _c(
-                  "div",
-                  {
-                    staticClass: "filter-brew-method",
-                    class: {
-                      active: _vm.brewMethods.indexOf(method.method) > -1
-                    },
-                    on: {
-                      click: function($event) {
-                        _vm.toggleBrewMethodFilter(method.method)
-                      }
-                    }
-                  },
-                  [
-                    _vm._v(
-                      "\n              " +
-                        _vm._s(method.method) +
-                        "\n            "
-                    )
-                  ]
-                )
-              })
-            )
-          ]),
-          _vm._v(" "),
-          _c(
-            "div",
-            { staticClass: "large-6 medium-6 small-12 cell" },
-            [_c("tags-input", { attrs: { unique: "cafe-search" } })],
-            1
-          )
-        ])
-      ]
-    )
-  ])
-}
-var staticRenderFns = []
-render._withStripped = true
-module.exports = { render: render, staticRenderFns: staticRenderFns }
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-    require("vue-hot-reload-api")      .rerender("data-v-5d26d3e5", module.exports)
-  }
-}
-
-/***/ }),
-/* 104 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c("div", { attrs: { id: "home" } }, [
-    _c(
-      "span",
-      {
-        directives: [
-          {
-            name: "show",
-            rawName: "v-show",
-            value: _vm.cafesLoadStatus == 1,
-            expression: "cafesLoadStatus == 1"
-          }
-        ]
-      },
-      [_vm._v("Loading")]
-    ),
-    _vm._v(" "),
-    _c(
-      "span",
-      {
-        directives: [
-          {
-            name: "show",
-            rawName: "v-show",
-            value: _vm.cafesLoadStatus == 2,
-            expression: "cafesLoadStatus == 2"
-          }
-        ]
-      },
-      [_vm._v("Cafes loaded successfully!")]
-    ),
-    _vm._v(" "),
-    _c(
-      "span",
-      {
-        directives: [
-          {
-            name: "show",
-            rawName: "v-show",
-            value: _vm.cafesLoadStatus == 3,
-            expression: "cafesLoadStatus == 3"
-          }
-        ]
-      },
-      [_vm._v("Cafes loaded unsuccessfully!")]
-    ),
-    _vm._v(" "),
-    _c(
-      "ul",
-      _vm._l(_vm.cafes, function(cafe) {
-        return _c("li", [_vm._v(_vm._s(cafe.name))])
-      })
-    )
-  ])
-}
-var staticRenderFns = []
-render._withStripped = true
-module.exports = { render: render, staticRenderFns: staticRenderFns }
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-    require("vue-hot-reload-api")      .rerender("data-v-440dff1c", module.exports)
-  }
-}
-
-/***/ }),
-/* 105 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var disposed = false
-function injectStyle (ssrContext) {
-  if (disposed) return
-  __webpack_require__(106)
-}
-var normalizeComponent = __webpack_require__(7)
-/* script */
-var __vue_script__ = __webpack_require__(108)
-/* template */
-var __vue_template__ = __webpack_require__(114)
-/* template functional */
-var __vue_template_functional__ = false
-/* styles */
-var __vue_styles__ = injectStyle
-/* scopeId */
-var __vue_scopeId__ = null
-/* moduleIdentifier (server only) */
-var __vue_module_identifier__ = null
-var Component = normalizeComponent(
-  __vue_script__,
-  __vue_template__,
-  __vue_template_functional__,
-  __vue_styles__,
-  __vue_scopeId__,
-  __vue_module_identifier__
-)
-Component.options.__file = "resources/assets/js/pages/Cafes.vue"
-
-/* hot reload */
-if (false) {(function () {
-  var hotAPI = require("vue-hot-reload-api")
-  hotAPI.install(require("vue"), false)
-  if (!hotAPI.compatible) return
-  module.hot.accept()
-  if (!module.hot.data) {
-    hotAPI.createRecord("data-v-3b6b4789", Component.options)
-  } else {
-    hotAPI.reload("data-v-3b6b4789", Component.options)
-  }
-  module.hot.dispose(function (data) {
-    disposed = true
-  })
-})()}
-
-module.exports = Component.exports
-
-
-/***/ }),
-/* 106 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(107);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var update = __webpack_require__(8)("6919dc95", content, false);
-// Hot Module Replacement
-if(false) {
- // When the styles change, update the <style> tags
- if(!content.locals) {
-   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-3b6b4789\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Cafes.vue", function() {
-     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-3b6b4789\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Cafes.vue");
-     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-     update(newContent);
-   });
- }
- // When the module is disposed, remove the <style> tags
- module.hot.dispose(function() { update(); });
-}
-
-/***/ }),
-/* 107 */
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(6)(undefined);
-// imports
-
-
-// module
-exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
-
-// exports
-
-
-/***/ }),
-/* 108 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_cafes_CafeMap_vue__ = __webpack_require__(109);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_cafes_CafeMap_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__components_cafes_CafeMap_vue__);
-//
-//
-//
-//
-//
-//
-
-
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-  components: {
-    CafeMap: __WEBPACK_IMPORTED_MODULE_0__components_cafes_CafeMap_vue___default.a
-  }
-});
-
-/***/ }),
-/* 109 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var disposed = false
-function injectStyle (ssrContext) {
-  if (disposed) return
-  __webpack_require__(110)
-}
-var normalizeComponent = __webpack_require__(7)
-/* script */
-var __vue_script__ = __webpack_require__(112)
-/* template */
-var __vue_template__ = __webpack_require__(113)
-/* template functional */
-var __vue_template_functional__ = false
-/* styles */
-var __vue_styles__ = injectStyle
-/* scopeId */
-var __vue_scopeId__ = null
-/* moduleIdentifier (server only) */
-var __vue_module_identifier__ = null
-var Component = normalizeComponent(
-  __vue_script__,
-  __vue_template__,
-  __vue_template_functional__,
-  __vue_styles__,
-  __vue_scopeId__,
-  __vue_module_identifier__
-)
-Component.options.__file = "resources/assets/js/components/cafes/CafeMap.vue"
-
-/* hot reload */
-if (false) {(function () {
-  var hotAPI = require("vue-hot-reload-api")
-  hotAPI.install(require("vue"), false)
-  if (!hotAPI.compatible) return
-  module.hot.accept()
-  if (!module.hot.data) {
-    hotAPI.createRecord("data-v-1dd0d03f", Component.options)
-  } else {
-    hotAPI.reload("data-v-1dd0d03f", Component.options)
-  }
-  module.hot.dispose(function (data) {
-    disposed = true
-  })
-})()}
-
-module.exports = Component.exports
-
-
-/***/ }),
-/* 110 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(111);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var update = __webpack_require__(8)("21b3e8ae", content, false);
-// Hot Module Replacement
-if(false) {
- // When the styles change, update the <style> tags
- if(!content.locals) {
-   module.hot.accept("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-1dd0d03f\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./CafeMap.vue", function() {
-     var newContent = require("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-1dd0d03f\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./CafeMap.vue");
-     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-     update(newContent);
-   });
- }
- // When the module is disposed, remove the <style> tags
- module.hot.dispose(function() { update(); });
-}
-
-/***/ }),
-/* 111 */
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(6)(undefined);
-// imports
-
-
-// module
-exports.push([module.i, "\ndiv#cafe-map {\n  position: absolute;\n  top: 50px;\n  left: 0px;\n  right: 0px;\n  bottom: 100px;\n}\n", ""]);
-
-// exports
-
-
-/***/ }),
-/* 112 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-//
-//
-//
-//
-//
-//
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-  props: {
-    'latitude': {
-      type: Number,
-      default: function _default() {
-        return 20.67;
-      }
-    },
-    'longitude': {
-      type: Number,
-      default: function _default() {
-        return -103.40;
-      }
-    },
-    'zoom': {
-      type: Number,
-      default: function _default() {
-        return 6;
-      }
-    }
-  },
-  data: function data() {
-    return {
-      markers: [],
-      infoWindows: []
-    };
-  },
-
-  methods: {
-    buildMarkers: function buildMarkers() {
-      var _this = this;
-
-      /*
-        Initialize the markers to an empty array.
-      */
-      this.markers = [];
-
-      /*
-        Iterate over all of the cafes
-      */
-
-      var _loop = function _loop() {
-
-        /*
-          Create the marker for each of the cafes and set the
-          latitude and longitude to the latitude and longitude
-          of the cafe. Also set the map to be the local map.
-        */
-        image = 'img/coffee-icon-png-13684.png';
-        marker = new google.maps.Marker({
-          position: { lat: parseFloat(_this.cafes[i].latitude), lng: parseFloat(_this.cafes[i].longitude) },
-          map: _this.map,
-          icon: image
-        });
-
-        /**
-          create info window and add it ti the loca
-        */
-
-        var infoWindow = new google.maps.InfoWindow({
-          content: _this.cafes[i].name
-        });
-        _this.infoWindows.push(infoWindow);
-
-        /*
-          Push the new marker on to the array.
-        */
-        _this.markers.push(marker);
-
-        /**
-          Add the event listener to open the info window for the marker 
-        */
-        marker.addListener('click', function () {
-          infoWindow.open(this.map, this);
-        });
-      };
-
-      for (var i = 0; i < this.cafes.length; i++) {
-        var image;
-        var marker;
-
-        _loop();
-      }
-    },
-
-    /*
-      Clears the markers from the map.
-    */
-    clearMarkers: function clearMarkers() {
-      /*
-        Iterate over all of the markers and set the map
-        to null so they disappear.
-      */
-      for (var i = 0; i < this.markers.length; i++) {
-        this.markers[i].setMap(null);
-      }
-    }
-  },
-  computed: {
-    cafes: function cafes() {
-      return this.$store.getters.getCafes;
-    }
-  },
-  mounted: function mounted() {
-    /*
-     We don't want the map to be reactive, so we initialize it locally,
-     but don't store it in our data array.
-    */
-    this.map = new google.maps.Map(document.getElementById('cafe-map'), {
-      center: { lat: this.latitude, lng: this.longitude },
-      zoom: this.zoom
-    });
-    /*
-      Clear and re-build the markers
-    */
-    this.clearMarkers();
-    this.buildMarkers();
-  },
-
-  watch: {
-    /*
-      Watches the cafes. When they are updated, clear the markers
-      and re build them.
-    */
-    cafes: function cafes() {
-      this.clearMarkers();
-      this.buildMarkers();
-    }
-  }
-});
-
-/***/ }),
-/* 113 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c("div", { attrs: { id: "cafe-map" } })
-}
-var staticRenderFns = []
-render._withStripped = true
-module.exports = { render: render, staticRenderFns: staticRenderFns }
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-    require("vue-hot-reload-api")      .rerender("data-v-1dd0d03f", module.exports)
-  }
-}
-
-/***/ }),
-/* 114 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    { staticClass: "page", attrs: { id: "cafes" } },
-    [_c("cafe-map")],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-module.exports = { render: render, staticRenderFns: staticRenderFns }
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-    require("vue-hot-reload-api")      .rerender("data-v-3b6b4789", module.exports)
-  }
-}
-
-/***/ }),
-/* 115 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var disposed = false
-function injectStyle (ssrContext) {
-  if (disposed) return
-  __webpack_require__(116)
-}
-var normalizeComponent = __webpack_require__(7)
-/* script */
-var __vue_script__ = __webpack_require__(118)
-/* template */
-var __vue_template__ = __webpack_require__(119)
-/* template functional */
-var __vue_template_functional__ = false
-/* styles */
-var __vue_styles__ = injectStyle
-/* scopeId */
-var __vue_scopeId__ = null
-/* moduleIdentifier (server only) */
-var __vue_module_identifier__ = null
-var Component = normalizeComponent(
-  __vue_script__,
-  __vue_template__,
-  __vue_template_functional__,
-  __vue_styles__,
-  __vue_scopeId__,
-  __vue_module_identifier__
-)
-Component.options.__file = "resources/assets/js/pages/NewCafe.vue"
-
-/* hot reload */
-if (false) {(function () {
-  var hotAPI = require("vue-hot-reload-api")
-  hotAPI.install(require("vue"), false)
-  if (!hotAPI.compatible) return
-  module.hot.accept()
-  if (!module.hot.data) {
-    hotAPI.createRecord("data-v-10b7d3a0", Component.options)
-  } else {
-    hotAPI.reload("data-v-10b7d3a0", Component.options)
-  }
-  module.hot.dispose(function (data) {
-    disposed = true
-  })
-})()}
-
-module.exports = Component.exports
-
-
-/***/ }),
-/* 116 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(117);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var update = __webpack_require__(8)("33fb2a81", content, false);
-// Hot Module Replacement
-if(false) {
- // When the styles change, update the <style> tags
- if(!content.locals) {
-   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-10b7d3a0\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./NewCafe.vue", function() {
-     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-10b7d3a0\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./NewCafe.vue");
-     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-     update(newContent);
-   });
- }
- // When the module is disposed, remove the <style> tags
- module.hot.dispose(function() { update(); });
-}
-
-/***/ }),
-/* 117 */
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(6)(undefined);
-// imports
-
-
-// module
-exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
-
-// exports
-
-
-/***/ }),
-/* 118 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_global_forms_TagsInput_vue__ = __webpack_require__(34);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_global_forms_TagsInput_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__components_global_forms_TagsInput_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__event_bus_js__ = __webpack_require__(19);
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-
-
-
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-  components: {
-    TagsInput: __WEBPACK_IMPORTED_MODULE_0__components_global_forms_TagsInput_vue___default.a
-  },
-  data: function data() {
-    return {
-      name: '',
-      locations: [],
-      website: '',
-      description: '',
-      roaster: false,
-      validations: {
-        name: {
-          is_valid: true,
-          text: ''
-        },
-        locations: [],
-        oneLocation: {
-          is_valid: true,
-          text: ''
-        },
-        website: {
-          is_valid: true,
-          text: ''
-        }
-      }
-    };
-  },
-  mounted: function mounted() {
-    __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$on('tags-edited', function (tagsAdded) {
-      this.locations[tagsAdded.unique].tags = tagsAdded.tags;
-    }.bind(this));
-  },
-
-  computed: {
-    brewMethods: function brewMethods() {
-      return this.$store.getters.getBrewMethods;
-    },
-    addCafeStatus: function addCafeStatus() {
-      return this.$store.getters.getCafeAddStatus;
-    }
-  },
-  methods: {
-    submitNewCafe: function submitNewCafe() {
-      if (this.validateNewCafe()) {
-        this.$store.dispatch('addCafe', {
-          name: this.name,
-          locations: this.locations,
-          website: this.website,
-          description: this.description,
-          roaster: this.roaster
-        });
-      }
-    },
-    validateNewCafe: function validateNewCafe() {
-      var validNewCafeForm = true;
-      /*
-        Ensure a name has been entered
-      */
-      if (this.name.trim() == '') {
-        validNewCafeForm = false;
-        this.validations.name.is_valid = false;
-        this.validations.name.text = 'Please enter a name for the new cafe!';
-      } else {
-        this.validations.name.is_valid = true;
-        this.validations.name.text = '';
-      }
-
-      /*
-        Ensure all locations entered are valid
-      */
-      for (var index in this.locations) {
-        if (this.locations.hasOwnProperty(index)) {
-          /*
-            Ensure an address has been entered
-          */
-          if (this.locations[index].address.trim() == '') {
-            validNewCafeForm = false;
-            this.validations.locations[index].address.is_valid = false;
-            this.validations.locations[index].address.text = 'Please enter an address for the new cafe!';
-          } else {
-            this.validations.locations[index].address.is_valid = true;
-            this.validations.locations[index].address.text = '';
-          }
-        }
-
-        /*
-          Ensure a city has been entered
-        */
-        if (this.locations[index].city.trim() == '') {
-          validNewCafeForm = false;
-          this.validations.locations[index].city.is_valid = false;
-          this.validations.locations[index].city.text = 'Please enter a city for the new cafe!';
-        } else {
-          this.validations.locations[index].city.is_valid = true;
-          this.validations.locations[index].city.text = '';
-        }
-
-        /*
-          Ensure a state has been entered
-        */
-        if (this.locations[index].state.trim() == '') {
-          validNewCafeForm = false;
-          this.validations.locations[index].state.is_valid = false;
-          this.validations.locations[index].state.text = 'Please enter a state for the new cafe!';
-        } else {
-          this.validations.locations[index].state.is_valid = true;
-          this.validations.locations[index].state.text = '';
-        }
-
-        /*
-          Ensure a zip has been entered
-        */
-        if (this.locations[index].zip.trim() == '' || !this.locations[index].zip.match(/(^\d{5}$)/)) {
-          validNewCafeForm = false;
-          this.validations.locations[index].zip.is_valid = false;
-          this.validations.locations[index].zip.text = 'Please enter a valid zip code for the new cafe!';
-        } else {
-          this.validations.locations[index].zip.is_valid = true;
-          this.validations.locations[index].zip.text = '';
-        }
-
-        /*
-          If a website has been entered, ensure the URL is valid
-        */
-        if (this.website.trim != '' && !this.website.match(/^((https?):\/\/)?([w|W]{3}\.)+[a-zA-Z0-9\-\.]{3,}\.[a-zA-Z]{2,}(\.[a-zA-Z]{2,})?$/)) {
-          validNewCafeForm = false;
-          this.validations.website.is_valid = false;
-          this.validations.website.text = 'Please enter a valid URL for the website!';
-        } else {
-          this.validations.website.is_valid = true;
-          this.validations.website.text = '';
-        }
-      }
-      return validNewCafeForm;
-    },
-    addLocation: function addLocation() {
-      this.locations.push({ name: '', address: '', city: '', state: '', zip: '', methodsAvailable: [], tags: [] });
-      this.validations.locations.push({
-        address: {
-          is_valid: true,
-          text: ''
-        },
-        city: {
-          is_valid: true,
-          text: ''
-        },
-        state: {
-          is_valid: true,
-          text: ''
-        },
-        zip: {
-          is_valid: true,
-          text: ''
-        }
-      });
-    },
-    removeLocation: function removeLocation(key) {
-      this.locations.splice(key, 1);
-      this.validations.locations.splice(key, 1);
-    },
-    clearForm: function clearForm() {
-      this.name = '';
-      this.locations = [];
-      this.website = '';
-      this.description = '';
-      this.roaster = false;
-      this.validations = {
-        name: {
-          is_valid: true,
-          text: ''
-        },
-        locations: [],
-        oneLocation: {
-          is_valid: true,
-          text: ''
-        },
-        website: {
-          is_valid: true,
-          text: ''
-        }
-      };
-      this.addLocation();
-      __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$emit('clear-tags');
-    }
-  },
-  created: function created() {
-    this.addLocation();
-  },
-
-  watch: {
-    'addCafeStatus': function addCafeStatus() {
-      if (this.addCafeStatus == 2) {
-        this.clearForm();
-        $('#cafe-added-successfully').show().delay(5000).fadeOut();
-      }
-
-      if (this.addCafeStatus == 3) {
-        $('#cafe-added-successfully').show().delay(5000).fadeOut();
-      }
-    }
-  }
-});
-
-/***/ }),
-/* 119 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c("div", { staticClass: "page" }, [
-    _c("form", [
-      _c(
-        "div",
-        { staticClass: "grid-container" },
-        _vm._l(_vm.locations, function(location, key) {
-          return _c("div", { staticClass: "grid-x grid-padding-x" }, [
-            _vm._m(0, true),
-            _vm._v(" "),
-            _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
-              _c("label", [
-                _vm._v("Location Name\n            "),
-                _c("input", {
-                  directives: [
-                    {
-                      name: "model",
-                      rawName: "v-model",
-                      value: _vm.locations[key].name,
-                      expression: "locations[key].name"
-                    }
-                  ],
-                  attrs: { type: "text", placeholder: "Location Name" },
-                  domProps: { value: _vm.locations[key].name },
-                  on: {
-                    input: function($event) {
-                      if ($event.target.composing) {
-                        return
-                      }
-                      _vm.$set(_vm.locations[key], "name", $event.target.value)
-                    }
-                  }
-                })
-              ])
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
-              _c("label", [
-                _vm._v("Address\n            "),
-                _c("input", {
-                  directives: [
-                    {
-                      name: "model",
-                      rawName: "v-model",
-                      value: _vm.locations[key].address,
-                      expression: "locations[key].address"
-                    }
-                  ],
-                  attrs: { type: "text", placeholder: "Address" },
-                  domProps: { value: _vm.locations[key].address },
-                  on: {
-                    input: function($event) {
-                      if ($event.target.composing) {
-                        return
-                      }
-                      _vm.$set(
-                        _vm.locations[key],
-                        "address",
-                        $event.target.value
-                      )
-                    }
-                  }
-                })
-              ]),
-              _vm._v(" "),
-              _c(
-                "span",
-                {
-                  directives: [
-                    {
-                      name: "show",
-                      rawName: "v-show",
-                      value: !_vm.validations.locations[key].address.is_valid,
-                      expression: "!validations.locations[key].address.is_valid"
-                    }
-                  ],
-                  staticClass: "validation"
-                },
-                [_vm._v(_vm._s(_vm.validations.locations[key].address.text))]
-              )
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
-              _c("label", [
-                _vm._v("City\n            "),
-                _c("input", {
-                  directives: [
-                    {
-                      name: "model",
-                      rawName: "v-model",
-                      value: _vm.locations[key].city,
-                      expression: "locations[key].city"
-                    }
-                  ],
-                  attrs: { type: "text", placeholder: "City" },
-                  domProps: { value: _vm.locations[key].city },
-                  on: {
-                    input: function($event) {
-                      if ($event.target.composing) {
-                        return
-                      }
-                      _vm.$set(_vm.locations[key], "city", $event.target.value)
-                    }
-                  }
-                })
-              ]),
-              _vm._v(" "),
-              _c(
-                "span",
-                {
-                  directives: [
-                    {
-                      name: "show",
-                      rawName: "v-show",
-                      value: !_vm.validations.locations[key].city.is_valid,
-                      expression: "!validations.locations[key].city.is_valid"
-                    }
-                  ],
-                  staticClass: "validation"
-                },
-                [_vm._v(_vm._s(_vm.validations.locations[key].city.text))]
-              )
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
-              _c("label", [
-                _vm._v("State\n            "),
-                _c("input", {
-                  directives: [
-                    {
-                      name: "model",
-                      rawName: "v-model",
-                      value: _vm.locations[key].state,
-                      expression: "locations[key].state"
-                    }
-                  ],
-                  attrs: { type: "text", placeholder: "State" },
-                  domProps: { value: _vm.locations[key].state },
-                  on: {
-                    input: function($event) {
-                      if ($event.target.composing) {
-                        return
-                      }
-                      _vm.$set(_vm.locations[key], "state", $event.target.value)
-                    }
-                  }
-                })
-              ]),
-              _vm._v(" "),
-              _c(
-                "span",
-                {
-                  directives: [
-                    {
-                      name: "show",
-                      rawName: "v-show",
-                      value: !_vm.validations.locations[key].state.is_valid,
-                      expression: "!validations.locations[key].state.is_valid"
-                    }
-                  ],
-                  staticClass: "validation"
-                },
-                [_vm._v(_vm._s(_vm.validations.locations[key].state.text))]
-              )
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
-              _c("label", [
-                _vm._v("Zip\n            "),
-                _c("input", {
-                  directives: [
-                    {
-                      name: "model",
-                      rawName: "v-model",
-                      value: _vm.locations[key].zip,
-                      expression: "locations[key].zip"
-                    }
-                  ],
-                  attrs: { type: "text", placeholder: "Zip" },
-                  domProps: { value: _vm.locations[key].zip },
-                  on: {
-                    input: function($event) {
-                      if ($event.target.composing) {
-                        return
-                      }
-                      _vm.$set(_vm.locations[key], "zip", $event.target.value)
-                    }
-                  }
-                })
-              ]),
-              _vm._v(" "),
-              _c(
-                "span",
-                {
-                  directives: [
-                    {
-                      name: "show",
-                      rawName: "v-show",
-                      value: !_vm.validations.locations[key].zip.is_valid,
-                      expression: "!validations.locations[key].zip.is_valid"
-                    }
-                  ],
-                  staticClass: "validation"
-                },
-                [_vm._v(_vm._s(_vm.validations.locations[key].zip.text))]
-              )
-            ]),
-            _vm._v(" "),
-            _c(
-              "div",
-              { staticClass: "large-12 medium-12 small-12 cell" },
-              [
-                _c("label", [_vm._v("Brew Methods Available")]),
-                _vm._v(" "),
-                _vm._l(_vm.brewMethods, function(brewMethod) {
-                  return _c("span", { staticClass: "brew-method" }, [
-                    _c("input", {
-                      directives: [
-                        {
-                          name: "model",
-                          rawName: "v-model",
-                          value: _vm.locations[key].methodsAvailable,
-                          expression: "locations[key].methodsAvailable"
-                        }
-                      ],
-                      attrs: {
-                        id: "brew-method-" + brewMethod.id + "-" + key,
-                        type: "checkbox"
-                      },
-                      domProps: {
-                        value: brewMethod.id,
-                        checked: Array.isArray(
-                          _vm.locations[key].methodsAvailable
-                        )
-                          ? _vm._i(
-                              _vm.locations[key].methodsAvailable,
-                              brewMethod.id
-                            ) > -1
-                          : _vm.locations[key].methodsAvailable
-                      },
-                      on: {
-                        change: function($event) {
-                          var $$a = _vm.locations[key].methodsAvailable,
-                            $$el = $event.target,
-                            $$c = $$el.checked ? true : false
-                          if (Array.isArray($$a)) {
-                            var $$v = brewMethod.id,
-                              $$i = _vm._i($$a, $$v)
-                            if ($$el.checked) {
-                              $$i < 0 &&
-                                (_vm.locations[
-                                  key
-                                ].methodsAvailable = $$a.concat([$$v]))
-                            } else {
-                              $$i > -1 &&
-                                (_vm.locations[
-                                  key
-                                ].methodsAvailable = $$a
-                                  .slice(0, $$i)
-                                  .concat($$a.slice($$i + 1)))
-                            }
-                          } else {
-                            _vm.$set(
-                              _vm.locations[key],
-                              "methodsAvailable",
-                              $$c
-                            )
-                          }
-                        }
-                      }
-                    }),
-                    _c(
-                      "label",
-                      {
-                        attrs: {
-                          for: "brew-method-" + brewMethod.id + "-" + key
-                        }
-                      },
-                      [_vm._v(_vm._s(brewMethod.method))]
-                    )
-                  ])
-                })
-              ],
-              2
-            ),
-            _vm._v(" "),
-            _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
-              _c(
-                "a",
-                {
-                  staticClass: "button",
-                  on: {
-                    click: function($event) {
-                      _vm.removeLocation(key)
-                    }
-                  }
-                },
-                [_vm._v("Remove Location")]
-              )
-            ]),
-            _vm._v(" "),
-            _c(
-              "div",
-              { staticClass: "large-12 medium-12 small-12 cell" },
-              [_c("tags-input", { attrs: { unique: key } })],
-              1
-            )
-          ])
-        })
-      )
-    ])
-  ])
-}
-var staticRenderFns = [
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
-      _c("h3", [_vm._v("Location")])
-    ])
-  }
-]
-render._withStripped = true
-module.exports = { render: render, staticRenderFns: staticRenderFns }
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-    require("vue-hot-reload-api")      .rerender("data-v-10b7d3a0", module.exports)
-  }
-}
-
-/***/ }),
-/* 120 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var disposed = false
-function injectStyle (ssrContext) {
-  if (disposed) return
-  __webpack_require__(121)
-}
-var normalizeComponent = __webpack_require__(7)
-/* script */
-var __vue_script__ = __webpack_require__(123)
-/* template */
-var __vue_template__ = __webpack_require__(132)
-/* template functional */
-var __vue_template_functional__ = false
-/* styles */
-var __vue_styles__ = injectStyle
-/* scopeId */
-var __vue_scopeId__ = null
-/* moduleIdentifier (server only) */
-var __vue_module_identifier__ = null
-var Component = normalizeComponent(
-  __vue_script__,
-  __vue_template__,
-  __vue_template_functional__,
-  __vue_styles__,
-  __vue_scopeId__,
-  __vue_module_identifier__
-)
-Component.options.__file = "resources/assets/js/pages/Cafe.vue"
-
-/* hot reload */
-if (false) {(function () {
-  var hotAPI = require("vue-hot-reload-api")
-  hotAPI.install(require("vue"), false)
-  if (!hotAPI.compatible) return
-  module.hot.accept()
-  if (!module.hot.data) {
-    hotAPI.createRecord("data-v-4c1ef4da", Component.options)
-  } else {
-    hotAPI.reload("data-v-4c1ef4da", Component.options)
-  }
-  module.hot.dispose(function (data) {
-    disposed = true
-  })
-})()}
-
-module.exports = Component.exports
-
-
-/***/ }),
-/* 121 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(122);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var update = __webpack_require__(8)("35b83dc6", content, false);
-// Hot Module Replacement
-if(false) {
- // When the styles change, update the <style> tags
- if(!content.locals) {
-   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-4c1ef4da\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/sass-loader/lib/loader.js!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Cafe.vue", function() {
-     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-4c1ef4da\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/sass-loader/lib/loader.js!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Cafe.vue");
-     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-     update(newContent);
-   });
- }
- // When the module is disposed, remove the <style> tags
- module.hot.dispose(function() { update(); });
-}
-
-/***/ }),
-/* 122 */
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(6)(undefined);
-// imports
-
-
-// module
-exports.push([module.i, "\ndiv.cafe-page h2 {\n  text-align: center;\n  color: #7F6D50;\n  font-family: 'Josefin Sans', sans-serif;\n}\ndiv.cafe-page h3 {\n  text-align: center;\n  color: #FFBE54;\n  font-family: 'Josefin Sans', sans-serif;\n}\ndiv.cafe-page span.address {\n  text-align: center;\n  display: block;\n  font-family: 'Lato', sans-serif;\n  color: #A0A0A0;\n  font-size: 20px;\n  line-height: 30px;\n  margin-top: 50px;\n}\ndiv.cafe-page a.website {\n  text-align: center;\n  color: #CCAF80;\n  font-size: 30px;\n  font-weight: bold;\n  margin-top: 50px;\n  display: block;\n  font-family: 'Josefin Sans', sans-serif;\n}\ndiv.cafe-page div.brew-methods-container {\n  max-width: 700px;\n  margin: auto;\n}\ndiv.cafe-page div.brew-methods-container div.cell {\n    text-align: center;\n}\ndiv.tags-container {\n  max-width: 700px;\n  margin: auto;\n  text-align: center;\n  margin-top: 30px;\n}\ndiv.tags-container span.tag {\n    color: #7F5F2A;\n    font-family: 'Josefin Sans', sans-serif;\n    margin-right: 20px;\n    display: inline-block;\n    line-height: 20px;\n}\n", ""]);
-
-// exports
-
-
-/***/ }),
-/* 123 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_global_Loader_vue__ = __webpack_require__(124);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_global_Loader_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__components_global_Loader_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__components_cafes_IndividualCafeMap_vue__ = __webpack_require__(127);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__components_cafes_IndividualCafeMap_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__components_cafes_IndividualCafeMap_vue__);
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-
-/*
-  Import the loader and cafe map for use in the component.
-*/
-
-
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-  /*
-    Defines the components used by the page.
-  */
-  components: {
-    Loader: __WEBPACK_IMPORTED_MODULE_0__components_global_Loader_vue___default.a,
-    IndividualCafeMap: __WEBPACK_IMPORTED_MODULE_1__components_cafes_IndividualCafeMap_vue___default.a
-  },
-
-  /*
-    When created, load the cafe based on the ID in the
-    route parameter.
-  */
-  created: function created() {
-    this.$store.dispatch('loadCafe', {
-      id: this.$route.params.id
-    });
-  },
-
-
-  /*
-    Defines the computed variables on the cafe.
-  */
-  computed: {
-    /*
-      Grabs the cafe load status from the Vuex state.
-    */
-    cafeLoadStatus: function cafeLoadStatus() {
-      return this.$store.getters.getCafeLoadStatus;
-    },
-
-
-    /*
-      Grabs the cafe from the Vuex state.
-    */
-    cafe: function cafe() {
-      return this.$store.getters.getCafe;
-    }
-  }
-});
-
-/***/ }),
-/* 124 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var disposed = false
-var normalizeComponent = __webpack_require__(7)
-/* script */
-var __vue_script__ = __webpack_require__(125)
-/* template */
-var __vue_template__ = __webpack_require__(126)
-/* template functional */
-var __vue_template_functional__ = false
-/* styles */
-var __vue_styles__ = null
-/* scopeId */
-var __vue_scopeId__ = null
-/* moduleIdentifier (server only) */
-var __vue_module_identifier__ = null
-var Component = normalizeComponent(
-  __vue_script__,
-  __vue_template__,
-  __vue_template_functional__,
-  __vue_styles__,
-  __vue_scopeId__,
-  __vue_module_identifier__
-)
-Component.options.__file = "resources/assets/js/components/global/Loader.vue"
-
-/* hot reload */
-if (false) {(function () {
-  var hotAPI = require("vue-hot-reload-api")
-  hotAPI.install(require("vue"), false)
-  if (!hotAPI.compatible) return
-  module.hot.accept()
-  if (!module.hot.data) {
-    hotAPI.createRecord("data-v-5795fc18", Component.options)
-  } else {
-    hotAPI.reload("data-v-5795fc18", Component.options)
-  }
-  module.hot.dispose(function (data) {
-    disposed = true
-  })
-})()}
-
-module.exports = Component.exports
-
-
-/***/ }),
-/* 125 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-  props: {
-    'width': Number,
-    'height': Number,
-    'display': {
-      default: 'block'
-    }
-  }
-});
-
-/***/ }),
-/* 126 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    {
-      staticClass: "loader loader--style3",
-      style:
-        "width: " +
-        _vm.width +
-        "px; height: " +
-        _vm.height +
-        "px; display: " +
-        _vm.display +
-        "",
-      attrs: { title: "2" }
-    },
-    [
-      _c(
-        "svg",
-        {
-          staticStyle: { "enable-background": "new 0 0 50 50" },
-          attrs: {
-            version: "1.1",
-            id: "loader-1",
-            xmlns: "http://www.w3.org/2000/svg",
-            "xmlns:xlink": "http://www.w3.org/1999/xlink",
-            x: "0px",
-            y: "0px",
-            width: _vm.width + "px",
-            height: _vm.height + "px",
-            viewBox: "0 0 50 50",
-            "xml:space": "preserve"
-          }
-        },
-        [
-          _c(
-            "path",
-            {
-              attrs: {
-                fill: "#000",
-                d:
-                  "M43.935,25.145c0-10.318-8.364-18.683-18.683-18.683c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615c8.072,0,14.615,6.543,14.615,14.615H43.935z"
-              }
-            },
-            [
-              _c("animateTransform", {
-                attrs: {
-                  attributeType: "xml",
-                  attributeName: "transform",
-                  type: "rotate",
-                  from: "0 25 25",
-                  to: "360 25 25",
-                  dur: "0.6s",
-                  repeatCount: "indefinite"
-                }
-              })
-            ],
-            1
-          )
-        ]
-      )
-    ]
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-module.exports = { render: render, staticRenderFns: staticRenderFns }
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-    require("vue-hot-reload-api")      .rerender("data-v-5795fc18", module.exports)
-  }
-}
-
-/***/ }),
-/* 127 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var disposed = false
-function injectStyle (ssrContext) {
-  if (disposed) return
-  __webpack_require__(128)
-}
-var normalizeComponent = __webpack_require__(7)
-/* script */
-var __vue_script__ = __webpack_require__(130)
-/* template */
-var __vue_template__ = __webpack_require__(131)
-/* template functional */
-var __vue_template_functional__ = false
-/* styles */
-var __vue_styles__ = injectStyle
-/* scopeId */
-var __vue_scopeId__ = null
-/* moduleIdentifier (server only) */
-var __vue_module_identifier__ = null
-var Component = normalizeComponent(
-  __vue_script__,
-  __vue_template__,
-  __vue_template_functional__,
-  __vue_styles__,
-  __vue_scopeId__,
-  __vue_module_identifier__
-)
-Component.options.__file = "resources/assets/js/components/cafes/IndividualCafeMap.vue"
-
-/* hot reload */
-if (false) {(function () {
-  var hotAPI = require("vue-hot-reload-api")
-  hotAPI.install(require("vue"), false)
-  if (!hotAPI.compatible) return
-  module.hot.accept()
-  if (!module.hot.data) {
-    hotAPI.createRecord("data-v-12aa39e6", Component.options)
-  } else {
-    hotAPI.reload("data-v-12aa39e6", Component.options)
-  }
-  module.hot.dispose(function (data) {
-    disposed = true
-  })
-})()}
-
-module.exports = Component.exports
-
-
-/***/ }),
-/* 128 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(129);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var update = __webpack_require__(8)("6a2f7ccd", content, false);
-// Hot Module Replacement
-if(false) {
- // When the styles change, update the <style> tags
- if(!content.locals) {
-   module.hot.accept("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-12aa39e6\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./IndividualCafeMap.vue", function() {
-     var newContent = require("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-12aa39e6\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./IndividualCafeMap.vue");
-     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-     update(newContent);
-   });
- }
- // When the module is disposed, remove the <style> tags
- module.hot.dispose(function() { update(); });
-}
-
-/***/ }),
-/* 129 */
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(6)(undefined);
-// imports
-
-
-// module
-exports.push([module.i, "\ndiv#individual-cafe-map {\n  width: 700px;\n  height: 500px;\n  margin: auto;\n  margin-bottom: 200px;\n}\n", ""]);
-
-// exports
-
-
-/***/ }),
-/* 130 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-//
-//
-//
-//
-//
-//
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-  computed: {
-    cafeLoadStatus: function cafeLoadStatus() {
-      return this.$store.getters.getCafeLoadStatus;
-    },
-    cafe: function cafe() {
-      return this.$store.getters.getCafe;
-    }
-  },
-  watch: {
-    cafeLoadStatus: function cafeLoadStatus() {
-      if (this.cafeLoadStatus == 2) {
-        this.displayIndividualCafeMap();
-      }
-    }
-  },
-  methods: {
-    displayIndividualCafeMap: function displayIndividualCafeMap() {
-      this.map = new google.maps.Map(document.getElementById('individual-cafe-map'), {
-        center: { lat: parseFloat(this.cafe.latitude), lng: parseFloat(this.cafe.longitude) },
-        zoom: 13
-      });
-    }
-  }
-});
-
-/***/ }),
-/* 131 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c("div", { attrs: { id: "individual-cafe-map" } })
-}
-var staticRenderFns = []
-render._withStripped = true
-module.exports = { render: render, staticRenderFns: staticRenderFns }
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-    require("vue-hot-reload-api")      .rerender("data-v-12aa39e6", module.exports)
-  }
-}
-
-/***/ }),
-/* 132 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c("div", { staticClass: "page", attrs: { id: "cafe" } }, [
-    _c("div", { staticClass: "grid-container" }, [
-      _c("div", { staticClass: "grid-x grid-padding-x" }, [
-        _c(
-          "div",
-          { staticClass: "large-12 medium-12 small-12 cell" },
-          [
-            _c("loader", {
-              directives: [
-                {
-                  name: "show",
-                  rawName: "v-show",
-                  value: _vm.cafeLoadStatus == 1,
-                  expression: "cafeLoadStatus == 1"
-                }
-              ],
-              attrs: { width: 100, height: 100 }
-            }),
-            _vm._v(" "),
-            _c(
-              "div",
-              {
-                directives: [
-                  {
-                    name: "show",
-                    rawName: "v-show",
-                    value: _vm.cafeLoadStatus == 2,
-                    expression: "cafeLoadStatus == 2"
-                  }
-                ],
-                staticClass: "cafe-page"
-              },
-              [
-                _c("h2", [_vm._v(_vm._s(_vm.cafe.name))]),
-                _vm._v(" "),
-                _vm.cafe.location_name != ""
-                  ? _c("h3", [_vm._v(_vm._s(_vm.cafe.location_name))])
-                  : _vm._e(),
-                _vm._v(" "),
-                _c("span", { staticClass: "address" }, [
-                  _vm._v("\n            " + _vm._s(_vm.cafe.address)),
-                  _c("br"),
-                  _vm._v(
-                    "\n            " +
-                      _vm._s(_vm.cafe.city) +
-                      ", " +
-                      _vm._s(_vm.cafe.state)
-                  ),
-                  _c("br"),
-                  _vm._v(
-                    "\n            " + _vm._s(_vm.cafe.zip) + "\n          "
-                  )
-                ]),
-                _vm._v(" "),
-                _c(
-                  "a",
-                  {
-                    staticClass: "website",
-                    attrs: { href: _vm.cafe.website, target: "_blank" }
-                  },
-                  [_vm._v(_vm._s(_vm.cafe.website))]
-                ),
-                _vm._v(" "),
-                _c("div", { staticClass: "brew-methods-container" }, [
-                  _c(
-                    "div",
-                    { staticClass: "grid-x grid-padding-x" },
-                    _vm._l(_vm.cafe.brew_methods, function(brewMethod) {
-                      return _c(
-                        "div",
-                        { staticClass: "large-3 medium-4 small-12 cell" },
-                        [
-                          _vm._v(
-                            "\n                " +
-                              _vm._s(brewMethod.method) +
-                              "\n              "
-                          )
-                        ]
-                      )
-                    })
-                  )
-                ]),
-                _vm._v(" "),
-                _c("br"),
-                _vm._v(" "),
-                _c("individual-cafe-map")
-              ],
-              1
-            )
-          ],
-          1
-        )
-      ])
-    ])
-  ])
-}
-var staticRenderFns = []
-render._withStripped = true
-module.exports = { render: render, staticRenderFns: staticRenderFns }
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-    require("vue-hot-reload-api")      .rerender("data-v-4c1ef4da", module.exports)
-  }
-}
-
-/***/ }),
-/* 133 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(15);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_vuex__ = __webpack_require__(136);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__modules_cafes_js__ = __webpack_require__(137);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__modules_brewMethods_js__ = __webpack_require__(139);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__modules_brewMethods_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__modules_brewMethods_js__);
-/*
-  Adds the promise polyfill for IE 11
-*/
-__webpack_require__(134).polyfill();
-
-/**
- * Imports vue and vuex
- */
-
-
-
-/**
- * initialize vuex in vue
- */
-__WEBPACK_IMPORTED_MODULE_0_vue___default.a.use(__WEBPACK_IMPORTED_MODULE_1_vuex__["a" /* default */]);
-
-/*
-    Imports all of the modules used in the application to build the data store.
-*/
-
-/**
- * imports all of the modules use in the application to build data store
- */
-
-
-/**
- * export our data store
- */
-
-/* harmony default export */ __webpack_exports__["a"] = (new __WEBPACK_IMPORTED_MODULE_1_vuex__["a" /* default */].Store({
-  modules: {
-    cafes: __WEBPACK_IMPORTED_MODULE_2__modules_cafes_js__["a" /* cafes */],
-    brewMethods: __WEBPACK_IMPORTED_MODULE_3__modules_brewMethods_js__["brewMethods"]
-  }
-}));
-
-/***/ }),
-/* 134 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process, global) {var require;/*!
@@ -58533,7 +55833,7 @@ function flush() {
 function attemptVertx() {
   try {
     var r = require;
-    var vertx = __webpack_require__(135);
+    var vertx = __webpack_require__(86);
     vertxNext = vertx.runOnLoop || vertx.runOnContext;
     return useVertxTimer();
   } catch (e) {
@@ -59585,16 +56885,16 @@ return Promise$1;
 
 //# sourceMappingURL=es6-promise.map
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(18), __webpack_require__(11)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(21), __webpack_require__(12)))
 
 /***/ }),
-/* 135 */
+/* 86 */
 /***/ (function(module, exports) {
 
 /* (ignored) */
 
 /***/ }),
-/* 136 */
+/* 87 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -60539,12 +57839,12 @@ var index_esm = {
 
 
 /***/ }),
-/* 137 */
+/* 88 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return cafes; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__api_cafe_js__ = __webpack_require__(138);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__api_cafe_js__ = __webpack_require__(89);
 /**
  * Vuex modules/cafe.js
  * the vuex data store for the cafes
@@ -60569,31 +57869,31 @@ var cafes = {
     loadCafes: function loadCafes(_ref) {
       var commit = _ref.commit;
 
-      commit('setCafesLoadStatus', 1);
+      commit("setCafesLoadStatus", 1);
 
       __WEBPACK_IMPORTED_MODULE_0__api_cafe_js__["a" /* default */].getCafes().then(function (response) {
-        commit('setCafes', response.data);
-        commit('setCafesLoadStatus', 2);
+        commit("setCafes", response.data);
+        commit("setCafesLoadStatus", 2);
       }).catch(function () {
-        commit('setCafes', []);
-        commit('setCafesLoadStatus', 3);
+        commit("setCafes", []);
+        commit("setCafesLoadStatus", 3);
       });
     },
     loadCafe: function loadCafe(_ref2, data) {
       var commit = _ref2.commit;
 
-      commit('setCafeLikedStatus', false);
-      commit('setCafeLoadStatus', 1);
+      commit("setCafeLikedStatus", false);
+      commit("setCafeLoadStatus", 1);
 
       __WEBPACK_IMPORTED_MODULE_0__api_cafe_js__["a" /* default */].getCafe(data.id).then(function (response) {
-        commit('setCafe', response.data);
+        commit("setCafe", response.data);
         if (response.data.user_like.length > 0) {
-          commit('setCafeLikedStatus', true);
+          commit("setCafeLikedStatus", true);
         }
-        commit('setCafeLoadStatus', 2);
+        commit("setCafeLoadStatus", 2);
       }).catch(function () {
-        commit('setCafe', {});
-        commit('setCafeLoadStatus', 3);
+        commit("setCafe", {});
+        commit("setCafeLoadStatus", 3);
       });
     },
 
@@ -60605,47 +57905,65 @@ var cafes = {
           state = _ref3.state,
           dispatch = _ref3.dispatch;
 
-      commit('setCafeAddedStatus', 1);
+      commit("setCafeAddedStatus", 1);
 
-      __WEBPACK_IMPORTED_MODULE_0__api_cafe_js__["a" /* default */].postAddNewCafe(data.name, data.locations, data.website, data.description, data.roaster).then(function (response) {
-        commit('setCafeAddedStatus', 2);
-        dispatch('loadCafes');
+      __WEBPACK_IMPORTED_MODULE_0__api_cafe_js__["a" /* default */].postAddNewCafe(data.name, data.locations, data.website, data.description, data.roaster, data.picture).then(function (response) {
+        commit("setCafeAddedStatus", 2);
+        dispatch("loadCafes");
       }).catch(function () {
-        commit('setCafeAddedStatus', 3);
+        commit("setCafeAddedStatus", 3);
+      });
+    },
+
+    /*
+      Edits a cafe
+    */
+    editCafe: function editCafe(_ref4, data) {
+      var commit = _ref4.commit,
+          state = _ref4.state,
+          dispatch = _ref4.dispatch;
+
+      commit("setCafeEditStatus", 1);
+
+      __WEBPACK_IMPORTED_MODULE_0__api_cafe_js__["a" /* default */].putEditCafe(data.id, data.name, data.locations, data.website, data.description, data.roaster, data.picture).then(function (response) {
+        commit("setCafeEditStatus", 2);
+        dispatch("loadCafes");
+      }).catch(function () {
+        commit("setCafeEditStatus", 3);
       });
     },
 
     /**
      * Likes a cafe
      */
-    likeCafe: function likeCafe(_ref4, data) {
-      var commit = _ref4.commit,
-          state = _ref4.state;
+    likeCafe: function likeCafe(_ref5, data) {
+      var commit = _ref5.commit,
+          state = _ref5.state;
 
-      commit('setCafeLikeActionStatus', 1);
+      commit("setCafeLikeActionStatus", 1);
 
       __WEBPACK_IMPORTED_MODULE_0__api_cafe_js__["a" /* default */].postLikeCafe(data.id).then(function (response) {
-        commit('setCafeLikedStatus', true);
-        commit('setCafeLikeActionStatus', 2);
+        commit("setCafeLikedStatus", true);
+        commit("setCafeLikeActionStatus", 2);
       }).catch(function () {
-        commit('setCafeLikedActionStatus', 3);
+        commit("setCafeLikedActionStatus", 3);
       });
     },
 
     /**
      * UnLikes a cafe
      */
-    unlikeCafe: function unlikeCafe(_ref5, data) {
-      var commit = _ref5.commit,
-          state = _ref5.state;
+    unlikeCafe: function unlikeCafe(_ref6, data) {
+      var commit = _ref6.commit,
+          state = _ref6.state;
 
-      commit('setCafeUnlikeActionStatus', 1);
+      commit("setCafeUnlikeActionStatus", 1);
 
       __WEBPACK_IMPORTED_MODULE_0__api_cafe_js__["a" /* default */].deleteLikeCafe(data.id).then(function (response) {
-        commit('setCafeLikedStatus', false);
-        commit('setCafeUnlikeActionStatus', 2);
+        commit("setCafeLikedStatus", false);
+        commit("setCafeUnlikeActionStatus", 2);
       }).catch(function () {
-        commit('setCafeUnlikeActionStatus', 3);
+        commit("setCafeUnlikeActionStatus", 3);
       });
     }
   },
@@ -60688,7 +58006,7 @@ var cafes = {
     }
   },
   /**
-   * defined the getters used by module 
+   * defined the getters used by module
    */
   getters: {
     /**
@@ -60750,11 +58068,11 @@ var cafes = {
 };
 
 /***/ }),
-/* 138 */
+/* 89 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__config_js__ = __webpack_require__(35);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__config_js__ = __webpack_require__(17);
 /**
  *  Import the Caffe API URL  from the config
  */
@@ -60763,10 +58081,10 @@ var cafes = {
 /* harmony default export */ __webpack_exports__["a"] = ({
   /**
    * GET /api/v1/cafes
-  */
+   */
 
   getCafes: function getCafes() {
-    return axios.get(__WEBPACK_IMPORTED_MODULE_0__config_js__["a" /* COFFE_CONFIG */].API_URL + '/cafes');
+    return axios.get(__WEBPACK_IMPORTED_MODULE_0__config_js__["a" /* COFFE_CONFIG */].API_URL + "/cafes");
   },
 
   /**
@@ -60774,45 +58092,6619 @@ var cafes = {
    */
 
   getCafe: function getCafe(cafeID) {
-    return axios.get(__WEBPACK_IMPORTED_MODULE_0__config_js__["a" /* COFFE_CONFIG */].API_URL + '/cafes/' + cafeID);
+    return axios.get(__WEBPACK_IMPORTED_MODULE_0__config_js__["a" /* COFFE_CONFIG */].API_URL + "/cafes/" + cafeID);
   },
 
   /**
-  *  POST /api/v1/cafes
-  */
-  postAddNewCafe: function postAddNewCafe(name, locations, website, description, roaster) {
-    return axios.post(ROAST_CONFIG.API_URL + '/cafes', {
-      name: name,
-      locations: locations,
-      website: website,
-      description: description,
-      roaster: roaster
+   *  POST /api/v1/cafes
+   */
+  postAddNewCafe: function postAddNewCafe(name, locations, website, description, roaster, picture) {
+    /**
+     * Initialize the form data
+     */
+    var formData = new FormData();
+    formData.append("name", name);
+    formData.append("locations", JSON.stringify(locations));
+    formData.append("website", website);
+    formData.append("descriprion", description);
+    formData.append("roaster", roaster);
+    formData.append("picture", picture);
+
+    return axios.post(ROAST_CONFIG.API_URL + "/cafes", formData, {
+      headers: {
+        "Content-type": "multipart/form-data"
+      }
     });
   },
   /**
    * POST /api/v1/cafes/{cafeID}/like
    */
   postLikeCafe: function postLikeCafe(cafeID) {
-    return axios.post(ROAST_CONFIG.API_URL + '/cafes/' + cafeID + '/like');
+    return axios.post(ROAST_CONFIG.API_URL + "/cafes/" + cafeID + "/like");
   },
 
   /**
    * DELETE /api/v1/cafes/{cafeID/like}
    */
   deleteLikeCafe: function deleteLikeCafe(cafeID) {
-    return axios.delete(ROAST_CONFIG.API_URL + '/cafes/' + cafeID + '/like');
-  }
+    return axios.delete(ROAST_CONFIG.API_URL + "/cafes/" + cafeID + "/like");
+  },
 
+  /*
+    PUT   /api/v1/cafes/{id}
+  */
+  putEditCafe: function putEditCafe(id, name, locations, website, description, roaster, picture) {
+    /*
+      Initialize the form data
+    */
+    var formData = new FormData();
+
+    /*
+      Add the form data we need to submit
+    */
+    formData.append("name", name);
+    formData.append("locations", JSON.stringify(locations));
+    formData.append("website", website);
+    formData.append("description", description);
+    formData.append("roaster", roaster);
+    formData.append("picture", picture);
+
+    return axios.put(ROAST_CONFIG.API_URL + "/cafes/" + id, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    });
+  }
 });
 
 /***/ }),
-/* 139 */
+/* 90 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return users; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__api_user_js__ = __webpack_require__(91);
+function _defineProperty(obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true });
+  } else {
+    obj[key] = value;
+  }return obj;
+}
+
+/**
+ * Vuex modules/users.js
+ */
+
+
+var users = {
+  state: {
+    user: {},
+    userLoadStatus: 0,
+    userUpdateStatus: 0
+  },
+
+  actions: _defineProperty({
+    loadUser: function loadUser(_ref) {
+      var commit = _ref.commit;
+
+      commit("setUserLoadStatus", 1);
+
+      __WEBPACK_IMPORTED_MODULE_0__api_user_js__["a" /* default */].getUser().then(function (response) {
+        console.log(response);
+        commit("setUser", response.data);
+        commit("setUserLoadStatus", 2);
+      }).catch(function () {
+        commit("setUser", {});
+        commit("setUserLoadStatus", 3);
+      });
+    },
+    logoutUser: function logoutUser(_ref2) {
+      var commit = _ref2.commit;
+
+      commit("setUserLoadStatus", 0);
+      commit("setUser", {});
+    },
+
+    /**
+     * Edit a user
+     */
+    editUser: function editUser(_ref3, data) {
+      var commit = _ref3.commit,
+          state = _ref3.state,
+          dispatch = _ref3.dispatch;
+
+      commit("setUserUpdateStatus", 1);
+
+      __WEBPACK_IMPORTED_MODULE_0__api_user_js__["a" /* default */].putUpdateUser(data.public_visibility, data.favorite_coffe, data_flavor_note, data.city, data_state).then(function (response) {
+        commit("setuserUpdateStatus", 2);
+        dispatch("loadUser");
+      }).catch(function () {
+        commit("setUserUpdateStatus", 3);
+      });
+    }
+  }, "logoutUser", function logoutUser(_ref4) {
+    var commit = _ref4.commit;
+
+    commit("setUserLoadStatus", 0);
+    commit("setUser", {});
+  }),
+  mutations: {
+    /**
+     * Sets the user load status
+     */
+    setUserLoadStatus: function setUserLoadStatus(state, status) {
+      state.userLoadStatus = status;
+    },
+
+    /**
+     * Sets the user
+     */
+    setUser: function setUser(state, user) {
+      state.user = user;
+    },
+
+    /**
+     * Sets the user update status
+     */
+    setUserUpdateStatus: function setUserUpdateStatus(state, status) {
+      state.userUpdateStatus = status;
+    }
+  },
+  getters: {
+    /**
+     * Returns the user load status
+     */
+    getUserLoadStatus: function getUserLoadStatus(state) {
+      return function () {
+        return state.userLoadStatus;
+      };
+    },
+
+    /**
+     * Returns the user
+     */
+    getUser: function getUser(state) {
+      return state.user;
+    },
+
+    /**
+     * Gets the user update status
+     */
+    getUserUpdateStatus: function getUserUpdateStatus(state, status) {
+      return state.userUpdateStatus;
+    }
+  }
+};
+
+/***/ }),
+/* 91 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__config_js__ = __webpack_require__(17);
+/**
+ * Imports the Roats API URL from the config
+ */
+
+
+/* harmony default export */ __webpack_exports__["a"] = ({
+  /**
+   * GET /api/v1/user
+   */
+
+  getUser: function getUser() {
+    return axios.get(__WEBPACK_IMPORTED_MODULE_0__config_js__["a" /* COFFE_CONFIG */].API_URL + '/user');
+  },
+
+  /**
+   * PUT /api/v1/user
+   */
+  putUpdateUser: function putUpdateUser(public_visibility, favorite_coffe, flavor_notes, city, state) {
+    return axios.put(__WEBPACK_IMPORTED_MODULE_0__config_js__["a" /* COFFE_CONFIG */].API_URL + '/user', {
+      public_visibility: public_visibility,
+      favorite_coffe: favorite_coffe,
+      flavor_notes: flavor_notes,
+      city: city,
+      state: state
+    });
+  }
+});
+
+/***/ }),
+/* 92 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return brewMethods; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__api_brewMethods_js__ = __webpack_require__(93);
+/*
+|-------------------------------------------------------------------------------
+| VUEX modules/brewmethods.js
+|-------------------------------------------------------------------------------
+| The Vuex data store for the brew methods
+*/
+
+
+var brewMethods = {
+  /*
+    Defines the state being monitored for the module
+  */
+  state: {
+    brewMethods: [],
+    brewMethodsLoadStatus: 0
+  },
+
+  actions: {
+    loadBrewMethods: function loadBrewMethods(_ref) {
+      var commit = _ref.commit;
+
+      commit("setBrewMethodsLoadStatus", 1);
+
+      __WEBPACK_IMPORTED_MODULE_0__api_brewMethods_js__["a" /* default */].getBrewMethods().then(function (response) {
+        commit("setBrewMethods", response.data);
+        commit("setBrewMethodsLoadStatus", 2);
+      }).catch(function () {
+        commit("setBrewMethods", []);
+        commit("setBrewMethodsLoadStatus", 3);
+      });
+    }
+  },
+
+  mutations: {
+    setBrewMethodsLoadStatus: function setBrewMethodsLoadStatus(state, status) {
+      state.brewMethodsLoadStatus = status;
+    },
+    setBrewMethods: function setBrewMethods(state, brewMethods) {
+      state.brewMethods = brewMethods;
+    }
+  },
+
+  getters: {
+    getBrewMethods: function getBrewMethods(state) {
+      return state.brewMethods;
+    },
+    getBrewMethodsLoadStatus: function getBrewMethodsLoadStatus(state) {
+      return state.brewMethodsLoadStatus;
+    }
+  }
+};
+
+/***/ }),
+/* 93 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__config_js__ = __webpack_require__(17);
+/*
+	Imports the Roast API URL from the config.
+*/
+
+
+/* harmony default export */ __webpack_exports__["a"] = ({
+  /*
+    GET   /api/v1/brew-methods
+  */
+  getBrewMethods: function getBrewMethods() {
+    return axios.get(__WEBPACK_IMPORTED_MODULE_0__config_js__["a" /* COFFE_CONFIG */].API_URL + "/brew-methods");
+  }
+});
+
+/***/ }),
+/* 94 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(95)
+}
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(98)
+/* template */
+var __vue_template__ = __webpack_require__(115)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/pages/Layout.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-d32a9ab2", Component.options)
+  } else {
+    hotAPI.reload("data-v-d32a9ab2", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 95 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(96);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(5)("d8ffc7f0", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-d32a9ab2\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Layout.vue", function() {
+     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-d32a9ab2\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Layout.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 96 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 97 */
 /***/ (function(module, exports) {
 
+/**
+ * Translates the list format produced by css-loader into something
+ * easier to manipulate.
+ */
+module.exports = function listToStyles (parentId, list) {
+  var styles = []
+  var newStyles = {}
+  for (var i = 0; i < list.length; i++) {
+    var item = list[i]
+    var id = item[0]
+    var css = item[1]
+    var media = item[2]
+    var sourceMap = item[3]
+    var part = {
+      id: parentId + ':' + i,
+      css: css,
+      media: media,
+      sourceMap: sourceMap
+    }
+    if (!newStyles[id]) {
+      styles.push(newStyles[id] = { id: id, parts: [part] })
+    } else {
+      newStyles[id].parts.push(part)
+    }
+  }
+  return styles
+}
+
+
+/***/ }),
+/* 98 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_global_Navigation_vue__ = __webpack_require__(99);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_global_Navigation_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__components_global_Navigation_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__components_global_AppFooter_vue__ = __webpack_require__(105);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__components_global_AppFooter_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__components_global_AppFooter_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__components_global_LoginModal_vue__ = __webpack_require__(110);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__components_global_LoginModal_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__components_global_LoginModal_vue__);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  components: {
+    Navigation: __WEBPACK_IMPORTED_MODULE_0__components_global_Navigation_vue___default.a,
+    AppFooter: __WEBPACK_IMPORTED_MODULE_1__components_global_AppFooter_vue___default.a,
+    LoginModal: __WEBPACK_IMPORTED_MODULE_2__components_global_LoginModal_vue___default.a
+  },
+  created: function created() {
+    this.$store.dispatch('loadCafes');
+    this.$store.dispatch('loadUser');
+    this.$store.dispatch('loadBrewMethods');
+  }
+});
+
+/***/ }),
+/* 99 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(100)
+}
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(103)
+/* template */
+var __vue_template__ = __webpack_require__(104)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/components/global/Navigation.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-6666af19", Component.options)
+  } else {
+    hotAPI.reload("data-v-6666af19", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 100 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(101);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(5)("b5c450f0", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-6666af19\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Navigation.vue", function() {
+     var newContent = require("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-6666af19\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Navigation.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 101 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+exports.i(__webpack_require__(102), "");
+
+// module
+exports.push([module.i, "\nnav.top-navigation{\n  background-color: $white;\n  height: 50px;\n  border-bottom: 2px solid $dark-color;\nspan.logo{\n    border-right: 1px solid $dark-color;\n    display: block;\n    float: left;\n    height: 50px;\n    line-height: 50px;\n    padding: 0px 20px 0px 20px;\n    font-family: 'Josefin Sans', sans-serif;\n    font-weight: bold;\n    color: $dark-color;\n&:hover{\n      color: white;\n      background-color: $dark-color;\n}\n}\nul.links{\n    display: block;\n    float: left;\nli{\n      display: inline-block;\n      list-style-type: none;\n      line-height: 50px;\na{\n        font-family: 'Lato', sans-serif;\n        font-weight: bold;\n        color: $black;\n&:hover{\n          color: $dark-color;\n}\n}\n}\n}\ndiv.right{\n    float: right;\nimg.avatar{\n      width: 40px;\n      height: 40px;\n      border-radius: 40px;\n      margin-top: 5px;\n      margin-right: 10px;\n}\nspan.login{\n      height: 50px;\n      line-height: 50px;\n      padding: 0px 20px 0px 20px;\n      font-family: 'Josefin Sans', sans-serif;\n      font-weight: bold;\n      color: $dark-color;\n      cursor: pointer;\n}\na.profile{\n      height: 50px;\n      line-height: 50px;\n      padding: 0px 20px 0px 20px;\n      font-family: 'Josefin Sans', sans-serif;\n      font-weight: bold;\n      color: $dark-color;\n      cursor: pointer;\n}\nspan.logout{\n      height: 50px;\n      line-height: 50px;\n      padding: 0px 20px 0px 20px;\n      font-family: 'Josefin Sans', sans-serif;\n      font-weight: bold;\n      color: $dark-color;\n      cursor: pointer;\n}\n}\n&:after{\n    content: \"\";\n    display: table;\n    clear: both;\n}\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 102 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "$white: #ffffff;\n$black: #111111;\n$grey: #a0a0a0;\n\n$primary-color: #7f6d50;\n$secondary-color: #ffbe54;\n$highlight-color: #ffdba0;\n$dark-color: #7f5f2a;\n$dull-color: #ccaf80;\n\n$success: #39dd4c;\n$dark-success: #269b55;\n$failure: #dd3e38;\n$dark-failure: #9b2f25;\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 103 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__event_bus_js__ = __webpack_require__(9);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  computed: {
+    userLoadStatus: function userLoadStatus() {
+      return this.$store.getters.getUserLoadStatus();
+    },
+    user: function user() {
+      return this.$store.getters.getUser;
+    }
+  },
+  methods: {
+    login: function login() {
+      __WEBPACK_IMPORTED_MODULE_0__event_bus_js__["a" /* EventBus */].$emit('prompt-login');
+    },
+    logout: function logout() {
+      this.$store.dispatch('logoutUser');
+      window.location = '/logout';
+    }
+  }
+});
+
+/***/ }),
+/* 104 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "nav",
+    { staticClass: "top-navigation" },
+    [
+      _c("router-link", { attrs: { to: { name: "home" } } }, [
+        _c("span", { staticClass: "logo" }, [_vm._v("Coffe in GDL")])
+      ]),
+      _vm._v(" "),
+      _c("ul", { staticClass: "links" }, [
+        _c(
+          "li",
+          [
+            _c("router-link", { attrs: { to: { name: "cafes" } } }, [
+              _vm._v("\n      cafes\n      ")
+            ])
+          ],
+          1
+        )
+      ]),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "right" },
+        [
+          _vm.user != "" && _vm.userLoadStatus == 2
+            ? _c("img", {
+                directives: [
+                  {
+                    name: "show",
+                    rawName: "v-show",
+                    value: _vm.userLoadStatus == 2,
+                    expression: "userLoadStatus == 2"
+                  }
+                ],
+                staticClass: "avatar",
+                attrs: { src: _vm.user.avatar }
+              })
+            : _vm._e(),
+          _vm._v(" "),
+          _vm.user != "" && _vm.userLoadStatus == 2
+            ? _c(
+                "router-link",
+                { staticClass: "profile", attrs: { to: { name: "profile" } } },
+                [_vm._v("\n      Profile\n    ")]
+              )
+            : _vm._e(),
+          _vm._v(" "),
+          _vm.user != "" && _vm.userLoadStatus == 2
+            ? _c(
+                "span",
+                {
+                  staticClass: "logout",
+                  on: {
+                    click: function($event) {
+                      _vm.logout()
+                    }
+                  }
+                },
+                [_vm._v("Logout")]
+              )
+            : _vm._e(),
+          _vm._v(" "),
+          _vm.user == ""
+            ? _c(
+                "span",
+                {
+                  staticClass: "login",
+                  on: {
+                    click: function($event) {
+                      _vm.login()
+                    }
+                  }
+                },
+                [_vm._v("Login")]
+              )
+            : _vm._e()
+        ],
+        1
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-6666af19", module.exports)
+  }
+}
+
+/***/ }),
+/* 105 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(106)
+}
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(108)
+/* template */
+var __vue_template__ = __webpack_require__(109)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/components/global/AppFooter.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-447825a7", Component.options)
+  } else {
+    hotAPI.reload("data-v-447825a7", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 106 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(107);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(5)("17697e56", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-447825a7\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./AppFooter.vue", function() {
+     var newContent = require("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-447825a7\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./AppFooter.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 107 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "\nfooter.app-footer {\n  padding: 30px;\n  background-color: #ccaf80;\n}\nfooter.app-footer img.ssu-logo {\n    max-width: 200px;\n    float: right;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 108 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ __webpack_exports__["default"] = ({});
+
+/***/ }),
+/* 109 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _vm._m(0)
+}
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("footer", { staticClass: "app-footer" }, [
+      _c("div", { staticClass: "grid-x" }, [
+        _c("div", { staticClass: "large-6 medium-6 small-12 cell" }),
+        _vm._v(" "),
+        _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
+          _c(
+            "a",
+            { attrs: { href: "http://felipeguzman.me", target: "_blank" } },
+            [
+              _c("img", {
+                staticClass: "ssu-logo",
+                attrs: { src: "/img/ssu-logo.svg" }
+              })
+            ]
+          )
+        ])
+      ])
+    ])
+  }
+]
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-447825a7", module.exports)
+  }
+}
+
+/***/ }),
+/* 110 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(111)
+}
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(113)
+/* template */
+var __vue_template__ = __webpack_require__(114)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/components/global/LoginModal.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-2b3121c9", Component.options)
+  } else {
+    hotAPI.reload("data-v-2b3121c9", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 111 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(112);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(5)("41c29428", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-2b3121c9\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./LoginModal.vue", function() {
+     var newContent = require("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-2b3121c9\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./LoginModal.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 112 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "\ndiv#login-modal {\n  position: fixed;\n  top: 0;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  background-color: rgba(0, 0, 0, 0.6);\n}\ndiv#login-modal div.login-box {\n    max-width: 370px;\n    min-width: 320px;\n    padding: 0 19px;\n    background-color: #fff;\n    border: 1px solid #ddd;\n    -webkit-box-shadow: 0 1px 3px rgba(50, 50, 50, 0.08);\n    box-shadow: 0 1px 3px rgba(50, 50, 50, 0.08);\n    border-radius: 4px;\n    font-size: 16px;\n    position: absolute;\n    top: 50%;\n    left: 50%;\n    -webkit-transform: translate(-50%, -50%);\n            transform: translate(-50%, -50%);\n}\ndiv#login-modal div.login-box a {\n      display: block;\n      margin: auto;\n      width: 230px;\n      margin-top: 10px;\n      margin-bottom: 10px;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 113 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__event_bus_js__ = __webpack_require__(9);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  data: function data() {
+    return {
+      show: false
+    };
+  },
+  mounted: function mounted() {
+    __WEBPACK_IMPORTED_MODULE_0__event_bus_js__["a" /* EventBus */].$on('prompt-login', function () {
+      this.show = true;
+    }.bind(this));
+  }
+});
+
+/***/ }),
+/* 114 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    {
+      directives: [
+        { name: "show", rawName: "v-show", value: _vm.show, expression: "show" }
+      ],
+      staticClass: "login-modal",
+      on: {
+        click: function($event) {
+          _vm.show = false
+        }
+      }
+    },
+    [
+      _c("div", { staticClass: "login-box" }, [
+        _c(
+          "a",
+          {
+            attrs: { href: "/login/google" },
+            on: {
+              click: function($event) {
+                $event.stopPropagation()
+              }
+            }
+          },
+          [_c("img", { attrs: { src: "/img/google-login.svg" } })]
+        ),
+        _vm._v(" "),
+        _c(
+          "a",
+          {
+            attrs: { href: "/login/twitter" },
+            on: {
+              click: function($event) {
+                $event.stopPropagation()
+              }
+            }
+          },
+          [_c("img", { attrs: { src: "/img/twitter-login.svg" } })]
+        ),
+        _vm._v(" "),
+        _c(
+          "a",
+          {
+            attrs: { href: "/login/facebook" },
+            on: {
+              click: function($event) {
+                $event.stopPropagation()
+              }
+            }
+          },
+          [_c("img", { attrs: { src: "/img/facebook-login.svg" } })]
+        )
+      ])
+    ]
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-2b3121c9", module.exports)
+  }
+}
+
+/***/ }),
+/* 115 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { attrs: { id: "app-layout" } },
+    [
+      _c("navigation"),
+      _vm._v(" "),
+      _c("router-view"),
+      _vm._v(" "),
+      _c("login-modal"),
+      _vm._v(" "),
+      _c("app-footer")
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-d32a9ab2", module.exports)
+  }
+}
+
+/***/ }),
+/* 116 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(117)
+}
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(119)
+/* template */
+var __vue_template__ = __webpack_require__(136)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/pages/Home.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-440dff1c", Component.options)
+  } else {
+    hotAPI.reload("data-v-440dff1c", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 117 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(118);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(5)("4012de3c", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-440dff1c\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/sass-loader/lib/loader.js!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Home.vue", function() {
+     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-440dff1c\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/sass-loader/lib/loader.js!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Home.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 118 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "\ndiv#home a.add-cafe-button {\n  float: right;\n  display: block;\n  margin-top: 10px;\n  margin-bottom: 10px;\n  background-color: #7f5f2a;\n  color: white;\n  padding-top: 5px;\n  padding-bottom: 5px;\n  padding-left: 10px;\n  padding-right: 10px;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 119 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__event_bus_js__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__components_cafes_CafeCard_vue__ = __webpack_require__(120);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__components_cafes_CafeCard_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__components_cafes_CafeCard_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__components_global_Loader_vue__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__components_global_Loader_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__components_global_Loader_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__components_cafes_CafeFilter_vue__ = __webpack_require__(127);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__components_cafes_CafeFilter_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__components_cafes_CafeFilter_vue__);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
+
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  components: {
+    CafeCard: __WEBPACK_IMPORTED_MODULE_1__components_cafes_CafeCard_vue___default.a,
+    Loader: __WEBPACK_IMPORTED_MODULE_2__components_global_Loader_vue___default.a,
+    CafeFilter: __WEBPACK_IMPORTED_MODULE_3__components_cafes_CafeFilter_vue___default.a
+  },
+
+  computed: {
+    cafesLoadStatus: function cafesLoadStatus() {
+      return this.$store.getters.getCafesLoadStatus;
+    },
+    cafes: function cafes() {
+      return this.$store.getters.getCafes;
+    },
+    user: function user() {
+      return this.$store.getters.getUser;
+    },
+    userLoadStatus: function userLoadStatus() {
+      return this.$store.getters.getUserLoadStatus();
+    }
+  },
+  methods: {
+    login: function login() {
+      __WEBPACK_IMPORTED_MODULE_0__event_bus_js__["a" /* EventBus */].$emit('prompt-login');
+    }
+  }
+});
+
+/***/ }),
+/* 120 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(121)
+/* template */
+var __vue_template__ = __webpack_require__(122)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = null
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/components/cafes/CafeCard.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-d8812e86", Component.options)
+  } else {
+    hotAPI.reload("data-v-d8812e86", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 121 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__mixins_filters_CafeIsRoasterFilter_js__ = __webpack_require__(38);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__mixins_filters_CafeBrewMethodsFilter_js__ = __webpack_require__(39);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__mixins_filters_CafeTagsFilter_js__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__mixins_filters_CafeTextFilter_js__ = __webpack_require__(41);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__event_bus_js__ = __webpack_require__(9);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
+
+
+
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  props: ['cafe'],
+
+  mixins: [__WEBPACK_IMPORTED_MODULE_0__mixins_filters_CafeIsRoasterFilter_js__["a" /* CafeIsRoasterFilter */], __WEBPACK_IMPORTED_MODULE_1__mixins_filters_CafeBrewMethodsFilter_js__["a" /* CafeBrewMethodsFilter */], __WEBPACK_IMPORTED_MODULE_2__mixins_filters_CafeTagsFilter_js__["a" /* CafeTagsFilter */], __WEBPACK_IMPORTED_MODULE_3__mixins_filters_CafeTextFilter_js__["a" /* CafeTextFilter */]],
+  data: function data() {
+    return {
+      show: true
+    };
+  },
+  mounted: function mounted() {
+    __WEBPACK_IMPORTED_MODULE_4__event_bus_js__["a" /* EventBus */].$on('filters-updated', function (filters) {
+      this.processFilters(filters);
+    }.bind(this));
+  },
+
+  methods: {
+    processFilters: function processFilters(filter) {
+      /*
+        If no filters are selected, show the card
+      */
+      if (filters.text == '' && filters.tags.length == 0 && filters.roaster == false && filters.brew_methods.length == 0) {
+        this.show = true;
+      } else {
+        /*
+          Initialize flags for the filtering
+        */
+        var textPassed = false;
+        var tagsPassed = false;
+        var brewMethodsPassed = false;
+        var roasterPassed = false;
+
+        /*
+          Check if the roaster passes
+        */
+        if (filters.roaster && this.processCafeIsRoasterFilter(this.cafe)) {
+          roasterPassed = true;
+        } else if (!filters.roaster) {
+          roasterPassed = true;
+        }
+
+        /*
+          Check if text passes
+        */
+        if (filters.text != '' && this.processCafeTextFilter(this.cafe, filters.text)) {
+          textPassed = true;
+        } else if (filters.text == '') {
+          textPassed = true;
+        }
+
+        /*
+          Check if brew methods passes
+        */
+        if (filters.brew_methods.length != 0 && this.processCafeBrewMethodsFilter(this.cafe, filters.brew_methods)) {
+          brewMethodsPassed = true;
+        } else if (filters.brew_methods.length == 0) {
+          brewMethodsPassed = true;
+        }
+
+        /*
+          Check if tags passes
+        */
+        if (filters.tags.length != 0 && this.processCafeTagsFilter(this.cafe, filters.tags)) {
+          tagsPassed = true;
+        } else if (filters.tags.length == 0) {
+          tagsPassed = true;
+        }
+
+        /*
+          If everything passes, then we show the Cafe Card
+        */
+        if (roasterPassed && textPassed && brewMethodsPassed && tagsPassed) {
+          this.show = true;
+        } else {
+          this.show = false;
+        }
+      }
+    }
+  }
+});
+
+/***/ }),
+/* 122 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    {
+      directives: [
+        { name: "show", rawName: "v-show", value: _vm.show, expression: "show" }
+      ],
+      staticClass: "grid-container"
+    },
+    [
+      _c(
+        "router-link",
+        { attrs: { to: { name: "cafe", params: { id: _vm.cafe.id } } } },
+        [
+          _c("div", { staticClass: "cafe-card" }, [
+            _c("span", { staticClass: "tittle" }, [
+              _vm._v(_vm._s(_vm.cafe.name))
+            ]),
+            _vm._v(" "),
+            _c("span", { staticClass: "address" }, [
+              _c("span", { staticClass: "street" }, [
+                _vm._v(_vm._s(_vm.cafe.address))
+              ]),
+              _vm._v(" "),
+              _c("span", { staticClass: "city" }, [
+                _vm._v(_vm._s(_vm.cafe.city))
+              ]),
+              _vm._v(" "),
+              _c("span", { staticClass: "state" }, [
+                _vm._v(_vm._s(_vm.cafe.state))
+              ]),
+              _vm._v(" "),
+              _c("span", { staticClass: "zip" }, [_vm._v(_vm._s(_vm.cafe.zip))])
+            ])
+          ])
+        ]
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-d8812e86", module.exports)
+  }
+}
+
+/***/ }),
+/* 123 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(124);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(5)("4ff2e558", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-5795fc18\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Loader.vue", function() {
+     var newContent = require("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-5795fc18\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Loader.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 124 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "\ndiv.loader {\n  margin: auto;\n}\nsvg path,\nsvg rect {\n  fill: #ffbe54;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 125 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  props: {
+    'width': Number,
+    'height': Number,
+    'display': {
+      default: 'block'
+    }
+  }
+});
+
+/***/ }),
+/* 126 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    {
+      staticClass: "loader loader--style3",
+      style:
+        "width: " +
+        _vm.width +
+        "px; height: " +
+        _vm.height +
+        "px; display: " +
+        _vm.display +
+        "",
+      attrs: { title: "2" }
+    },
+    [
+      _c(
+        "svg",
+        {
+          staticStyle: { "enable-background": "new 0 0 50 50" },
+          attrs: {
+            version: "1.1",
+            id: "loader-1",
+            xmlns: "http://www.w3.org/2000/svg",
+            "xmlns:xlink": "http://www.w3.org/1999/xlink",
+            x: "0px",
+            y: "0px",
+            width: _vm.width + "px",
+            height: _vm.height + "px",
+            viewBox: "0 0 50 50",
+            "xml:space": "preserve"
+          }
+        },
+        [
+          _c(
+            "path",
+            {
+              attrs: {
+                fill: "#000",
+                d:
+                  "M43.935,25.145c0-10.318-8.364-18.683-18.683-18.683c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615c8.072,0,14.615,6.543,14.615,14.615H43.935z"
+              }
+            },
+            [
+              _c("animateTransform", {
+                attrs: {
+                  attributeType: "xml",
+                  attributeName: "transform",
+                  type: "rotate",
+                  from: "0 25 25",
+                  to: "360 25 25",
+                  dur: "0.6s",
+                  repeatCount: "indefinite"
+                }
+              })
+            ],
+            1
+          )
+        ]
+      )
+    ]
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-5795fc18", module.exports)
+  }
+}
+
+/***/ }),
+/* 127 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(128)
+}
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(130)
+/* template */
+var __vue_template__ = __webpack_require__(135)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/components/cafes/CafeFilter.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-5d26d3e5", Component.options)
+  } else {
+    hotAPI.reload("data-v-5d26d3e5", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 128 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(129);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(5)("1315c5a6", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-5d26d3e5\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./CafeFilter.vue", function() {
+     var newContent = require("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-5d26d3e5\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./CafeFilter.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 129 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "\ndiv.filter-brew-method {\n  display: inline-block;\n  height: 35px;\n  text-align: center;\n  border: 1px solid #ededed;\n  border-radius: 5px;\n  padding-left: 10px;\n  padding-right: 10px;\n  padding-top: 5px;\n  padding-bottom: 5px;\n  margin-right: 10px;\n  margin-top: 10px;\n  cursor: pointer;\n  color: #7f5f2a;\n  font-family: 'Josefin Sans', sans-serif;\n}\ndiv.filter-brew-method.active {\n    border-bottom: 4px solid #7f6d50;\n}\nspan.show-filters {\n  display: block;\n  margin: auto;\n  color: #7f5f2a;\n  font-family: 'Josefin Sans', sans-serif;\n  cursor: pointer;\n  font-size: 14px;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 130 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__global_forms_TagsInput_vue__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__global_forms_TagsInput_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__global_forms_TagsInput_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__event_bus_js__ = __webpack_require__(9);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  components: {
+    TagsInput: __WEBPACK_IMPORTED_MODULE_0__global_forms_TagsInput_vue___default.a
+  },
+  data: function data() {
+    return {
+      textSearch: '',
+      tags: [],
+      isRoaster: false,
+      brewMethods: [],
+      show: true
+    };
+  },
+  mounted: function mounted() {
+    __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$on('tags-edited', function (tagsEdited) {
+      if (tagsEdited.unique == 'cafe-search') {
+        this.tags = tagsEdited.tags;
+      }
+    }.bind(this));
+  },
+
+  methods: {
+    toggleBrewMethodFilter: function toggleBrewMethodFilter(method) {
+      if (this.brewMethods.indexOf(method) > -1) {
+        this.brewMethods.splice(this.brewMethods.indexOf(method), 1);
+      } else {
+        this.brewMethods.push(method);
+      }
+    },
+    updateFilterDisplay: function updateFilterDisplay() {
+      __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$emit('filters-updated', {
+        text: this.textSearch,
+        tags: this.tags,
+        roaster: this.isRoaster,
+        brew_methods: this.brewMethods
+      });
+    }
+  },
+  computed: {
+    cafeBrewMethods: function cafeBrewMethods() {
+      return this.$store.getters.getBrewMethods;
+    }
+  },
+  watch: {
+    textSearch: function textSearch() {
+      this.updateFilterDisplay();
+    },
+    tags: function tags() {
+      this.updateFilterDisplay();
+    },
+    isRoaster: function isRoaster() {
+      this.updateFilterDisplay();
+    },
+    brewMethods: function brewMethods() {
+      this.updateFilterDisplay();
+    }
+  }
+});
+
+/***/ }),
+/* 131 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(132);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(5)("5b1c212e", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../../../node_modules/css-loader/index.js!../../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-6674a71c\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../../node_modules/sass-loader/lib/loader.js!../../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./TagsInput.vue", function() {
+     var newContent = require("!!../../../../../../node_modules/css-loader/index.js!../../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-6674a71c\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../../node_modules/sass-loader/lib/loader.js!../../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./TagsInput.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 132 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "\ndiv.tags-input-container {\n  position: relative;\n}\ndiv.tags-input-container div.tags-input {\n    display: block;\n    -webkit-box-sizing: border-box;\n    box-sizing: border-box;\n    width: 100%;\n    height: auto;\n    min-height: 100px;\n    padding-top: 4px;\n    border: 1px solid #cacaca;\n    border-radius: 0;\n    background-color: #FFFFFF;\n    -webkit-box-shadow: inset 0 1px 2px rgba(17, 17, 17, 0.1);\n    box-shadow: inset 0 1px 2px rgba(17, 17, 17, 0.1);\n    font-family: inherit;\n    font-size: 1rem;\n    font-weight: normal;\n    line-height: 1.5;\n    color: #111111;\n}\ndiv.tags-input-container div.tags-input div.selected-tag {\n      border: 1px solid #7f5f2a;\n      background: #ffdba0;\n      font-size: 18px;\n      color: #7f5f2a;\n      padding: 3px;\n      margin: 5px;\n      float: left;\n      border-radius: 3px;\n}\ndiv.tags-input-container div.tags-input div.selected-tag span.remove-tag {\n        margin: 0 0 0 5px;\n        padding: 0;\n        border: none;\n        background: none;\n        cursor: pointer;\n        vertical-align: middle;\n        color: #7f5f2a;\n}\ndiv.tags-input-container div.tags-input input[type=\"text\"].new-tag-input {\n      border: 0px;\n      margin: 0px;\n      float: left;\n      width: auto;\n      min-width: 100px;\n      -webkit-box-shadow: none;\n      box-shadow: none;\n      margin: 5px;\n}\ndiv.tags-input-container div.tags-input input[type=\"text\"].new-tag-input.duplicate-warning {\n        color: red;\n}\ndiv.tags-input-container div.tags-input input[type=\"text\"].new-tag-input:focus {\n        -webkit-box-shadow: none;\n                box-shadow: none;\n}\ndiv.tags-input-container div.tag-autocomplete {\n    position: absolute;\n    background-color: white;\n    width: 100%;\n    padding: 5px 0;\n    z-index: 99999;\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    -webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);\n    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);\n}\ndiv.tags-input-container div.tag-autocomplete div.tag-search-result {\n      padding: 5px 10px;\n      cursor: pointer;\n      white-space: nowrap;\n      overflow: hidden;\n      text-overflow: ellipsis;\n      color: #7f5f2a;\n      font-size: 14px;\n      background-color: white;\n}\ndiv.tags-input-container div.tag-autocomplete div.tag-search-result:hover {\n        background-color: #ffdba0;\n}\ndiv.tags-input-container div.tag-autocomplete div.tag-search-result.selected-search-index {\n        background-color: #ffdba0;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 133 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__config_js__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__event_bus_js__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_lodash__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_lodash___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_lodash__);
+var _methods;
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  props: ['unique'],
+  data: function data() {
+    return {
+      currentTag: '',
+      tagsArray: [],
+      tagSearchResults: [],
+      duplicateFlag: false,
+      searchSelectedIndex: -1,
+      pauseSearch: false
+    };
+  },
+  mounted: function mounted() {
+    __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$on('clear-tags', function (unique) {
+      this.currentTag = '';
+      this.tagsArray = [];
+      this.tagSearchResults = [];
+      this.duplicateFlag = false;
+      this.searchSelectedIndex = -1;
+      this.pauseSearch = false;
+    }.bind(this));
+  },
+
+  computed: {
+    showAutocomplete: function showAutocomplete() {
+      return this.tagSearchResults.length == 0 ? false : true;
+    }
+  },
+  methods: (_methods = {
+    selectedTag: function selectedTag(tag) {
+      if (!this.checkDuplicates(tag)) {
+        tag = this.cleanTagName(tag);
+        this.tagsArray.push(tag);
+
+        __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$emit('tags-edited', { unique: this.unique, tags: this.tagsArray });
+        this.resetInputs();
+      } else {
+        this.duplicateFlag = true;
+      }
+    },
+    addNewTag: function addNewTag() {
+      if (!this.checkDuplicates(this.currentTag)) {
+        var newTagName = this.cleanTagName(this.currentTag);
+        this.tagsArray.push(newTagName);
+
+        __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$emit('tags-edited', { unique: this.unique, tags: this.tagsArray });
+        this.resetInputs();
+      } else {
+        this.duplicateFlag = true;
+      }
+    },
+    removeTag: function removeTag(tagIndex) {
+      this.tagsArray.splice(tagIndex, 1);
+
+      __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$emit('tags-edited', { unique: this.unique, tags: this.tagsArray });
+    },
+    changeIndex: function changeIndex(direction) {
+      this.pauseSearch = true;
+
+      if (direction == 'up' && this.searchSelectedIndex - 1 > -1) {
+        this.searchSelectedIndex = this.searchSelectedIndex - 1;
+        this.currentTag = this.tagSearchResults[this.searchSelectedIndex].tag;
+      }
+
+      if (direction == 'down' && this.searchSelectedIndex + 1 <= this.tagSearchResults.length - 1) {
+        this.searchSelectedIndex = this.searchSelectedIndex + 1;
+        this.currentTag = this.tagSearchResults[this.searchSelectedIndex].tag;
+      }
+    },
+
+
+    /*
+      Searches the API route for tags with the autocomplete.
+    */
+    searchTags: __WEBPACK_IMPORTED_MODULE_2_lodash___default.a.debounce(function (e) {
+      if (this.currentTag.length > 2 && !this.pauseSearch) {
+        this.searchSelectedIndex = -1;
+        axios.get(__WEBPACK_IMPORTED_MODULE_0__config_js__["a" /* COFFE_CONFIG */].API_URL + '/tags', {
+          params: {
+            search: this.currentTag
+          }
+        }).then(function (response) {
+          this.tagSearchResults = response.data;
+        }.bind(this));
+      }
+    }, 300),
+
+    checkDuplicates: function checkDuplicates(tagName) {
+      tagName = this.cleanTagName(tagName);
+
+      return this.tagsArray.indexOf(tagName) > -1;
+    },
+    cleanTagName: function cleanTagName(tagName) {
+      var cleanTag = tagName.toLowerCase();
+
+      cleanTag = cleanTag.trim().replace(/[^a-zA-Z0-9]/g, '-');
+
+      cleanTag = cleanTag.replace(/-{2,}/, '-');
+
+      cleanTag = this.trimCharacter(cleanTag, '-');
+
+      return cleanTag;
+    }
+  }, _defineProperty(_methods, 'removeTag', function removeTag(tagIndex) {
+    this.tagsArray.splice(tagIndex, 1);
+  }), _defineProperty(_methods, 'trimCharacter', function trimCharacter(string, character) {
+    if (character === "]") c = "\\]";
+    //if(character === "\\") c = "\\\";
+    return string.replace(new RegExp("^[" + character + "]+|[" + character + "]+$", "g"), "");
+  }), _defineProperty(_methods, 'resetInputs', function resetInputs() {
+    this.currentTag = '';
+    this.tagsArray = [];
+    this.duplicateFlag = false;
+    this.searchSelectedIndex = -1;
+    this.pauseSearch = false;
+  }), _defineProperty(_methods, 'focusTagInput', function focusTagInput() {
+    document.getElementById(this.unique).focus();
+  }), _defineProperty(_methods, 'handleDelete', function handleDelete() {
+    if (this.currentTag.length == 0) {
+      this.tagsArray.splice(this.tagsArray.length - 1, 1);
+
+      __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$emit('tags-edited', { unique: this.unique, tags: this.tagsArray });
+    }
+  }), _methods)
+});
+
+/***/ }),
+/* 134 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", { staticClass: "tags-input-container" }, [
+    _c("label", [_vm._v("Tags")]),
+    _vm._v(" "),
+    _c(
+      "div",
+      {
+        staticClass: "tags-input",
+        on: {
+          click: function($event) {
+            _vm.focusTagInput()
+          }
+        }
+      },
+      [
+        _vm._l(_vm.tagsArray, function(selectedTag, key) {
+          return _c("div", { staticClass: "selected-tag" }, [
+            _vm._v(_vm._s(selectedTag) + " "),
+            _c(
+              "span",
+              {
+                staticClass: "remove-tag",
+                on: {
+                  click: function($event) {
+                    _vm.removeTag(key)
+                  }
+                }
+              },
+              [_vm._v("×")]
+            )
+          ])
+        }),
+        _vm._v(" "),
+        _c("input", {
+          directives: [
+            {
+              name: "model",
+              rawName: "v-model",
+              value: _vm.currentTag,
+              expression: "currentTag"
+            }
+          ],
+          staticClass: "new-tag-input",
+          class: { "duplicate-warning": _vm.duplicateFlag },
+          attrs: { type: "text", id: _vm.unique, placeholder: "Add a tag" },
+          domProps: { value: _vm.currentTag },
+          on: {
+            keyup: [
+              _vm.searchTags,
+              function($event) {
+                if (
+                  !("button" in $event) &&
+                  _vm._k($event.keyCode, "enter", 13, $event.key)
+                ) {
+                  return null
+                }
+                _vm.addNewTag($event)
+              }
+            ],
+            keydown: [
+              function($event) {
+                if (
+                  !("button" in $event) &&
+                  _vm._k($event.keyCode, "up", 38, $event.key)
+                ) {
+                  return null
+                }
+                _vm.changeIndex("up")
+              },
+              function($event) {
+                if (
+                  !("button" in $event) &&
+                  _vm._k($event.keyCode, "delete", [8, 46], $event.key)
+                ) {
+                  return null
+                }
+                _vm.handleDelete($event)
+              },
+              function($event) {
+                if (
+                  !("button" in $event) &&
+                  _vm._k($event.keyCode, "down", 40, $event.key)
+                ) {
+                  return null
+                }
+                _vm.changeIndex("down")
+              }
+            ],
+            input: function($event) {
+              if ($event.target.composing) {
+                return
+              }
+              _vm.currentTag = $event.target.value
+            }
+          }
+        })
+      ],
+      2
+    ),
+    _vm._v(" "),
+    _c(
+      "div",
+      {
+        directives: [
+          {
+            name: "show",
+            rawName: "v-show",
+            value: _vm.showAutocomplete,
+            expression: "showAutocomplete"
+          }
+        ],
+        staticClass: "tag-autocomplete"
+      },
+      _vm._l(_vm.tagSearchResults, function(tag, key) {
+        return _c(
+          "div",
+          {
+            staticClass: "tag-search-result",
+            class: { "selected-search-index": _vm.searchSelectedIndex == key },
+            on: {
+              click: function($event) {
+                _vm.selectTag(tag.tag)
+              }
+            }
+          },
+          [_vm._v(_vm._s(tag.tag))]
+        )
+      })
+    )
+  ])
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-6674a71c", module.exports)
+  }
+}
+
+/***/ }),
+/* 135 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", { attrs: { id: "cafe-filter" } }, [
+    _c(
+      "div",
+      {
+        directives: [
+          {
+            name: "show",
+            rawName: "v-show",
+            value: _vm.show,
+            expression: "show"
+          }
+        ],
+        staticClass: "grid-container"
+      },
+      [
+        _c("div", { staticClass: "grid-x grid-padding-x" }, [
+          _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
+            _c("label", [_vm._v("Search")]),
+            _vm._v(" "),
+            _c("input", {
+              directives: [
+                {
+                  name: "model",
+                  rawName: "v-model",
+                  value: _vm.textSearch,
+                  expression: "textSearch"
+                }
+              ],
+              attrs: { type: "text", placeholder: "Search" },
+              domProps: { value: _vm.textSearch },
+              on: {
+                input: function($event) {
+                  if ($event.target.composing) {
+                    return
+                  }
+                  _vm.textSearch = $event.target.value
+                }
+              }
+            }),
+            _vm._v(" "),
+            _c("div", { staticClass: "is-roaster-container" }, [
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.isRoaster,
+                    expression: "isRoaster"
+                  }
+                ],
+                attrs: { type: "checkbox" },
+                domProps: {
+                  checked: Array.isArray(_vm.isRoaster)
+                    ? _vm._i(_vm.isRoaster, null) > -1
+                    : _vm.isRoaster
+                },
+                on: {
+                  change: function($event) {
+                    var $$a = _vm.isRoaster,
+                      $$el = $event.target,
+                      $$c = $$el.checked ? true : false
+                    if (Array.isArray($$a)) {
+                      var $$v = null,
+                        $$i = _vm._i($$a, $$v)
+                      if ($$el.checked) {
+                        $$i < 0 && (_vm.isRoaster = $$a.concat([$$v]))
+                      } else {
+                        $$i > -1 &&
+                          (_vm.isRoaster = $$a
+                            .slice(0, $$i)
+                            .concat($$a.slice($$i + 1)))
+                      }
+                    } else {
+                      _vm.isRoaster = $$c
+                    }
+                  }
+                }
+              }),
+              _vm._v(" "),
+              _c("label", [_vm._v("Is Roaster?")])
+            ]),
+            _vm._v(" "),
+            _c(
+              "div",
+              { staticClass: "brew-methods-container" },
+              _vm._l(_vm.cafeBrewMethods, function(method) {
+                return _c(
+                  "div",
+                  {
+                    staticClass: "filter-brew-method",
+                    class: {
+                      active: _vm.brewMethods.indexOf(method.method) > -1
+                    },
+                    on: {
+                      click: function($event) {
+                        _vm.toggleBrewMethodFilter(method.method)
+                      }
+                    }
+                  },
+                  [
+                    _vm._v(
+                      "\n              " +
+                        _vm._s(method.method) +
+                        "\n            "
+                    )
+                  ]
+                )
+              })
+            )
+          ]),
+          _vm._v(" "),
+          _c(
+            "div",
+            { staticClass: "large-6 medium-6 small-12 cell" },
+            [_c("tags-input", { attrs: { unique: "cafe-search" } })],
+            1
+          )
+        ])
+      ]
+    )
+  ])
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-5d26d3e5", module.exports)
+  }
+}
+
+/***/ }),
+/* 136 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { staticClass: "page", attrs: { id: "home" } },
+    [
+      _c("div", { staticClass: "grid-container" }, [
+        _c("div", { staticClass: "grid-x" }, [
+          _c(
+            "div",
+            { staticClass: "large-12 medium-12 small-12 columns" },
+            [
+              _vm.user != "" && _vm.userLoadStatus == 2
+                ? _c(
+                    "router-link",
+                    {
+                      staticClass: "add-cafe-button",
+                      attrs: { to: { name: "newcafe" } }
+                    },
+                    [_vm._v("+ Add Cafe")]
+                  )
+                : _vm._e(),
+              _vm._v(" "),
+              _vm.user == "" && _vm.userLoadStatus == 2
+                ? _c(
+                    "a",
+                    {
+                      staticClass: "add-cafe-text",
+                      on: {
+                        click: function($event) {
+                          _vm.login()
+                        }
+                      }
+                    },
+                    [
+                      _vm._v(
+                        "Want to add a cafe? Create a profile and add your favorite cafe!"
+                      )
+                    ]
+                  )
+                : _vm._e()
+            ],
+            1
+          )
+        ])
+      ]),
+      _vm._v(" "),
+      _c("cafe-filter"),
+      _vm._v(" "),
+      _c("div", { staticClass: "grid-container" }, [
+        _c(
+          "div",
+          { staticClass: "grid-x grid-padding-x" },
+          [
+            _c("loader", {
+              directives: [
+                {
+                  name: "show",
+                  rawName: "v-show",
+                  value: _vm.cafesLoadStatus == 1,
+                  expression: "cafesLoadStatus == 1"
+                }
+              ],
+              attrs: { width: 100, height: 100 }
+            }),
+            _vm._v(" "),
+            _vm._l(_vm.cafes, function(cafe) {
+              return _c("cafe-card", { key: cafe.id, attrs: { cafe: cafe } })
+            })
+          ],
+          2
+        )
+      ])
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-440dff1c", module.exports)
+  }
+}
+
+/***/ }),
+/* 137 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(138)
+}
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(140)
+/* template */
+var __vue_template__ = __webpack_require__(151)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/pages/Cafes.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-3b6b4789", Component.options)
+  } else {
+    hotAPI.reload("data-v-3b6b4789", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 138 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(139);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(5)("6919dc95", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-3b6b4789\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Cafes.vue", function() {
+     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-3b6b4789\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Cafes.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 139 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
+
+// exports
 
 
 /***/ }),
 /* 140 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_cafes_CafeMap_vue__ = __webpack_require__(141);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_cafes_CafeMap_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__components_cafes_CafeMap_vue__);
+//
+//
+//
+//
+//
+//
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  components: {
+    CafeMap: __WEBPACK_IMPORTED_MODULE_0__components_cafes_CafeMap_vue___default.a
+  }
+});
+
+/***/ }),
+/* 141 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(142)
+}
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(144)
+/* template */
+var __vue_template__ = __webpack_require__(150)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/components/cafes/CafeMap.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-1dd0d03f", Component.options)
+  } else {
+    hotAPI.reload("data-v-1dd0d03f", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 142 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(143);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(5)("21b3e8ae", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-1dd0d03f\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./CafeMap.vue", function() {
+     var newContent = require("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-1dd0d03f\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./CafeMap.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 143 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "\ndiv#cafe-map-container {\n  position: absolute;\n  top: 50px;\n  left: 0px;\n  right: 0px;\n  bottom: 50px;\n}\ndiv#cafe-map-container div#cafe-map {\n    position: absolute;\n    top: 0px;\n    left: 0px;\n    right: 0px;\n    bottom: 0px;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 144 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__mixins_filters_CafeIsRoasterFilter_js__ = __webpack_require__(38);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__mixins_filters_CafeBrewMethodsFilter_js__ = __webpack_require__(39);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__mixins_filters_CafeTagsFilter_js__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__mixins_filters_CafeTextFilter_js__ = __webpack_require__(41);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__event_bus_js__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__CafeMapFilter_vue__ = __webpack_require__(145);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__CafeMapFilter_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__CafeMapFilter_vue__);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
+
+
+
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  mixins: [__WEBPACK_IMPORTED_MODULE_0__mixins_filters_CafeIsRoasterFilter_js__["a" /* CafeIsRoasterFilter */], __WEBPACK_IMPORTED_MODULE_1__mixins_filters_CafeBrewMethodsFilter_js__["a" /* CafeBrewMethodsFilter */], __WEBPACK_IMPORTED_MODULE_2__mixins_filters_CafeTagsFilter_js__["a" /* CafeTagsFilter */], __WEBPACK_IMPORTED_MODULE_3__mixins_filters_CafeTextFilter_js__["a" /* CafeTextFilter */]],
+  components: {
+    CafeMapFilter: __WEBPACK_IMPORTED_MODULE_5__CafeMapFilter_vue___default.a
+  },
+  props: {
+    'latitude': {
+      type: Number,
+      default: function _default() {
+        return 20.67;
+      }
+    },
+    'longitude': {
+      type: Number,
+      default: function _default() {
+        return -103.40;
+      }
+    },
+    'zoom': {
+      type: Number,
+      default: function _default() {
+        return 6;
+      }
+    }
+  },
+  data: function data() {
+    return {
+      markers: [],
+      infoWindows: []
+    };
+  },
+
+  methods: {
+    buildMarkers: function buildMarkers() {
+      var _this = this;
+
+      /*
+        Initialize the markers to an empty array.
+      */
+      this.markers = [];
+
+      /*
+        Iterate over all of the cafes
+      */
+
+      var _loop = function _loop() {
+
+        /*
+          Create the marker for each of the cafes and set the
+          latitude and longitude to the latitude and longitude
+          of the cafe. Also set the map to be the local map.
+        */
+        image = 'img/coffee-icon-png-13684.png';
+        marker = new google.maps.Marker({
+          position: { lat: parseFloat(_this.cafes[i].latitude), lng: parseFloat(_this.cafes[i].longitude) },
+          map: _this.map,
+          icon: image,
+          cafe: _this.cafes[i]
+        });
+
+        /**
+          create info window and add it ti the loca
+        */
+
+        var infoWindow = new google.maps.InfoWindow({
+          content: _this.cafes[i].name
+        });
+        _this.infoWindows.push(infoWindow);
+
+        /**
+          Add the event listener to open the info window for the marker 
+        */
+        marker.addListener('click', function () {
+          infoWindow.open(this.map, this);
+        });
+
+        /*
+          Push the new marker on to the array.
+        */
+        _this.markers.push(marker);
+      };
+
+      for (var i = 0; i < this.cafes.length; i++) {
+        var image;
+        var marker;
+
+        _loop();
+      }
+    },
+
+    /*
+      Clears the markers from the map.
+    */
+    clearMarkers: function clearMarkers() {
+      /*
+        Iterate over all of the markers and set the map
+        to null so they disappear.
+      */
+      for (var i = 0; i < this.markers.length; i++) {
+        this.markers[i].setMap(null);
+      }
+    },
+    processFilters: function processFilters() {
+      for (var i = 0; i < this.markers.length; i++) {
+        if (filters.text == '' && filters.roaster == false && filters.brew_methods.length == 0) {
+          this.markers[i].setMap(this.map);
+        } else {
+          /*
+            Initialize flags for the filtering
+          */
+          var textPassed = false;
+          var brewMethodsPassed = false;
+          var roasterPassed = false;
+          /*
+            Check if the roaster passes
+          */
+          if (filters.roaster && this.processCafeIsRoasterFilter(this.markers[i].cafe)) {
+            roasterPassed = true;
+          } else if (!filters.roaster) {
+            roasterPassed = true;
+          }
+          /*
+           Check if text passes
+          */
+          if (filters.text != '' && this.processCafeTextFilter(this.markers[i].cafe, filters.text)) {
+            textPassed = true;
+          } else if (filters.text == '') {
+            textPassed = true;
+          }
+
+          /*
+            Check if brew methods passes
+          */
+          if (filters.brew_methods.length != 0 && this.processCafeBrewMethodsFilter(this.markers[i].cafe, filters.brew_methods)) {
+            brewMethodsPassed = true;
+          } else if (filters.brew_methods.length == 0) {
+            brewMethodsPassed = true;
+          }
+
+          /*
+            If everything passes, then we show the Cafe Marker
+          */
+          if (roasterPassed && textPassed && brewMethodsPassed) {
+            this.markers[i].setMap(this.map);
+          } else {
+            this.markers[i].setMap(null);
+          }
+        }
+      }
+    }
+  },
+  computed: {
+    cafes: function cafes() {
+      return this.$store.getters.getCafes;
+    }
+  },
+  mounted: function mounted() {
+    /*
+     We don't want the map to be reactive, so we initialize it locally,
+     but don't store it in our data array.
+    */
+    this.map = new google.maps.Map(document.getElementById('cafe-map'), {
+      center: { lat: this.latitude, lng: this.longitude },
+      zoom: this.zoom
+    });
+    /*
+      Clear and re-build the markers
+    */
+    this.clearMarkers();
+    this.buildMarkers();
+
+    /*
+      Listen to the filters-updated event to filter the map markers
+    */
+    __WEBPACK_IMPORTED_MODULE_4__event_bus_js__["a" /* EventBus */].$on('filters-updated', function (filters) {
+      this.processFilters(filters);
+    }.bind(this));
+  },
+
+  watch: {
+    /*
+      Watches the cafes. When they are updated, clear the markers
+      and re build them.
+    */
+    cafes: function cafes() {
+      this.clearMarkers();
+      this.buildMarkers();
+    }
+  }
+});
+
+/***/ }),
+/* 145 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(146)
+}
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(148)
+/* template */
+var __vue_template__ = __webpack_require__(149)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/components/cafes/CafeMapFilter.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-1b4fe297", Component.options)
+  } else {
+    hotAPI.reload("data-v-1b4fe297", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 146 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(147);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(5)("11fcc9c6", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-1b4fe297\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./CafeMapFilter.vue", function() {
+     var newContent = require("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-1b4fe297\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./CafeMapFilter.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 147 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "\ndiv#cafe-map-filter {\n  background-color: white;\n  border-radius: 10px;\n  -webkit-box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.08);\n          box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.08);\n  padding: 5px;\n  z-index: 999999;\n  position: absolute;\n  right: 45px;\n  top: 50px;\n  width: 25%;\n}\ndiv.filter-brew-method {\n  display: inline-block;\n  height: 30px;\n  text-align: center;\n  border: 1px solid #ededed;\n  border-radius: 5px;\n  padding-left: 10px;\n  padding-right: 10px;\n  padding-top: 5px;\n  padding-bottom: 5px;\n  margin-right: 10px;\n  margin-top: 10px;\n  cursor: pointer;\n  color: #7F5F2A;\n  font-family: 'Josefin Sans', sans-serif;\n  font-size: 12px;\n}\ndiv.filter-brew-method.active {\n    border-bottom: 4px solid #7f6d50;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 148 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__event_bus_js__ = __webpack_require__(9);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  data: function data() {
+    return {
+      textSearch: '',
+      isRoaster: false,
+      brewMethods: []
+    };
+  },
+
+  computed: {
+    cafeBrewMethods: function cafeBrewMethods() {
+      return this.$store.getters.getBrewMethods;
+    }
+  },
+  methods: {
+    toggleBrewMethodFilter: function toggleBrewMethodFilter(method) {
+      if (this.brewMethods.indexOf(method) > -1) {
+        this.brewMethods.splice(this.brewMethods.indexOf(method), 1);
+      } else {
+        this.brewMethods.push(method);
+      }
+    },
+    updateFilterDisplay: function updateFilterDisplay() {
+      __WEBPACK_IMPORTED_MODULE_0__event_bus_js__["a" /* EventBus */].$emit('filters-updated', {
+        text: this.textSearch,
+        roaster: this.isRoaster,
+        brew_methods: this.brewMethods
+      });
+    }
+  }
+});
+
+/***/ }),
+/* 149 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", { attrs: { id: "cafe-map-filter" } }, [
+    _c("div", { staticClass: "grid-container" }, [
+      _c("div", { staticClass: "grid-x grid-padding-x" }, [
+        _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+          _c("label", [_vm._v("Search")]),
+          _vm._v(" "),
+          _c("input", {
+            directives: [
+              {
+                name: "model",
+                rawName: "v-model",
+                value: _vm.textSearch,
+                expression: "textSearch"
+              }
+            ],
+            attrs: { type: "text", placeholder: "Search" },
+            domProps: { value: _vm.textSearch },
+            on: {
+              input: function($event) {
+                if ($event.target.composing) {
+                  return
+                }
+                _vm.textSearch = $event.target.value
+              }
+            }
+          }),
+          _vm._v(" "),
+          _c("div", { staticClass: "is-roaster-container" }, [
+            _c("input", {
+              directives: [
+                {
+                  name: "model",
+                  rawName: "v-model",
+                  value: _vm.isRoaster,
+                  expression: "isRoaster"
+                }
+              ],
+              attrs: { type: "checkbox" },
+              domProps: {
+                checked: Array.isArray(_vm.isRoaster)
+                  ? _vm._i(_vm.isRoaster, null) > -1
+                  : _vm.isRoaster
+              },
+              on: {
+                change: function($event) {
+                  var $$a = _vm.isRoaster,
+                    $$el = $event.target,
+                    $$c = $$el.checked ? true : false
+                  if (Array.isArray($$a)) {
+                    var $$v = null,
+                      $$i = _vm._i($$a, $$v)
+                    if ($$el.checked) {
+                      $$i < 0 && (_vm.isRoaster = $$a.concat([$$v]))
+                    } else {
+                      $$i > -1 &&
+                        (_vm.isRoaster = $$a
+                          .slice(0, $$i)
+                          .concat($$a.slice($$i + 1)))
+                    }
+                  } else {
+                    _vm.isRoaster = $$c
+                  }
+                }
+              }
+            }),
+            _vm._v(" "),
+            _c("label", [_vm._v("Is Roaster?")])
+          ]),
+          _vm._v(" "),
+          _c(
+            "div",
+            { staticClass: "brew-methods-container" },
+            _vm._l(_vm.cafeBrewMethods, function(method) {
+              return _c(
+                "div",
+                {
+                  staticClass: "filter-brew-method",
+                  class: {
+                    active: _vm.brewMethods.indexOf(method.method) > -1
+                  },
+                  on: {
+                    click: function($event) {
+                      _vm.toggleBrewMethodFilter(method.method)
+                    }
+                  }
+                },
+                [
+                  _vm._v(
+                    "\n            " + _vm._s(method.method) + "\n          "
+                  )
+                ]
+              )
+            })
+          )
+        ])
+      ])
+    ])
+  ])
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-1b4fe297", module.exports)
+  }
+}
+
+/***/ }),
+/* 150 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { attrs: { id: "cafe-map-container" } },
+    [
+      _c("div", { attrs: { id: "cafe-map" } }),
+      _vm._v(" "),
+      _c("cafe-map-filter")
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-1dd0d03f", module.exports)
+  }
+}
+
+/***/ }),
+/* 151 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { staticClass: "page", attrs: { id: "cafes" } },
+    [_c("cafe-map")],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-3b6b4789", module.exports)
+  }
+}
+
+/***/ }),
+/* 152 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(153)
+}
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(155)
+/* template */
+var __vue_template__ = __webpack_require__(156)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = "data-v-10b7d3a0"
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/pages/NewCafe.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-10b7d3a0", Component.options)
+  } else {
+    hotAPI.reload("data-v-10b7d3a0", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 153 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(154);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(5)("6f63e155", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-10b7d3a0\",\"scoped\":true,\"hasInlineConfig\":true}!../../../../node_modules/sass-loader/lib/loader.js!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./NewCafe.vue", function() {
+     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-10b7d3a0\",\"scoped\":true,\"hasInlineConfig\":true}!../../../../node_modules/sass-loader/lib/loader.js!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./NewCafe.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 154 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "\nform[data-v-10b7d3a0] {\n  max-width: 900px;\n  margin: auto;\n}\nform h3[data-v-10b7d3a0] {\n    font-family: 'Josefin Sans', sans-serif;\n    font-size: 24px;\n    border-bottom: 1px solid #7f6d50;\n    color: #7f6d50;\n}\nform span.brew-method[data-v-10b7d3a0] {\n    display: block;\n    width: 33%;\n    float: left;\n}\nform a.add-location[data-v-10b7d3a0] {\n    background-color: #ccaf80;\n}\nform a.remove-location[data-v-10b7d3a0] {\n    color: red;\n    background-color: white;\n    float: right;\n    text-decoration: underline;\n}\nform a.save-cafe[data-v-10b7d3a0] {\n    float: right;\n    background-color: #7f5f2a;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 155 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_global_forms_TagsInput_vue__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_global_forms_TagsInput_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__components_global_forms_TagsInput_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__event_bus_js__ = __webpack_require__(9);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  components: {
+    TagsInput: __WEBPACK_IMPORTED_MODULE_0__components_global_forms_TagsInput_vue___default.a
+  },
+  data: function data() {
+    return {
+      name: '',
+      locations: [],
+      website: '',
+      description: '',
+      roaster: false,
+      picture: '',
+      validations: {
+        name: {
+          is_valid: true,
+          text: ''
+        },
+        locations: [],
+        oneLocation: {
+          is_valid: true,
+          text: ''
+        },
+        website: {
+          is_valid: true,
+          text: ''
+        }
+      }
+    };
+  },
+  mounted: function mounted() {
+    __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$on('tags-edited', function (tagsAdded) {
+      this.locations[tagsAdded.unique].tags = tagsAdded.tags;
+    }.bind(this));
+  },
+
+  computed: {
+    brewMethods: function brewMethods() {
+      return this.$store.getters.getBrewMethods;
+    },
+    addCafeStatus: function addCafeStatus() {
+      return this.$store.getters.getCafeAddStatus;
+    }
+  },
+  methods: {
+    submitNewCafe: function submitNewCafe() {
+      if (this.validateNewCafe()) {
+        this.$store.dispatch('addCafe', {
+          name: this.name,
+          locations: this.locations,
+          website: this.website,
+          description: this.description,
+          roaster: this.roaster,
+          picture: this.picture
+        });
+      }
+    },
+    validateNewCafe: function validateNewCafe() {
+      var validNewCafeForm = true;
+      /*
+        Ensure a name has been entered
+      */
+      if (this.name.trim() == '') {
+        validNewCafeForm = false;
+        this.validations.name.is_valid = false;
+        this.validations.name.text = 'Please enter a name for the new cafe!';
+      } else {
+        this.validations.name.is_valid = true;
+        this.validations.name.text = '';
+      }
+
+      /*
+        Ensure all locations entered are valid
+      */
+      for (var index in this.locations) {
+        if (this.locations.hasOwnProperty(index)) {
+          /*
+            Ensure an address has been entered
+          */
+          if (this.locations[index].address.trim() == '') {
+            validNewCafeForm = false;
+            this.validations.locations[index].address.is_valid = false;
+            this.validations.locations[index].address.text = 'Please enter an address for the new cafe!';
+          } else {
+            this.validations.locations[index].address.is_valid = true;
+            this.validations.locations[index].address.text = '';
+          }
+        }
+
+        /*
+          Ensure a city has been entered
+        */
+        if (this.locations[index].city.trim() == '') {
+          validNewCafeForm = false;
+          this.validations.locations[index].city.is_valid = false;
+          this.validations.locations[index].city.text = 'Please enter a city for the new cafe!';
+        } else {
+          this.validations.locations[index].city.is_valid = true;
+          this.validations.locations[index].city.text = '';
+        }
+
+        /*
+          Ensure a state has been entered
+        */
+        if (this.locations[index].state.trim() == '') {
+          validNewCafeForm = false;
+          this.validations.locations[index].state.is_valid = false;
+          this.validations.locations[index].state.text = 'Please enter a state for the new cafe!';
+        } else {
+          this.validations.locations[index].state.is_valid = true;
+          this.validations.locations[index].state.text = '';
+        }
+
+        /*
+          Ensure a zip has been entered
+        */
+        if (this.locations[index].zip.trim() == '' || !this.locations[index].zip.match(/(^\d{5}$)/)) {
+          validNewCafeForm = false;
+          this.validations.locations[index].zip.is_valid = false;
+          this.validations.locations[index].zip.text = 'Please enter a valid zip code for the new cafe!';
+        } else {
+          this.validations.locations[index].zip.is_valid = true;
+          this.validations.locations[index].zip.text = '';
+        }
+
+        /*
+          If a website has been entered, ensure the URL is valid
+        */
+        if (this.website.trim != '' && !this.website.match(/^((https?):\/\/)?([w|W]{3}\.)+[a-zA-Z0-9\-\.]{3,}\.[a-zA-Z]{2,}(\.[a-zA-Z]{2,})?$/)) {
+          validNewCafeForm = false;
+          this.validations.website.is_valid = false;
+          this.validations.website.text = 'Please enter a valid URL for the website!';
+        } else {
+          this.validations.website.is_valid = true;
+          this.validations.website.text = '';
+        }
+      }
+      return validNewCafeForm;
+    },
+    addLocation: function addLocation() {
+      this.locations.push({ name: '', address: '', city: '', state: '', zip: '', methodsAvailable: [], tags: [] });
+      this.validations.locations.push({
+        address: {
+          is_valid: true,
+          text: ''
+        },
+        city: {
+          is_valid: true,
+          text: ''
+        },
+        state: {
+          is_valid: true,
+          text: ''
+        },
+        zip: {
+          is_valid: true,
+          text: ''
+        }
+      });
+    },
+    removeLocation: function removeLocation(key) {
+      this.locations.splice(key, 1);
+      this.validations.locations.splice(key, 1);
+    },
+    clearForm: function clearForm() {
+      this.name = '';
+      this.locations = [];
+      this.website = '';
+      this.description = '';
+      this.roaster = false;
+      this.picture = '';
+      this.$refs.photo.value = '';
+      this.validations = {
+        name: {
+          is_valid: true,
+          text: ''
+        },
+        locations: [],
+        oneLocation: {
+          is_valid: true,
+          text: ''
+        },
+        website: {
+          is_valid: true,
+          text: ''
+        }
+      };
+      this.addLocation();
+      __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$emit('clear-tags');
+    },
+    handleFileUpload: function handleFileUpload() {
+      this.picture = this.$refs.photo.files[0];
+    }
+  },
+  created: function created() {
+    this.addLocation();
+  },
+
+  watch: {
+    'addCafeStatus': function addCafeStatus() {
+      if (this.addCafeStatus == 2) {
+        this.clearForm();
+        $('#cafe-added-successfully').show().delay(5000).fadeOut();
+      }
+
+      if (this.addCafeStatus == 3) {
+        $('#cafe-added-successfully').show().delay(5000).fadeOut();
+      }
+    }
+  }
+});
+
+/***/ }),
+/* 156 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", { staticClass: "page" }, [
+    _c(
+      "div",
+      {
+        staticClass: "notification success",
+        attrs: { id: "cafe-added-successfully" }
+      },
+      [_vm._v("\n    Cafe Added Successfully!\n  ")]
+    ),
+    _vm._v(" "),
+    _c(
+      "div",
+      {
+        staticClass: "notification failure",
+        attrs: { id: "cafe-added-unsuccessfully" }
+      },
+      [
+        _vm._v(
+          "\n    Cafe Failed to be Added Successfully! Please Try Again!\n  "
+        )
+      ]
+    ),
+    _vm._v(" "),
+    _c("form", [
+      _c("div", { staticClass: "grid-container" }, [
+        _c("div", { staticClass: "grid-x grid-padding-x" }, [
+          _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+            _c("label", [
+              _vm._v("Name\n            "),
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.name,
+                    expression: "name"
+                  }
+                ],
+                attrs: { type: "text", placeholder: "Cafe name" },
+                domProps: { value: _vm.name },
+                on: {
+                  input: function($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.name = $event.target.value
+                  }
+                }
+              })
+            ]),
+            _vm._v(" "),
+            _c(
+              "span",
+              {
+                directives: [
+                  {
+                    name: "show",
+                    rawName: "v-show",
+                    value: !_vm.validations.name.is_valid,
+                    expression: "!validations.name.is_valid"
+                  }
+                ],
+                staticClass: "validation"
+              },
+              [_vm._v(_vm._s(_vm.validations.name.text))]
+            )
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+            _c("label", [
+              _vm._v("Website\n            "),
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.website,
+                    expression: "website"
+                  }
+                ],
+                attrs: { type: "text", placeholder: "Website" },
+                domProps: { value: _vm.website },
+                on: {
+                  input: function($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.website = $event.target.value
+                  }
+                }
+              })
+            ]),
+            _vm._v(" "),
+            _c(
+              "span",
+              {
+                directives: [
+                  {
+                    name: "show",
+                    rawName: "v-show",
+                    value: !_vm.validations.website.is_valid,
+                    expression: "!validations.website.is_valid"
+                  }
+                ],
+                staticClass: "validation"
+              },
+              [_vm._v(_vm._s(_vm.validations.website.text))]
+            )
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+            _c("label", [
+              _vm._v("Photo\n            "),
+              _c("input", {
+                ref: "photo",
+                attrs: { type: "file", id: "cafe-photo" },
+                on: {
+                  change: function($event) {
+                    _vm.handleFileUpload()
+                  }
+                }
+              })
+            ])
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+            _c("label", [
+              _vm._v("Description\n            "),
+              _c("textarea", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.description,
+                    expression: "description"
+                  }
+                ],
+                domProps: { value: _vm.description },
+                on: {
+                  input: function($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.description = $event.target.value
+                  }
+                }
+              })
+            ])
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+            _c("input", {
+              directives: [
+                {
+                  name: "model",
+                  rawName: "v-model",
+                  value: _vm.roaster,
+                  expression: "roaster"
+                }
+              ],
+              attrs: { id: "is-roaster", type: "checkbox", value: "1" },
+              domProps: {
+                checked: Array.isArray(_vm.roaster)
+                  ? _vm._i(_vm.roaster, "1") > -1
+                  : _vm.roaster
+              },
+              on: {
+                change: function($event) {
+                  var $$a = _vm.roaster,
+                    $$el = $event.target,
+                    $$c = $$el.checked ? true : false
+                  if (Array.isArray($$a)) {
+                    var $$v = "1",
+                      $$i = _vm._i($$a, $$v)
+                    if ($$el.checked) {
+                      $$i < 0 && (_vm.roaster = $$a.concat([$$v]))
+                    } else {
+                      $$i > -1 &&
+                        (_vm.roaster = $$a
+                          .slice(0, $$i)
+                          .concat($$a.slice($$i + 1)))
+                    }
+                  } else {
+                    _vm.roaster = $$c
+                  }
+                }
+              }
+            }),
+            _c("label", { attrs: { for: "is-roaster" } }, [
+              _vm._v("Is roaster?")
+            ])
+          ])
+        ])
+      ]),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "grid-container" },
+        _vm._l(_vm.locations, function(location, key) {
+          return _c("div", { staticClass: "grid-x grid-padding-x" }, [
+            _vm._m(0, true),
+            _vm._v(" "),
+            _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
+              _c("label", [
+                _vm._v("Location Name\n            "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.locations[key].name,
+                      expression: "locations[key].name"
+                    }
+                  ],
+                  attrs: { type: "text", placeholder: "Location Name" },
+                  domProps: { value: _vm.locations[key].name },
+                  on: {
+                    input: function($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(_vm.locations[key], "name", $event.target.value)
+                    }
+                  }
+                })
+              ])
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
+              _c("label", [
+                _vm._v("Address\n            "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.locations[key].address,
+                      expression: "locations[key].address"
+                    }
+                  ],
+                  attrs: { type: "text", placeholder: "Address" },
+                  domProps: { value: _vm.locations[key].address },
+                  on: {
+                    input: function($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(
+                        _vm.locations[key],
+                        "address",
+                        $event.target.value
+                      )
+                    }
+                  }
+                })
+              ]),
+              _vm._v(" "),
+              _c(
+                "span",
+                {
+                  directives: [
+                    {
+                      name: "show",
+                      rawName: "v-show",
+                      value: !_vm.validations.locations[key].address.is_valid,
+                      expression: "!validations.locations[key].address.is_valid"
+                    }
+                  ],
+                  staticClass: "validation"
+                },
+                [_vm._v(_vm._s(_vm.validations.locations[key].address.text))]
+              )
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
+              _c("label", [
+                _vm._v("City\n            "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.locations[key].city,
+                      expression: "locations[key].city"
+                    }
+                  ],
+                  attrs: { type: "text", placeholder: "City" },
+                  domProps: { value: _vm.locations[key].city },
+                  on: {
+                    input: function($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(_vm.locations[key], "city", $event.target.value)
+                    }
+                  }
+                })
+              ]),
+              _vm._v(" "),
+              _c(
+                "span",
+                {
+                  directives: [
+                    {
+                      name: "show",
+                      rawName: "v-show",
+                      value: !_vm.validations.locations[key].city.is_valid,
+                      expression: "!validations.locations[key].city.is_valid"
+                    }
+                  ],
+                  staticClass: "validation"
+                },
+                [_vm._v(_vm._s(_vm.validations.locations[key].city.text))]
+              )
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
+              _c("label", [
+                _vm._v("State\n            "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.locations[key].state,
+                      expression: "locations[key].state"
+                    }
+                  ],
+                  attrs: { type: "text", placeholder: "State" },
+                  domProps: { value: _vm.locations[key].state },
+                  on: {
+                    input: function($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(_vm.locations[key], "state", $event.target.value)
+                    }
+                  }
+                })
+              ]),
+              _vm._v(" "),
+              _c(
+                "span",
+                {
+                  directives: [
+                    {
+                      name: "show",
+                      rawName: "v-show",
+                      value: !_vm.validations.locations[key].state.is_valid,
+                      expression: "!validations.locations[key].state.is_valid"
+                    }
+                  ],
+                  staticClass: "validation"
+                },
+                [_vm._v(_vm._s(_vm.validations.locations[key].state.text))]
+              )
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
+              _c("label", [
+                _vm._v("Zip\n            "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.locations[key].zip,
+                      expression: "locations[key].zip"
+                    }
+                  ],
+                  attrs: { type: "text", placeholder: "Zip" },
+                  domProps: { value: _vm.locations[key].zip },
+                  on: {
+                    input: function($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(_vm.locations[key], "zip", $event.target.value)
+                    }
+                  }
+                })
+              ]),
+              _vm._v(" "),
+              _c(
+                "span",
+                {
+                  directives: [
+                    {
+                      name: "show",
+                      rawName: "v-show",
+                      value: !_vm.validations.locations[key].zip.is_valid,
+                      expression: "!validations.locations[key].zip.is_valid"
+                    }
+                  ],
+                  staticClass: "validation"
+                },
+                [_vm._v(_vm._s(_vm.validations.locations[key].zip.text))]
+              )
+            ]),
+            _vm._v(" "),
+            _c(
+              "div",
+              { staticClass: "large-12 medium-12 small-12 cell" },
+              [
+                _c("label", [_vm._v("Brew Methods Available")]),
+                _vm._v(" "),
+                _vm._l(_vm.brewMethods, function(brewMethod) {
+                  return _c("span", { staticClass: "brew-method" }, [
+                    _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.locations[key].methodsAvailable,
+                          expression: "locations[key].methodsAvailable"
+                        }
+                      ],
+                      attrs: {
+                        id: "brew-method-" + brewMethod.id + "-" + key,
+                        type: "checkbox"
+                      },
+                      domProps: {
+                        value: brewMethod.id,
+                        checked: Array.isArray(
+                          _vm.locations[key].methodsAvailable
+                        )
+                          ? _vm._i(
+                              _vm.locations[key].methodsAvailable,
+                              brewMethod.id
+                            ) > -1
+                          : _vm.locations[key].methodsAvailable
+                      },
+                      on: {
+                        change: function($event) {
+                          var $$a = _vm.locations[key].methodsAvailable,
+                            $$el = $event.target,
+                            $$c = $$el.checked ? true : false
+                          if (Array.isArray($$a)) {
+                            var $$v = brewMethod.id,
+                              $$i = _vm._i($$a, $$v)
+                            if ($$el.checked) {
+                              $$i < 0 &&
+                                (_vm.locations[
+                                  key
+                                ].methodsAvailable = $$a.concat([$$v]))
+                            } else {
+                              $$i > -1 &&
+                                (_vm.locations[
+                                  key
+                                ].methodsAvailable = $$a
+                                  .slice(0, $$i)
+                                  .concat($$a.slice($$i + 1)))
+                            }
+                          } else {
+                            _vm.$set(
+                              _vm.locations[key],
+                              "methodsAvailable",
+                              $$c
+                            )
+                          }
+                        }
+                      }
+                    }),
+                    _c(
+                      "label",
+                      {
+                        attrs: {
+                          for: "brew-method-" + brewMethod.id + "-" + key
+                        }
+                      },
+                      [_vm._v(_vm._s(brewMethod.method))]
+                    )
+                  ])
+                })
+              ],
+              2
+            ),
+            _vm._v(" "),
+            _c(
+              "div",
+              { staticClass: "large-12 medium-12 small-12 cell" },
+              [_c("tags-input", { attrs: { unique: key } })],
+              1
+            ),
+            _vm._v(" "),
+            _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+              _c(
+                "a",
+                {
+                  staticClass: "button remove-location",
+                  on: {
+                    click: function($event) {
+                      _vm.removeLocation(key)
+                    }
+                  }
+                },
+                [_vm._v("Remove Location")]
+              )
+            ])
+          ])
+        })
+      ),
+      _vm._v(" "),
+      _c("div", { staticClass: "grid-container" }, [
+        _c("div", { staticClass: "grid-x grid-padding-x" }, [
+          _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+            _c(
+              "span",
+              {
+                directives: [
+                  {
+                    name: "show",
+                    rawName: "v-show",
+                    value: !_vm.validations.oneLocation.is_valid,
+                    expression: "!validations.oneLocation.is_valid"
+                  }
+                ],
+                staticClass: "validation"
+              },
+              [_vm._v(_vm._s(_vm.validations.oneLocation.text))]
+            ),
+            _vm._v(" "),
+            _c(
+              "a",
+              {
+                staticClass: "button add-location",
+                on: {
+                  click: function($event) {
+                    _vm.addLocation()
+                  }
+                }
+              },
+              [_vm._v("+ Add Location")]
+            )
+          ])
+        ])
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "grid-container" }, [
+        _c("div", { staticClass: "grid-x grid-padding-x" }, [
+          _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+            _c(
+              "a",
+              {
+                staticClass: "button save-cafe",
+                on: {
+                  click: function($event) {
+                    _vm.submitNewCafe()
+                  }
+                }
+              },
+              [_vm._v("Save Cafe")]
+            )
+          ])
+        ])
+      ])
+    ])
+  ])
+}
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+      _c("h3", [_vm._v("Location")])
+    ])
+  }
+]
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-10b7d3a0", module.exports)
+  }
+}
+
+/***/ }),
+/* 157 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(158)
+}
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(160)
+/* template */
+var __vue_template__ = __webpack_require__(169)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/pages/Cafe.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-4c1ef4da", Component.options)
+  } else {
+    hotAPI.reload("data-v-4c1ef4da", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 158 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(159);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(5)("35b83dc6", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-4c1ef4da\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/sass-loader/lib/loader.js!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Cafe.vue", function() {
+     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-4c1ef4da\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/sass-loader/lib/loader.js!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Cafe.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 159 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "\ndiv.cafe-page h2 {\n  text-align: center;\n  color: #7f6d50;\n  font-family: 'Josefin Sans', sans-serif;\n}\ndiv.cafe-page h3 {\n  text-align: center;\n  color: #ffbe54;\n  font-family: 'Josefin Sans', sans-serif;\n}\ndiv.cafe-page span.address {\n  text-align: center;\n  display: block;\n  font-family: 'Lato', sans-serif;\n  color: #A0A0A0;\n  font-size: 20px;\n  line-height: 30px;\n  margin-top: 50px;\n}\ndiv.cafe-page a.website {\n  text-align: center;\n  color: #ccaf80;\n  font-size: 30px;\n  font-weight: bold;\n  margin-top: 50px;\n  display: block;\n  font-family: 'Josefin Sans', sans-serif;\n}\ndiv.cafe-page div.brew-methods-container {\n  max-width: 700px;\n  margin: auto;\n}\ndiv.cafe-page div.brew-methods-container div.cell {\n    text-align: center;\n}\ndiv.tags-container {\n  max-width: 700px;\n  margin: auto;\n  text-align: center;\n  margin-top: 30px;\n}\ndiv.tags-container span.tag {\n    color: #7f5f2a;\n    font-family: 'Josefin Sans', sans-serif;\n    margin-right: 20px;\n    display: inline-block;\n    line-height: 20px;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 160 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__event_bus_js__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__components_global_Loader_vue__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__components_global_Loader_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__components_global_Loader_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__components_cafes_IndividualCafeMap_vue__ = __webpack_require__(161);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__components_cafes_IndividualCafeMap_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__components_cafes_IndividualCafeMap_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__components_cafes_ToggleLike_vue__ = __webpack_require__(166);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__components_cafes_ToggleLike_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__components_cafes_ToggleLike_vue__);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
+/*
+  Import the loader and cafe map for use in the component.
+*/
+
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  /*
+    Defines the components used by the page.
+  */
+  components: {
+    Loader: __WEBPACK_IMPORTED_MODULE_1__components_global_Loader_vue___default.a,
+    IndividualCafeMap: __WEBPACK_IMPORTED_MODULE_2__components_cafes_IndividualCafeMap_vue___default.a,
+    ToggleLike: __WEBPACK_IMPORTED_MODULE_3__components_cafes_ToggleLike_vue___default.a
+  },
+
+  /*
+    When created, load the cafe based on the ID in the
+    route parameter.
+  */
+  created: function created() {
+    this.$store.dispatch('loadCafe', {
+      id: this.$route.params.id
+    });
+  },
+
+
+  /*
+    Defines the computed variables on the cafe.
+  */
+  computed: {
+    /*
+      Grabs the cafe load status from the Vuex state.
+    */
+    cafeLoadStatus: function cafeLoadStatus() {
+      return this.$store.getters.getCafeLoadStatus;
+    },
+
+
+    /*
+      Grabs the cafe from the Vuex state.
+    */
+    cafe: function cafe() {
+      return this.$store.getters.getCafe;
+    },
+
+    /**
+      Grabs the authenticated user
+     */
+    user: function user() {
+      return this.$store.getters.getUser;
+    },
+
+    /**
+      Gets the users load status
+     */
+    userLoadStatus: function userLoadStatus() {
+      return this.$store.getters.getCafeLoadStatus();
+    }
+  },
+  methods: {
+    login: function login() {
+      __WEBPACK_IMPORTED_MODULE_0__event_bus_js__["a" /* EventBus */].$emit('prompt-login');
+    }
+  }
+});
+
+/***/ }),
+/* 161 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(162)
+}
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(164)
+/* template */
+var __vue_template__ = __webpack_require__(165)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/components/cafes/IndividualCafeMap.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-12aa39e6", Component.options)
+  } else {
+    hotAPI.reload("data-v-12aa39e6", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 162 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(163);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(5)("6a2f7ccd", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-12aa39e6\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./IndividualCafeMap.vue", function() {
+     var newContent = require("!!../../../../../node_modules/css-loader/index.js!../../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-12aa39e6\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../../node_modules/sass-loader/lib/loader.js!../../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./IndividualCafeMap.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 163 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "\ndiv#individual-cafe-map {\n  width: 700px;\n  height: 500px;\n  margin: auto;\n  margin-bottom: 200px;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 164 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  computed: {
+    cafeLoadStatus: function cafeLoadStatus() {
+      return this.$store.getters.getCafeLoadStatus;
+    },
+    cafe: function cafe() {
+      return this.$store.getters.getCafe;
+    }
+  },
+  watch: {
+    cafeLoadStatus: function cafeLoadStatus() {
+      if (this.cafeLoadStatus == 2) {
+        this.displayIndividualCafeMap();
+      }
+    }
+  },
+  methods: {
+    displayIndividualCafeMap: function displayIndividualCafeMap() {
+      this.map = new google.maps.Map(document.getElementById('individual-cafe-map'), {
+        center: { lat: parseFloat(this.cafe.latitude), lng: parseFloat(this.cafe.longitude) },
+        zoom: 13
+      });
+
+      var image = '/img/coffe-marker.png';
+
+      var marker = new google.maps.Marker({
+        position: { lat: parseFloat(this.cafe.latitude), lng: parseFloat(this.cafe.longitude) }, map: this.map,
+        icon: image
+      });
+    }
+  }
+});
+
+/***/ }),
+/* 165 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", { attrs: { id: "individual-cafe-map" } })
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-12aa39e6", module.exports)
+  }
+}
+
+/***/ }),
+/* 166 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(167)
+/* template */
+var __vue_template__ = __webpack_require__(168)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = null
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/components/cafes/ToggleLike.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-52d7667b", Component.options)
+  } else {
+    hotAPI.reload("data-v-52d7667b", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 167 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__global_Loader_vue__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__global_Loader_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__global_Loader_vue__);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  components: {
+    Loader: __WEBPACK_IMPORTED_MODULE_0__global_Loader_vue___default.a
+  },
+  computed: {
+    /**
+     Gets the cafe load status from the Vuex state
+     */
+    cafeLoadStatus: function cafeLoadStatus() {
+      return this.$store.getters.getCafeLoadStatus;
+    },
+
+    /**
+      Gets the cafe from the vuex state
+     */
+    cafe: function cafe() {
+      return this.$store.getters.getCafe;
+    },
+
+    /**
+      Determines if the cafe is liked or not
+     */
+    liked: function liked() {
+      return this.$store.getters.getCafeLikedStatus;
+    },
+
+    /**
+      Determine if the cafe is still processing the like action
+     */
+    cafeLikeActionStatus: function cafeLikeActionStatus() {
+      return this.$store.getters.getCafeLikeActionStatus;
+    },
+
+    /**
+      determines if the cafe is still proccessing the un-like action
+     */
+    cafeUnlikeActionStatus: function cafeUnlikeActionStatus() {
+      return this.$store.getters.getCafeUnLikeActionStatus;
+    }
+  },
+  methods: {
+    likeCafe: function likeCafe(cafeID) {
+      this.$store.dispatch('likeCafe', {
+        id: this.cafe.id
+      });
+    },
+    unlikeCafe: function unlikeCafe(cafeID) {
+      this.$store.dispatch('unlikeCafe', {
+        id: this.cafe.id
+      });
+    }
+  }
+});
+
+/***/ }),
+/* 168 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "span",
+    { staticClass: "toggle-like" },
+    [
+      !_vm.liked &&
+      _vm.cafeLoadStatus == 2 &&
+      _vm.cafeLikeActionStatus != 1 &&
+      _vm.cafeUnlikeActionStatus != 1
+        ? _c(
+            "span",
+            {
+              staticClass: "like",
+              on: {
+                click: function($event) {
+                  _vm.likeCafe(_vm.cafe.id)
+                }
+              }
+            },
+            [_vm._v("\n      Like\n  ")]
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.liked &&
+      _vm.cafeLoadStatus == 2 &&
+      _vm.cafeLikeActionStatus != 1 &&
+      _vm.cafeUnlikeActionStatus != 1
+        ? _c(
+            "span",
+            {
+              staticClass: "un-like",
+              on: {
+                click: function($event) {
+                  _vm.unlikeCafe(_vm.cafe.id)
+                }
+              }
+            },
+            [_vm._v("\n    Un-like\n  ")]
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _c("loader", {
+        directives: [
+          {
+            name: "show",
+            rawName: "v-show",
+            value:
+              _vm.cafeLikeActionStatus == 1 || _vm.cafeUnlikeActionStatus == 1,
+            expression:
+              "cafeLikeActionStatus == 1 || cafeUnlikeActionStatus == 1"
+          }
+        ],
+        attrs: { width: 30, height: 30, display: "inline-block" }
+      })
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-52d7667b", module.exports)
+  }
+}
+
+/***/ }),
+/* 169 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", { staticClass: "page", attrs: { id: "cafe" } }, [
+    _c("div", { staticClass: "grid-container" }, [
+      _c("div", { staticClass: "grid-x grid-padding-x" }, [
+        _c(
+          "div",
+          { staticClass: "large-12 medium-12 small-12 cell" },
+          [
+            _c("loader", {
+              directives: [
+                {
+                  name: "show",
+                  rawName: "v-show",
+                  value: _vm.cafeLoadStatus == 1,
+                  expression: "cafeLoadStatus == 1"
+                }
+              ],
+              attrs: { width: 100, height: 100 }
+            }),
+            _vm._v(" "),
+            _c(
+              "div",
+              {
+                directives: [
+                  {
+                    name: "show",
+                    rawName: "v-show",
+                    value: _vm.cafeLoadStatus == 2,
+                    expression: "cafeLoadStatus == 2"
+                  }
+                ],
+                staticClass: "cafe-page"
+              },
+              [
+                _c("h2", [_vm._v(_vm._s(_vm.cafe.name))]),
+                _vm._v(" "),
+                _vm.cafe.location_name != ""
+                  ? _c("h3", [_vm._v(_vm._s(_vm.cafe.location_name))])
+                  : _vm._e(),
+                _vm._v(" "),
+                this.user != "" && this.userLoadStatus == 2
+                  ? _c(
+                      "div",
+                      { staticClass: "edit-container" },
+                      [
+                        _c(
+                          "router-link",
+                          {
+                            attrs: {
+                              to: {
+                                name: "editcafe",
+                                params: { id: _vm.cafe.id }
+                              }
+                            }
+                          },
+                          [_vm._v("Edit")]
+                        )
+                      ],
+                      1
+                    )
+                  : _vm._e(),
+                _vm._v(" "),
+                _c("span", { staticClass: "address" }, [
+                  _vm._v("\n            " + _vm._s(_vm.cafe.address)),
+                  _c("br"),
+                  _vm._v(
+                    "\n            " +
+                      _vm._s(_vm.cafe.city) +
+                      ", " +
+                      _vm._s(_vm.cafe.state)
+                  ),
+                  _c("br"),
+                  _vm._v(
+                    "\n            " + _vm._s(_vm.cafe.zip) + "\n          "
+                  )
+                ]),
+                _vm._v(" "),
+                _vm.user != "" && _vm.userLoadStatus == 2
+                  ? _c("toggle-like")
+                  : _vm._e(),
+                _vm._v(" "),
+                _vm.user == "" && _vm.userLoadStatus == 2
+                  ? _c(
+                      "a",
+                      {
+                        staticClass: "prompt-log-in",
+                        on: {
+                          click: function($event) {
+                            _vm.login()
+                          }
+                        }
+                      },
+                      [
+                        _vm._v(
+                          'Did you know you can "like" this cafe and save it to your profile? Just log in!'
+                        )
+                      ]
+                    )
+                  : _vm._e(),
+                _vm._v(" "),
+                _c("div", { staticClass: "tags-container" }, [
+                  _c("div", { staticClass: "grid-x grid-padding-x" }, [
+                    _c(
+                      "div",
+                      { staticClass: "large-12 medium-12 small-12 cell" },
+                      _vm._l(_vm.cafe.tags, function(tag) {
+                        return _c("span", { staticClass: "tag" }, [
+                          _vm._v("#" + _vm._s(tag.tag))
+                        ])
+                      })
+                    )
+                  ])
+                ]),
+                _vm._v(" "),
+                _c(
+                  "a",
+                  {
+                    staticClass: "website",
+                    attrs: { href: _vm.cafe.website, target: "_blank" }
+                  },
+                  [_vm._v(_vm._s(_vm.cafe.website))]
+                ),
+                _vm._v(" "),
+                _c("div", { staticClass: "brew-methods-container" }, [
+                  _c(
+                    "div",
+                    { staticClass: "grid-x grid-padding-x" },
+                    _vm._l(_vm.cafe.brew_methods, function(brewMethod) {
+                      return _c(
+                        "div",
+                        { staticClass: "large-3 medium-4 small-12 cell" },
+                        [
+                          _vm._v(
+                            "\n                " +
+                              _vm._s(brewMethod.method) +
+                              "\n              "
+                          )
+                        ]
+                      )
+                    })
+                  )
+                ]),
+                _vm._v(" "),
+                _c("br"),
+                _vm._v(" "),
+                _c("individual-cafe-map")
+              ],
+              1
+            )
+          ],
+          1
+        )
+      ])
+    ])
+  ])
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-4c1ef4da", module.exports)
+  }
+}
+
+/***/ }),
+/* 170 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(171)
+}
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(173)
+/* template */
+var __vue_template__ = __webpack_require__(174)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = "data-v-10edfaf8"
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/pages/EditCafe.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-10edfaf8", Component.options)
+  } else {
+    hotAPI.reload("data-v-10edfaf8", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 171 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(172);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(5)("4f11dabc", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-10edfaf8\",\"scoped\":true,\"hasInlineConfig\":true}!../../../../node_modules/sass-loader/lib/loader.js!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./EditCafe.vue", function() {
+     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-10edfaf8\",\"scoped\":true,\"hasInlineConfig\":true}!../../../../node_modules/sass-loader/lib/loader.js!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./EditCafe.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 172 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "\nform[data-v-10edfaf8] {\n  max-width: 900px;\n  margin: auto;\n}\nform h3[data-v-10edfaf8] {\n    font-family: 'Josefin Sans', sans-serif;\n    font-size: 24px;\n    border-bottom: 1px solid #7f6d50;\n    color: #7f6d50;\n}\nform span.brew-method[data-v-10edfaf8] {\n    display: block;\n    width: 33%;\n    float: left;\n}\nform a.add-location[data-v-10edfaf8] {\n    background-color: #ccaf80;\n    margin-top: 20px;\n}\nform a.remove-location[data-v-10edfaf8] {\n    color: red;\n    background-color: white;\n    float: right;\n    text-decoration: underline;\n}\nform a.save-cafe[data-v-10edfaf8] {\n    float: right;\n    background-color: #7f5f2a;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 173 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_global_forms_TagsInput_vue__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_global_forms_TagsInput_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__components_global_forms_TagsInput_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__event_bus_js__ = __webpack_require__(9);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
+
+/*
+  Imports the Event Bus to pass events on tag updates
+*/
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  components: {
+    TagsInput: __WEBPACK_IMPORTED_MODULE_0__components_global_forms_TagsInput_vue___default.a
+  },
+
+  /*
+    Defines the data used by the page
+  */
+  data: function data() {
+    return {
+      name: '',
+      locations: [],
+      website: '',
+      description: '',
+      roaster: false,
+      picture: '',
+      validations: {
+        name: {
+          is_valid: true,
+          text: ''
+        },
+        locations: [],
+        oneLocation: {
+          is_valid: true,
+          text: ''
+        },
+        website: {
+          is_valid: true,
+          text: ''
+        }
+      }
+    };
+  },
+
+
+  /*
+    Sync the tags to send to the server for the new cafe.
+  */
+  mounted: function mounted() {
+    __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$on('tags-edited', function (tagsAdded) {
+      this.locations[tagsAdded.unique].tags = tagsAdded.tags;
+    }.bind(this));
+  },
+
+
+  /*
+    When the component is created, add a location
+  */
+  created: function created() {
+    this.addLocation();
+
+    this.$store.dispatch('loadCafeEdit', {
+      id: this.$route.params.id
+    });
+  },
+
+
+  /*
+    Loads the Vuex data we need such as brew methods
+    and edit cafe status.
+  */
+  computed: {
+    brewMethods: function brewMethods() {
+      return this.$store.getters.getBrewMethods;
+    },
+    editCafeLoadStatus: function editCafeLoadStatus() {
+      return this.$store.getters.getCafeEditLoadStatus;
+    },
+    editCafeStatus: function editCafeStatus() {
+      return this.$store.getters.getCafeEditStatus;
+    },
+    editCafe: function editCafe() {
+      return this.$store.getters.getCafeEdit;
+    }
+  },
+
+  /*
+    Defines what we need to watch on the page.
+  */
+  watch: {
+    'editCafeStatus': function editCafeStatus() {
+      if (this.editCafeStatus == 2) {
+        this.$router.push({ name: 'cafe', params: { id: this.$route.params.id } });
+      }
+    },
+    'editCafeLoadStatus': function editCafeLoadStatus() {
+      if (this.editCafeLoadStatus == 2) {
+        this.populateForm();
+      }
+    }
+  },
+
+  /*
+    Defines the methods used by the page
+  */
+  methods: {
+    /*
+      Method populates the form with the data we need.
+    */
+    populateForm: function populateForm() {
+      var brewMethods = [];
+      var tags = [];
+
+      /*
+        Make an array of brew method IDs
+      */
+      for (var i = 0; i < this.editCafe.brew_methods.length; i++) {
+        brewMethods.push(this.editCafe.brew_methods[i].id);
+      }
+
+      /*
+        Make an array of tags
+      */
+      for (var _i = 0; _i < this.editCafe.tags.length; _i++) {
+        tags.push(this.editCafe.tags[_i].tag);
+      }
+
+      /*
+        Populate the form
+      */
+      this.name = this.editCafe.name;
+      this.website = this.editCafe.website;
+      this.description = this.editCafe.description;
+      this.roaster = this.editCafe.roaster == 1 ? true : false;
+      this.locations[0].name = this.editCafe.location_name;
+      this.locations[0].address = this.editCafe.address;
+      this.locations[0].city = this.editCafe.city;
+      this.locations[0].state = this.editCafe.state;
+      this.locations[0].zip = this.editCafe.zip;
+
+      this.locations[0].methodsAvailable = brewMethods;
+      this.locations[0].tags = tags;
+
+      __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$emit('set-initial-tags', { unique: 0, tags: tags });
+    },
+
+
+    /*
+      Submits edits for a cafe
+    */
+    submitEditCafe: function submitEditCafe() {
+      if (this.validateEditCafe()) {
+        this.$store.dispatch('editCafe', {
+          id: this.editCafe.id,
+          name: this.name,
+          locations: this.locations,
+          website: this.website,
+          description: this.description,
+          roaster: this.roaster,
+          picture: this.picture
+        });
+      }
+    },
+
+
+    /*
+      Validates cafe edits
+    */
+    validateEditCafe: function validateEditCafe() {
+      var validEditCafeForm = true;
+
+      /*
+        Ensure a name has been entered
+      */
+      if (this.name.trim() == '') {
+        validEditCafeForm = false;
+        this.validations.name.is_valid = false;
+        this.validations.name.text = 'Please enter a name for the cafe!';
+      } else {
+        this.validations.name.is_valid = true;
+        this.validations.name.text = '';
+      }
+
+      /*
+        Ensure at least one location has been entered
+      */
+      if (this.locations.length == 0) {
+        validEditCafeForm = false;
+        this.validations.oneLocation.is_valid = false;
+        this.validations.oneLocation.text = 'Please enter at least one location!';
+      } else {
+        this.validations.oneLocation.is_valid = true;
+        this.validations.oneLocation.text = '';
+      }
+
+      /*
+        Ensure all locations entered are valid
+      */
+      for (var index in this.locations) {
+        if (this.locations.hasOwnProperty(index)) {
+          /*
+            Ensure an address has been entered
+          */
+          if (this.locations[index].address.trim() == '') {
+            validEditCafeForm = false;
+            this.validations.locations[index].address.is_valid = false;
+            this.validations.locations[index].address.text = 'Please enter an address for the cafe!';
+          } else {
+            this.validations.locations[index].address.is_valid = true;
+            this.validations.locations[index].address.text = '';
+          }
+        }
+
+        /*
+          Ensure a city has been entered
+        */
+        if (this.locations[index].city.trim() == '') {
+          validEditCafeForm = false;
+          this.validations.locations[index].city.is_valid = false;
+          this.validations.locations[index].city.text = 'Please enter a city for the cafe!';
+        } else {
+          this.validations.locations[index].city.is_valid = true;
+          this.validations.locations[index].city.text = '';
+        }
+
+        /*
+          Ensure a state has been entered
+        */
+        if (this.locations[index].state.trim() == '') {
+          validEditEditForm = false;
+          this.validations.locations[index].state.is_valid = false;
+          this.validations.locations[index].state.text = 'Please enter a state for the cafe!';
+        } else {
+          this.validations.locations[index].state.is_valid = true;
+          this.validations.locations[index].state.text = '';
+        }
+
+        /*
+          Ensure a zip has been entered
+        */
+        if (this.locations[index].zip.trim() == '' || !this.locations[index].zip.match(/(^\d{5}$)/)) {
+          validEditCafeForm = false;
+          this.validations.locations[index].zip.is_valid = false;
+          this.validations.locations[index].zip.text = 'Please enter a valid zip code for the cafe!';
+        } else {
+          this.validations.locations[index].zip.is_valid = true;
+          this.validations.locations[index].zip.text = '';
+        }
+      }
+
+      /*
+        If a website has been entered, ensure the URL is valid
+      */
+      if (this.website.trim != '' && !this.website.match(/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/)) {
+        validEditCafeForm = false;
+        this.validations.website.is_valid = false;
+        this.validations.website.text = 'Please enter a valid URL for the website!';
+      } else {
+        this.validations.website.is_valid = true;
+        this.validations.website.text = '';
+      }
+
+      return validEditCafeForm;
+    },
+
+
+    /*
+      Adds a location to the edit cafe form
+    */
+    addLocation: function addLocation() {
+      this.locations.push({ name: '', address: '', city: '', state: '', zip: '', methodsAvailable: [], tags: [] });
+      this.validations.locations.push({
+        address: {
+          is_valid: true,
+          text: ''
+        },
+        city: {
+          is_valid: true,
+          text: ''
+        },
+        state: {
+          is_valid: true,
+          text: ''
+        },
+        zip: {
+          is_valid: true,
+          text: ''
+        }
+      });
+    },
+
+
+    /*
+      Clears the form.
+    */
+    clearForm: function clearForm() {
+      this.name = '';
+      this.locations = [];
+      this.website = '';
+      this.description = '';
+      this.roaster = false;
+      this.picture = '';
+      this.$refs.photo.value = '';
+
+      this.validations = {
+        name: {
+          is_valid: true,
+          text: ''
+        },
+        locations: [],
+        oneLocation: {
+          is_valid: true,
+          text: ''
+        },
+        website: {
+          is_valid: true,
+          text: ''
+        }
+      };
+
+      __WEBPACK_IMPORTED_MODULE_1__event_bus_js__["a" /* EventBus */].$emit('clear-tags');
+
+      this.addLocation();
+    },
+    handleFileUpload: function handleFileUpload() {
+      this.picture = this.$refs.photo.files[0];
+    },
+
+
+    /*
+      Removes the location from the cafe form
+    */
+    removeLocation: function removeLocation(key) {
+      this.locations.splice(key, 1);
+      this.validations.locations.splice(key, 1);
+    }
+  }
+});
+
+/***/ }),
+/* 174 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", { staticClass: "page" }, [
+    _c(
+      "div",
+      {
+        staticClass: "notification failure",
+        attrs: { id: "cafe-edited-unsuccessfully" }
+      },
+      [
+        _vm._v(
+          "\n    Cafe Failed to be Edited Successfully! Please Try Again!\n  "
+        )
+      ]
+    ),
+    _vm._v(" "),
+    _c("form", [
+      _c("div", { staticClass: "grid-container" }, [
+        _c("div", { staticClass: "grid-x grid-padding-x" }, [
+          _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+            _c("label", [
+              _vm._v("Name\n            "),
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.name,
+                    expression: "name"
+                  }
+                ],
+                attrs: { type: "text", placeholder: "Cafe name" },
+                domProps: { value: _vm.name },
+                on: {
+                  input: function($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.name = $event.target.value
+                  }
+                }
+              })
+            ]),
+            _vm._v(" "),
+            _c(
+              "span",
+              {
+                directives: [
+                  {
+                    name: "show",
+                    rawName: "v-show",
+                    value: !_vm.validations.name.is_valid,
+                    expression: "!validations.name.is_valid"
+                  }
+                ],
+                staticClass: "validation"
+              },
+              [_vm._v(_vm._s(_vm.validations.name.text))]
+            )
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+            _c("label", [
+              _vm._v("Website\n            "),
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.website,
+                    expression: "website"
+                  }
+                ],
+                attrs: { type: "text", placeholder: "Website" },
+                domProps: { value: _vm.website },
+                on: {
+                  input: function($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.website = $event.target.value
+                  }
+                }
+              })
+            ]),
+            _vm._v(" "),
+            _c(
+              "span",
+              {
+                directives: [
+                  {
+                    name: "show",
+                    rawName: "v-show",
+                    value: !_vm.validations.website.is_valid,
+                    expression: "!validations.website.is_valid"
+                  }
+                ],
+                staticClass: "validation"
+              },
+              [_vm._v(_vm._s(_vm.validations.website.text))]
+            )
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+            _c("label", [
+              _vm._v("Photo\n            "),
+              _c("input", {
+                ref: "photo",
+                attrs: { type: "file", id: "cafe-photo" },
+                on: {
+                  change: function($event) {
+                    _vm.handleFileUpload()
+                  }
+                }
+              })
+            ])
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+            _c("label", [
+              _vm._v("Description\n            "),
+              _c("textarea", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.description,
+                    expression: "description"
+                  }
+                ],
+                domProps: { value: _vm.description },
+                on: {
+                  input: function($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.description = $event.target.value
+                  }
+                }
+              })
+            ])
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+            _c("input", {
+              directives: [
+                {
+                  name: "model",
+                  rawName: "v-model",
+                  value: _vm.roaster,
+                  expression: "roaster"
+                }
+              ],
+              attrs: { id: "is-roaster", type: "checkbox", value: "1" },
+              domProps: {
+                checked: Array.isArray(_vm.roaster)
+                  ? _vm._i(_vm.roaster, "1") > -1
+                  : _vm.roaster
+              },
+              on: {
+                change: function($event) {
+                  var $$a = _vm.roaster,
+                    $$el = $event.target,
+                    $$c = $$el.checked ? true : false
+                  if (Array.isArray($$a)) {
+                    var $$v = "1",
+                      $$i = _vm._i($$a, $$v)
+                    if ($$el.checked) {
+                      $$i < 0 && (_vm.roaster = $$a.concat([$$v]))
+                    } else {
+                      $$i > -1 &&
+                        (_vm.roaster = $$a
+                          .slice(0, $$i)
+                          .concat($$a.slice($$i + 1)))
+                    }
+                  } else {
+                    _vm.roaster = $$c
+                  }
+                }
+              }
+            }),
+            _c("label", { attrs: { for: "is-roaster" } }, [
+              _vm._v("Is roaster?")
+            ])
+          ])
+        ])
+      ]),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "grid-container" },
+        _vm._l(_vm.locations, function(location, key) {
+          return _c("div", { staticClass: "grid-x grid-padding-x" }, [
+            _vm._m(0, true),
+            _vm._v(" "),
+            _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
+              _c("label", [
+                _vm._v("Location Name\n            "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.locations[key].name,
+                      expression: "locations[key].name"
+                    }
+                  ],
+                  attrs: { type: "text", placeholder: "Location Name" },
+                  domProps: { value: _vm.locations[key].name },
+                  on: {
+                    input: function($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(_vm.locations[key], "name", $event.target.value)
+                    }
+                  }
+                })
+              ])
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
+              _c("label", [
+                _vm._v("Address\n            "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.locations[key].address,
+                      expression: "locations[key].address"
+                    }
+                  ],
+                  attrs: { type: "text", placeholder: "Address" },
+                  domProps: { value: _vm.locations[key].address },
+                  on: {
+                    input: function($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(
+                        _vm.locations[key],
+                        "address",
+                        $event.target.value
+                      )
+                    }
+                  }
+                })
+              ]),
+              _vm._v(" "),
+              _c(
+                "span",
+                {
+                  directives: [
+                    {
+                      name: "show",
+                      rawName: "v-show",
+                      value: !_vm.validations.locations[key].address.is_valid,
+                      expression: "!validations.locations[key].address.is_valid"
+                    }
+                  ],
+                  staticClass: "validation"
+                },
+                [_vm._v(_vm._s(_vm.validations.locations[key].address.text))]
+              )
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
+              _c("label", [
+                _vm._v("City\n            "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.locations[key].city,
+                      expression: "locations[key].city"
+                    }
+                  ],
+                  attrs: { type: "text", placeholder: "City" },
+                  domProps: { value: _vm.locations[key].city },
+                  on: {
+                    input: function($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(_vm.locations[key], "city", $event.target.value)
+                    }
+                  }
+                })
+              ]),
+              _vm._v(" "),
+              _c(
+                "span",
+                {
+                  directives: [
+                    {
+                      name: "show",
+                      rawName: "v-show",
+                      value: !_vm.validations.locations[key].city.is_valid,
+                      expression: "!validations.locations[key].city.is_valid"
+                    }
+                  ],
+                  staticClass: "validation"
+                },
+                [_vm._v(_vm._s(_vm.validations.locations[key].city.text))]
+              )
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
+              _c("label", [
+                _vm._v("State\n            "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.locations[key].state,
+                      expression: "locations[key].state"
+                    }
+                  ],
+                  attrs: { type: "text", placeholder: "State" },
+                  domProps: { value: _vm.locations[key].state },
+                  on: {
+                    input: function($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(_vm.locations[key], "state", $event.target.value)
+                    }
+                  }
+                })
+              ]),
+              _vm._v(" "),
+              _c(
+                "span",
+                {
+                  directives: [
+                    {
+                      name: "show",
+                      rawName: "v-show",
+                      value: !_vm.validations.locations[key].state.is_valid,
+                      expression: "!validations.locations[key].state.is_valid"
+                    }
+                  ],
+                  staticClass: "validation"
+                },
+                [_vm._v(_vm._s(_vm.validations.locations[key].state.text))]
+              )
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "large-6 medium-6 small-12 cell" }, [
+              _c("label", [
+                _vm._v("Zip\n            "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.locations[key].zip,
+                      expression: "locations[key].zip"
+                    }
+                  ],
+                  attrs: { type: "text", placeholder: "Zip" },
+                  domProps: { value: _vm.locations[key].zip },
+                  on: {
+                    input: function($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(_vm.locations[key], "zip", $event.target.value)
+                    }
+                  }
+                })
+              ]),
+              _vm._v(" "),
+              _c(
+                "span",
+                {
+                  directives: [
+                    {
+                      name: "show",
+                      rawName: "v-show",
+                      value: !_vm.validations.locations[key].zip.is_valid,
+                      expression: "!validations.locations[key].zip.is_valid"
+                    }
+                  ],
+                  staticClass: "validation"
+                },
+                [_vm._v(_vm._s(_vm.validations.locations[key].zip.text))]
+              )
+            ]),
+            _vm._v(" "),
+            _c(
+              "div",
+              { staticClass: "large-12 medium-12 small-12 cell" },
+              [
+                _c("label", [_vm._v("Brew Methods Available")]),
+                _vm._v(" "),
+                _vm._l(_vm.brewMethods, function(brewMethod) {
+                  return _c("span", { staticClass: "brew-method" }, [
+                    _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.locations[key].methodsAvailable,
+                          expression: "locations[key].methodsAvailable"
+                        }
+                      ],
+                      attrs: {
+                        id: "brew-method-" + brewMethod.id + "-" + key,
+                        type: "checkbox"
+                      },
+                      domProps: {
+                        value: brewMethod.id,
+                        checked: Array.isArray(
+                          _vm.locations[key].methodsAvailable
+                        )
+                          ? _vm._i(
+                              _vm.locations[key].methodsAvailable,
+                              brewMethod.id
+                            ) > -1
+                          : _vm.locations[key].methodsAvailable
+                      },
+                      on: {
+                        change: function($event) {
+                          var $$a = _vm.locations[key].methodsAvailable,
+                            $$el = $event.target,
+                            $$c = $$el.checked ? true : false
+                          if (Array.isArray($$a)) {
+                            var $$v = brewMethod.id,
+                              $$i = _vm._i($$a, $$v)
+                            if ($$el.checked) {
+                              $$i < 0 &&
+                                (_vm.locations[
+                                  key
+                                ].methodsAvailable = $$a.concat([$$v]))
+                            } else {
+                              $$i > -1 &&
+                                (_vm.locations[
+                                  key
+                                ].methodsAvailable = $$a
+                                  .slice(0, $$i)
+                                  .concat($$a.slice($$i + 1)))
+                            }
+                          } else {
+                            _vm.$set(
+                              _vm.locations[key],
+                              "methodsAvailable",
+                              $$c
+                            )
+                          }
+                        }
+                      }
+                    }),
+                    _c(
+                      "label",
+                      {
+                        attrs: {
+                          for: "brew-method-" + brewMethod.id + "-" + key
+                        }
+                      },
+                      [_vm._v(_vm._s(brewMethod.method))]
+                    )
+                  ])
+                })
+              ],
+              2
+            ),
+            _vm._v(" "),
+            _c(
+              "div",
+              { staticClass: "large-12 medium-12 small-12 cell" },
+              [_c("tags-input", { attrs: { unique: key } })],
+              1
+            ),
+            _vm._v(" "),
+            _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+              key > 0
+                ? _c(
+                    "a",
+                    {
+                      staticClass: "button remove-location",
+                      on: {
+                        click: function($event) {
+                          _vm.removeLocation(key)
+                        }
+                      }
+                    },
+                    [_vm._v("Remove Location")]
+                  )
+                : _vm._e()
+            ])
+          ])
+        })
+      ),
+      _vm._v(" "),
+      _c("div", { staticClass: "grid-container" }, [
+        _c("div", { staticClass: "grid-x grid-padding-x" }, [
+          _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+            _c(
+              "span",
+              {
+                directives: [
+                  {
+                    name: "show",
+                    rawName: "v-show",
+                    value: !_vm.validations.oneLocation.is_valid,
+                    expression: "!validations.oneLocation.is_valid"
+                  }
+                ],
+                staticClass: "validation"
+              },
+              [_vm._v(_vm._s(_vm.validations.oneLocation.text))]
+            ),
+            _vm._v(" "),
+            _c(
+              "a",
+              {
+                staticClass: "button add-location",
+                on: {
+                  click: function($event) {
+                    _vm.addLocation()
+                  }
+                }
+              },
+              [_vm._v("+ Add Location")]
+            )
+          ])
+        ])
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "grid-container" }, [
+        _c("div", { staticClass: "grid-x grid-padding-x" }, [
+          _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+            _c(
+              "a",
+              {
+                staticClass: "button save-cafe",
+                on: {
+                  click: function($event) {
+                    _vm.submitEditCafe()
+                  }
+                }
+              },
+              [_vm._v("Save Cafe Changes")]
+            )
+          ])
+        ])
+      ])
+    ])
+  ])
+}
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "large-12 medium-12 small-12 cell" }, [
+      _c("h3", [_vm._v("Location")])
+    ])
+  }
+]
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-10edfaf8", module.exports)
+  }
+}
+
+/***/ }),
+/* 175 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(176)
+}
+var normalizeComponent = __webpack_require__(3)
+/* script */
+var __vue_script__ = __webpack_require__(178)
+/* template */
+var __vue_template__ = __webpack_require__(179)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/pages/Profile.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-67865b08", Component.options)
+  } else {
+    hotAPI.reload("data-v-67865b08", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 176 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(177);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(5)("2d81e7a2", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-67865b08\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/sass-loader/lib/loader.js!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Profile.vue", function() {
+     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-67865b08\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/sass-loader/lib/loader.js!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0&bustCache!./Profile.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 177 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(4)(undefined);
+// imports
+
+
+// module
+exports.push([module.i, "\ndiv#profile div.center {\n  margin: auto;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 178 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_global_Loader_vue__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_global_Loader_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__components_global_Loader_vue__);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  components: {
+    Loader: __WEBPACK_IMPORTED_MODULE_0__components_global_Loader_vue___default.a
+  },
+
+  data: function data() {
+    return {
+      favorite_coffee: '',
+      flavor_notes: '',
+      profile_visibility: 0,
+      city: '',
+      state: ''
+    };
+  },
+
+
+  watch: {
+    'userLoadStatus': function userLoadStatus() {
+      if (this.userLoadStatus == 2) {
+        this.setFields();
+      }
+    },
+
+    'userUpdateStatus': function userUpdateStatus() {
+      if (this.userUpdateStatus == 2) {
+        $("#profile-updated-successfully").show().delay(5000).fadeOut();
+      }
+    }
+  },
+
+  created: function created() {
+    if (this.userLoadStatus == 2) {
+      this.setFields();
+    }
+  },
+
+
+  computed: {
+    /*
+      Gets the authenticated user.
+    */
+    user: function user() {
+      return this.$store.getters.getUser;
+    },
+
+
+    /*
+      Gets the user load status.
+    */
+    userLoadStatus: function userLoadStatus() {
+      return this.$store.getters.getUserLoadStatus();
+    },
+
+
+    /*
+      Gets the user update status
+    */
+    userUpdateStatus: function userUpdateStatus() {
+      return this.$store.getters.getUserUpdateStatus;
+    }
+  },
+
+  /*
+    Defines the methods used by the component.
+  */
+  methods: {
+    setFields: function setFields() {
+      this.profile_visibility = this.user.profile_visibility;
+      this.favorite_coffee = this.user.favorite_coffee;
+      this.flavor_notes = this.user.flavor_notes;
+      this.city = this.user.city;
+      this.state = this.user.state;
+    },
+    updateProfile: function updateProfile() {
+      if (this.validateProfile()) {
+        this.$store.dispatch('editUser', {
+          profile_visibility: this.profile_visibility,
+          favorite_coffee: this.favorite_coffee,
+          flavor_notes: this.flavor_notes,
+          city: this.city,
+          state: this.state
+        });
+      }
+    },
+    validateProfile: function validateProfile() {
+      return true;
+    }
+  }
+});
+
+/***/ }),
+/* 179 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", { staticClass: "page", attrs: { id: "profile" } }, [
+    _c(
+      "div",
+      {
+        staticClass: "notification success",
+        attrs: { id: "profile-updated-successfully" }
+      },
+      [_vm._v("\n    Profile Updated Successfully!\n  ")]
+    ),
+    _vm._v(" "),
+    _c("div", { staticClass: "grid-container" }, [
+      _c(
+        "div",
+        { staticClass: "grid-x grid-padding-x" },
+        [
+          _c("loader", {
+            directives: [
+              {
+                name: "show",
+                rawName: "v-show",
+                value: _vm.userLoadStatus == 1,
+                expression: "userLoadStatus == 1"
+              }
+            ],
+            attrs: { width: 100, height: 100 }
+          })
+        ],
+        1
+      )
+    ]),
+    _vm._v(" "),
+    _c(
+      "div",
+      {
+        directives: [
+          {
+            name: "show",
+            rawName: "v-show",
+            value: _vm.userLoadStatus == 2,
+            expression: "userLoadStatus == 2"
+          }
+        ],
+        staticClass: "grid-container"
+      },
+      [
+        _c("div", { staticClass: "grid-x grid-padding-x" }, [
+          _c("div", { staticClass: "large-8 medium-10 small-12 cell center" }, [
+            _c("label", [
+              _vm._v("Favorite Coffee\n          "),
+              _c("textarea", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.favorite_coffee,
+                    expression: "favorite_coffee"
+                  }
+                ],
+                domProps: { value: _vm.favorite_coffee },
+                on: {
+                  input: function($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.favorite_coffee = $event.target.value
+                  }
+                }
+              })
+            ])
+          ])
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "grid-x grid-padding-x" }, [
+          _c("div", { staticClass: "large-8 medium-10 small-12 cell center" }, [
+            _c("label", [
+              _vm._v("Flavor Notes\n          "),
+              _c("textarea", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.flavor_notes,
+                    expression: "flavor_notes"
+                  }
+                ],
+                domProps: { value: _vm.flavor_notes },
+                on: {
+                  input: function($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.flavor_notes = $event.target.value
+                  }
+                }
+              })
+            ])
+          ])
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "grid-x grid-padding-x" }, [
+          _c("div", { staticClass: "large-8 medium-10 small-12 cell center" }, [
+            _c("label", [
+              _vm._v("Visibility\n          "),
+              _c(
+                "select",
+                {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.profile_visibility,
+                      expression: "profile_visibility"
+                    }
+                  ],
+                  attrs: { id: "public-visibility" },
+                  on: {
+                    change: function($event) {
+                      var $$selectedVal = Array.prototype.filter
+                        .call($event.target.options, function(o) {
+                          return o.selected
+                        })
+                        .map(function(o) {
+                          var val = "_value" in o ? o._value : o.value
+                          return val
+                        })
+                      _vm.profile_visibility = $event.target.multiple
+                        ? $$selectedVal
+                        : $$selectedVal[0]
+                    }
+                  }
+                },
+                [
+                  _c("option", { attrs: { value: "0" } }, [_vm._v("Private")]),
+                  _vm._v(" "),
+                  _c("option", { attrs: { value: "1" } }, [_vm._v("Public")])
+                ]
+              )
+            ])
+          ])
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "grid-x grid-padding-x" }, [
+          _c("div", { staticClass: "large-8 medium-10 small-12 cell center" }, [
+            _c("label", [
+              _vm._v("City\n          "),
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.city,
+                    expression: "city"
+                  }
+                ],
+                attrs: { type: "text" },
+                domProps: { value: _vm.city },
+                on: {
+                  input: function($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.city = $event.target.value
+                  }
+                }
+              })
+            ])
+          ])
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "grid-x grid-padding-x" }, [
+          _c("div", { staticClass: "large-8 medium-10 small-12 cell center" }, [
+            _c("label", [
+              _vm._v("State\n          "),
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.state,
+                    expression: "state"
+                  }
+                ],
+                attrs: { type: "text" },
+                domProps: { value: _vm.state },
+                on: {
+                  input: function($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.state = $event.target.value
+                  }
+                }
+              })
+            ])
+          ])
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "grid-x grid-padding-x" }, [
+          _c("div", { staticClass: "large-8 medium-10 small-12 cell center" }, [
+            _c(
+              "a",
+              {
+                staticClass: "button update-profile",
+                on: {
+                  click: function($event) {
+                    _vm.updateProfile()
+                  }
+                }
+              },
+              [_vm._v("Update Profile")]
+            )
+          ])
+        ])
+      ]
+    )
+  ])
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-67865b08", module.exports)
+  }
+}
+
+/***/ }),
+/* 180 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin

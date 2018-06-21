@@ -51,6 +51,7 @@ import Loader from '../global/Loader.vue';
     cafeUnlikeActionStatus() {
       return this.$store.getters.getCafeUnLikeActionStatus;
     }
+    //NO PUEDO SACARTE DE MI <head> <3
    },
    methods: {
      likeCafe(cafeID) {

@@ -27,6 +27,13 @@
           center: {lat: parseFloat( this.cafe.latitude ), lng: parseFloat( this.cafe.longitude )},
           zoom: 13 
         });
+
+        var image = '/img/coffe-marker.png';
+
+        var marker = new google.maps.Marker({
+          position: { lat: parseFloat(this.cafe.latitude), lng: parseFloat(this.cafe.longitude)}, map: this.map,
+          icon: image
+        });
       }
     }
   }
